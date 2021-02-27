@@ -7,8 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ViewModel.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Doaz.Reactive.Wpf\Doaz.Reactive.Wpf.fsproj" />
     <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
 
 </Project>
