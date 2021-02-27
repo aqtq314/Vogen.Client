@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Doaz.Reactive.Wpf\Doaz.Reactive.Wpf.fsproj" />
+    <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+  </ItemGroup>
+
+</Project>

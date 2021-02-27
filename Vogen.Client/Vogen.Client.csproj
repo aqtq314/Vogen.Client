@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Doaz.Reactive.Wpf\Doaz.Reactive.Wpf.fsproj" />
+    <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+    <ProjectReference Include="..\Vogen.Client.ViewModel\Vogen.Client.ViewModel.fsproj" />
+  </ItemGroup>
+
+</Project>

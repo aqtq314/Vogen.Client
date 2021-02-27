@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="WpfUtil.fs" />
+    <Compile Include="WpfOption.fs" />
+    <Compile Include="MarkupExtensions.fs" />
+    <Compile Include="State.fs" />
+    <Compile Include="StateOperations.fs" />
+    <Compile Include="StateWpfView.fs" />
+    <Compile Include="Controls.RenderControl.fs" />
+    <Compile Include="Controls.TrivialPanel.fs" />
+    <Compile Include="Controls.GraphicsCanvas.fs" />
+    <Compile Include="Controls.EventArgs.fs" />
+    <Compile Include="Controls.BehaviorBuilder.fs" />
+    <Compile Include="Controls.Behaviors.fs" />
+    <Compile Include="Controls.ReorderableItemsControl.fs" />
+    <Compile Include="Controls.ExtendedButtons.fs" />
+    <Compile Include="Controls.ScrollSync.fs" />
+    <Compile Include="Controls.Animated.fs" />
+    <Compile Include="Controls.Midi.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+  </ItemGroup>
+
+</Project>

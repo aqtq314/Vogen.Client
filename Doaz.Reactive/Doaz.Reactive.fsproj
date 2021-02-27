@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Util.fs" />
+    <Compile Include="ArraySeg.fs" />
+    <Compile Include="SuccessFailure.fs" />
+    <Compile Include="Math.fs" />
+    <Compile Include="RangeList.fs" />
+    <Compile Include="Midi.fs" />
+  </ItemGroup>
+
+</Project>
