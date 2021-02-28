@@ -54,18 +54,18 @@ module TimeSignatureUtils =
 
 
 module MidiTime =
-    let formatMeasures(timeSig : TimeSignature)(ticks : int64) =
-        let measure = ticks / timeSig.PulsesPerMeasure
+    let formatMeasures(timeSig : TimeSignature)(pulses : int64) =
+        let measure = pulses / timeSig.PulsesPerMeasure
         sprintf "%d" (measure + 1L)
 
-    let formatMeasureBeats(timeSig : TimeSignature)(ticks : int64) =
-        let measure, ticksInMeasure = ticks /% timeSig.PulsesPerMeasure
-        let beats = ticksInMeasure / timeSig.PulsesPerBeat
+    let formatMeasureBeats(timeSig : TimeSignature)(pulses : int64) =
+        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
+        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
         sprintf "%d:%d" (measure + 1L) (beats + 1L)
 
-    let formatFull(timeSig : TimeSignature)(ticks : int64) =
-        let measure, ticksInMeasure = ticks /% timeSig.PulsesPerMeasure
-        let beats, ticksInBeat = ticksInMeasure /% timeSig.PulsesPerBeat
-        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) ticksInBeat
+    let formatFull(timeSig : TimeSignature)(pulses : int64) =
+        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
+        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
+        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
 
 

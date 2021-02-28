@@ -12,6 +12,7 @@
     <Compile Include="JsonModels.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="DesignerModels.fs" />
+    <Compile Include="Controls.Midi.fs" />
   </ItemGroup>
 
   <ItemGroup>

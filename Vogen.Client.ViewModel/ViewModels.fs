@@ -100,7 +100,7 @@ type Composition(utts) =
         let { Utts = utts } = jComp
         Composition(Seq.map Utterance.ofJsonModel utts)
 
-type ProgramModel() =
+type WorkspaceModel() =
     let activeComp = rp(None : Composition option)
     let activeCompOrNull = activeComp |> Rpo.map(Option.defaultValue Unchecked.defaultof<_>)
 

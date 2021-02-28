@@ -23,7 +23,6 @@
     <Compile Include="Controls.ExtendedButtons.fs" />
     <Compile Include="Controls.ScrollSync.fs" />
     <Compile Include="Controls.Animated.fs" />
-    <Compile Include="Controls.Midi.fs" />
   </ItemGroup>
 
   <ItemGroup>

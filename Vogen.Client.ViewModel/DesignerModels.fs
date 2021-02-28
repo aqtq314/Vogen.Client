@@ -14,7 +14,7 @@ let jComp =
     reader.ReadToEnd()
     |> JsonConvert.DeserializeObject<Comp>
 
-let program = ProgramModel()
-do  program.LoadFromJson jComp
+let workspace = WorkspaceModel()
+do  workspace.LoadFromJson jComp
 
 

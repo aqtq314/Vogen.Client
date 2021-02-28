@@ -4,11 +4,80 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Vogen.Client"
+        xmlns:c="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
+        xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
         xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
         mc:Ignorable="d"
         Title="Vogen" Width="800" Height="450"
-        DataContext="{x:Static vm:DesignerModels.program}">
-  <Grid>
-
+        DataContext="{x:Static vm:DesignerModels.workspace}">
+  <!--All workspace properties bind to workspaceRoot-->
+  <Grid x:Name="workspaceRoot">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition/>
+      <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <vc:Ruler x:Name="ruler" Grid.Column="1"/>
+    <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9" ClipToBounds="True"/>
+    <vc:ChartGrid x:Name="chartGrid" Grid.Row="1" Grid.Column="1">
+    </vc:ChartGrid>
+    <Grid Grid.Row="2" Grid.Column="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <ScrollBar x:Name="hScroll" Orientation="Horizontal" Maximum="10000"
+                 Value="{Binding Path=(vc:WorkspaceProperties.HOffset), ElementName=workspaceRoot, Mode=TwoWay}">
+        <ScrollBar.ViewportSize>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}">
+            <Binding Path="(vc:WorkspaceProperties.QuarterWidth)" ElementName="workspaceRoot"/>
+            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+          </MultiBinding>
+        </ScrollBar.ViewportSize>
+        <ScrollBar.LargeChange>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.8">
+            <Binding Path="(vc:WorkspaceProperties.QuarterWidth)" ElementName="workspaceRoot"/>
+            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+          </MultiBinding>
+        </ScrollBar.LargeChange>
+        <ScrollBar.SmallChange>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.1">
+            <Binding Path="(vc:WorkspaceProperties.QuarterWidth)" ElementName="workspaceRoot"/>
+            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+          </MultiBinding>
+        </ScrollBar.SmallChange>
+      </ScrollBar>
+    </Grid>
+    <Grid Grid.Row="1" Grid.Column="2">
+      <Grid.RowDefinitions>
+        <RowDefinition/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <ScrollBar x:Name="vScroll" Orientation="Vertical" LargeChange="12" SmallChange="1"
+                 Maximum="{Binding Path=(vc:WorkspaceProperties.MinKey), ElementName=workspaceRoot, Converter={x:Static vc:ChartConverters.vScrollMinimumConverter}}"
+                 Value="{Binding Path=(vc:WorkspaceProperties.VOffset), ElementName=workspaceRoot, Mode=TwoWay, Converter={x:Static vc:ChartConverters.vScrollValueConverter}}">
+        <ScrollBar.Minimum>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollMaximumConverter}">
+            <Binding Path="(vc:WorkspaceProperties.MaxKey)" ElementName="workspaceRoot"/>
+            <Binding Path="(vc:WorkspaceProperties.KeyHeight)" ElementName="workspaceRoot"/>
+            <Binding Path="ActualHeight" ElementName="chartGrid"/>
+          </MultiBinding>
+        </ScrollBar.Minimum>
+        <ScrollBar.ViewportSize>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollViewportConverter}">
+            <Binding Path="(vc:WorkspaceProperties.KeyHeight)" ElementName="workspaceRoot"/>
+            <Binding Path="ActualHeight" ElementName="chartGrid"/>
+          </MultiBinding>
+        </ScrollBar.ViewportSize>
+      </ScrollBar>
+    </Grid>
+    <c:TrivialPanel Grid.Row="1" Grid.Column="2" IsHitTestVisible="False">
+      <TextBlock Text="{Binding Path=(vc:WorkspaceProperties.VOffset), RelativeSource={RelativeSource Self}}"/>
+    </c:TrivialPanel>
   </Grid>
 </Window>
