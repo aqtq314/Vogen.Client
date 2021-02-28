@@ -25,6 +25,7 @@
     <vc:Ruler x:Name="ruler" Grid.Column="1"/>
     <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9" ClipToBounds="True"/>
     <vc:ChartGrid x:Name="chartGrid" Grid.Row="1" Grid.Column="1">
+      <vc:NoteDisplay Composition="{Binding ActiveCompOrNull.Value}"/>
     </vc:ChartGrid>
     <Grid Grid.Row="2" Grid.Column="1">
       <Grid.ColumnDefinitions>
@@ -76,7 +77,7 @@
         </ScrollBar.ViewportSize>
       </ScrollBar>
     </Grid>
-    <c:TrivialPanel Grid.Row="1" Grid.Column="2" IsHitTestVisible="False">
+    <c:TrivialPanel Grid.Row="1" Grid.Column="2" IsHitTestVisible="False" VerticalAlignment="Top">
       <TextBlock Text="{Binding Path=(vc:WorkspaceProperties.VOffset), RelativeSource={RelativeSource Self}}"/>
     </c:TrivialPanel>
   </Grid>

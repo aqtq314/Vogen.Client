@@ -1,317 +1,75 @@
-{ "utts": [
-    { "chars": [
-        { "ch": null, "rom": null,
-          "ipa": [
-            { "ph": null, "on": 0, "off": 206 } ] },
-        { "ch": "我", "rom": "ngo",
-          "notes": [
-            { "pitch": 62, "on": 214, "off": 232 },
-            { "pitch": 64, "on": 232, "off": 250 } ],
-          "ipa": [
-            { "ph": "ŋ", "on": 206, "off": 214 },
-            { "ph": "ɔ", "on": 214, "off": 240 } ] },
-        { "ch": "自", "rom": "zi",
-          "notes": [
-            { "pitch": 62, "on": 250, "off": 286 } ],
-          "ipa": [
-            { "ph": "ts", "on": 240, "off": 250 },
-            { "ph": "i", "on": 250, "off": 272 } ] },
-        { "ch": "关", "rom": "gwaan",
-          "notes": [
-            { "pitch": 64, "on": 286, "off": 357 } ],
-          "ipa": [
-            { "ph": "k", "on": 272, "off": 286 },
-            { "ph": "w", "on": 286, "off": 290 },
-            { "ph": "ä", "on": 290, "off": 321 },
-            { "ph": "n̩", "on": 321, "off": 332 } ] },
-        { "ch": "山", "rom": "saan",
-          "notes": [
-            { "pitch": 71, "on": 357, "off": 375 },
-            { "pitch": 74, "on": 375, "off": 411 },
-            { "pitch": 71, "on": 411, "off": 429 } ],
-          "ipa": [
-            { "ph": "s", "on": 332, "off": 357 },
-            { "ph": "ä", "on": 357, "off": 393 },
-            { "ph": "n̩", "on": 393, "off": 416 } ] },
-        { "ch": "点", "rom": "dim",
-          "notes": [
-            { "pitch": 71, "on": 429, "off": 464 },
-            { "pitch": 74, "on": 464, "off": 482 },
-            { "pitch": 71, "on": 482, "off": 500 } ],
-          "ipa": [
-            { "ph": "t", "on": 416, "off": 429 },
-            { "ph": "i", "on": 429, "off": 459 },
-            { "ph": "m̩", "on": 459, "off": 483 } ] },
-        { "ch": "酒", "rom": "zau",
-          "notes": [
-            { "pitch": 69, "on": 500, "off": 571 } ],
-          "ipa": [
-            { "ph": "ts", "on": 483, "off": 500 },
-            { "ph": "ɐ", "on": 500, "off": 527 },
-            { "ph": "u̯", "on": 527, "off": 560 } ] },
-        { "ch": "千", "rom": "cin",
-          "notes": [
-            { "pitch": 69, "on": 571, "off": 589 },
-            { "pitch": 71, "on": 589, "off": 607 } ],
-          "ipa": [
-            { "ph": "tsʰ", "on": 560, "off": 571 },
-            { "ph": "i", "on": 571, "off": 585 },
-            { "ph": "n̩", "on": 585, "off": 596 } ] },
-        { "ch": "秋", "rom": "cau",
-          "notes": [
-            { "pitch": 69, "on": 607, "off": 643 } ],
-          "ipa": [
-            { "ph": "tsʰ", "on": 596, "off": 607 },
-            { "ph": "ɐ", "on": 607, "off": 616 },
-            { "ph": "u̯", "on": 616, "off": 635 } ] },
-        { "ch": "皆", "rom": "gaai",
-          "notes": [
-            { "pitch": 69, "on": 643, "off": 661 },
-            { "pitch": 64, "on": 661, "off": 679 } ],
-          "ipa": [
-            { "ph": "k", "on": 635, "off": 643 },
-            { "ph": "ä", "on": 643, "off": 654 },
-            { "ph": "i̯", "on": 654, "off": 675 } ] },
-        { "ch": "入", "rom": "jap",
-          "notes": [
-            { "pitch": 64, "on": 679, "off": 714 } ],
-          "ipa": [
-            { "ph": "j", "on": 675, "off": 682 },
-            { "ph": "ɐ", "on": 682, "off": 696 },
-            { "ph": "p̚", "on": 696, "off": 700 } ] },
-        { "ch": "喉", "rom": "hau",
-          "notes": [
-            { "pitch": 64, "on": 714, "off": 750 },
-            { "pitch": 67, "on": 750, "off": 786 } ],
-          "ipa": [
-            { "ph": "h", "on": 700, "off": 714 },
-            { "ph": "ɐ", "on": 714, "off": 742 },
-            { "ph": "u̯", "on": 742, "off": 778 } ] },
-        { "ch": "更", "rom": "gang",
-          "notes": [
-            { "pitch": 62, "on": 786, "off": 804 },
-            { "pitch": 64, "on": 804, "off": 821 } ],
-          "ipa": [
-            { "ph": "k", "on": 778, "off": 786 },
-            { "ph": "ɐ", "on": 786, "off": 799 },
-            { "ph": "ŋ̍", "on": 799, "off": 817 } ] },
-        { "ch": "有", "rom": "jau",
-          "notes": [
-            { "pitch": 62, "on": 821, "off": 857 } ],
-          "ipa": [
-            { "ph": "j", "on": 817, "off": 824 },
-            { "ph": "ɐ", "on": 824, "off": 830 },
-            { "ph": "u̯", "on": 830, "off": 838 } ] },
-        { "ch": "沸", "rom": "fai",
-          "notes": [
-            { "pitch": 64, "on": 857, "off": 929 } ],
-          "ipa": [
-            { "ph": "f", "on": 838, "off": 857 },
-            { "ph": "ɐ", "on": 857, "off": 887 },
-            { "ph": "i̯", "on": 887, "off": 909 } ] },
-        { "ch": "雪", "rom": "syut",
-          "notes": [
-            { "pitch": 71, "on": 929, "off": 946 },
-            { "pitch": 74, "on": 946, "off": 982 },
-            { "pitch": 71, "on": 982, "off": 1000 } ],
-          "ipa": [
-            { "ph": "ʃ", "on": 909, "off": 929 },
-            { "ph": "y", "on": 929, "off": 968 },
-            { "ph": "t̚", "on": 968, "off": 991 } ] },
-        { "ch": "酌", "rom": "zoek",
-          "notes": [
-            { "pitch": 71, "on": 1000, "off": 1018 },
-            { "pitch": 69, "on": 1018, "off": 1036 } ],
-          "ipa": [
-            { "ph": "tʃ", "on": 991, "off": 1000 },
-            { "ph": "œ", "on": 1000, "off": 1016 },
-            { "ph": "k̚", "on": 1016, "off": 1036 } ] },
-        { "ch": "与", "rom": "jyu",
-          "notes": [
-            { "pitch": 69, "on": 1036, "off": 1071 } ],
-          "ipa": [
-            { "ph": "y", "on": 1036, "off": 1060 } ] },
-        { "ch": "风", "rom": "fung",
-          "notes": [
-            { "pitch": 71, "on": 1071, "off": 1107 } ],
-          "ipa": [
-            { "ph": "f", "on": 1060, "off": 1071 },
-            { "ph": "o", "on": 1071, "off": 1084 },
-            { "ph": "ŋ̍", "on": 1084, "off": 1097 } ] },
-        { "ch": "云", "rom": "wan",
-          "notes": [
-            { "pitch": 71, "on": 1107, "off": 1143 },
-            { "pitch": 74, "on": 1143, "off": 1179 } ],
-          "ipa": [
-            { "ph": "w", "on": 1097, "off": 1112 },
-            { "ph": "ɐ", "on": 1112, "off": 1143 },
-            { "ph": "n̩", "on": 1143, "off": 1155 } ] },
-        { "ch": "某", "rom": "mau",
-          "notes": [
-            { "pitch": 71, "on": 1179, "off": 1196 },
-            { "pitch": 74, "on": 1196, "off": 1214 },
-            { "pitch": 71, "on": 1214, "off": 1321 } ],
-          "ipa": [
-            { "ph": "m", "on": 1155, "off": 1179 },
-            { "ph": "ɐ", "on": 1179, "off": 1257 },
-            { "ph": "u̯", "on": 1257, "off": 1321 } ] },
-        { "ch": null, "rom": null,
-          "ipa": [
-            { "ph": null, "on": 1321, "off": 1351 } ] } ] },
-    { "chars": [
-        { "ch": null, "rom": null,
-          "ipa": [
-            { "ph": null, "on": 1307, "off": 1349 } ] },
-        { "ch": "我", "rom": "ngo",
-          "notes": [
-            { "pitch": 62, "on": 1357, "off": 1375 },
-            { "pitch": 64, "on": 1375, "off": 1393 } ],
-          "ipa": [
-            { "ph": "ŋ", "on": 1349, "off": 1357 },
-            { "ph": "ɔ", "on": 1357, "off": 1378 } ] },
-        { "ch": "是", "rom": "si",
-          "notes": [
-            { "pitch": 62, "on": 1393, "off": 1429 } ],
-          "ipa": [
-            { "ph": "s", "on": 1378, "off": 1393 },
-            { "ph": "i", "on": 1393, "off": 1411 } ] },
-        { "ch": "千", "rom": "cin",
-          "notes": [
-            { "pitch": 64, "on": 1429, "off": 1500 } ],
-          "ipa": [
-            { "ph": "tsʰ", "on": 1411, "off": 1429 },
-            { "ph": "i", "on": 1429, "off": 1464 },
-            { "ph": "n̩", "on": 1464, "off": 1485 } ] },
-        { "ch": "里", "rom": "lei",
-          "notes": [
-            { "pitch": 71, "on": 1500, "off": 1518 },
-            { "pitch": 74, "on": 1518, "off": 1554 },
-            { "pitch": 71, "on": 1554, "off": 1571 } ],
-          "ipa": [
-            { "ph": "l", "on": 1485, "off": 1500 },
-            { "ph": "e", "on": 1500, "off": 1529 },
-            { "ph": "i̯", "on": 1529, "off": 1557 } ] },
-        { "ch": "故", "rom": "gu",
-          "notes": [
-            { "pitch": 71, "on": 1571, "off": 1607 },
-            { "pitch": 74, "on": 1607, "off": 1625 },
-            { "pitch": 71, "on": 1625, "off": 1643 } ],
-          "ipa": [
-            { "ph": "k", "on": 1557, "off": 1571 },
-            { "ph": "u", "on": 1571, "off": 1636 } ] },
-        { "ch": "人", "rom": "jan",
-          "notes": [
-            { "pitch": 69, "on": 1643, "off": 1714 } ],
-          "ipa": [
-            { "ph": "j", "on": 1636, "off": 1647 },
-            { "ph": "ɐ", "on": 1647, "off": 1678 },
-            { "ph": "n̩", "on": 1678, "off": 1703 } ] },
-        { "ch": "青", "rom": "ceng",
-          "notes": [
-            { "pitch": 69, "on": 1714, "off": 1732 },
-            { "pitch": 71, "on": 1732, "off": 1750 } ],
-          "ipa": [
-            { "ph": "tsʰ", "on": 1703, "off": 1714 },
-            { "ph": "ɛ", "on": 1714, "off": 1727 },
-            { "ph": "ŋ̍", "on": 1727, "off": 1735 } ] },
-        { "ch": "山", "rom": "saan",
-          "notes": [
-            { "pitch": 69, "on": 1750, "off": 1786 } ],
-          "ipa": [
-            { "ph": "s", "on": 1735, "off": 1750 },
-            { "ph": "ä", "on": 1750, "off": 1764 },
-            { "ph": "n̩", "on": 1764, "off": 1782 } ] },
-        { "ch": "应", "rom": "jing",
-          "notes": [
-            { "pitch": 69, "on": 1786, "off": 1804 },
-            { "pitch": 64, "on": 1804, "off": 1821 } ],
-          "ipa": [
-            { "ph": "j", "on": 1782, "off": 1789 },
-            { "ph": "e", "on": 1789, "off": 1799 },
-            { "ph": "ŋ̍", "on": 1799, "off": 1811 } ] },
-        { "ch": "白", "rom": "baak",
-          "notes": [
-            { "pitch": 64, "on": 1821, "off": 1857 } ],
-          "ipa": [
-            { "ph": "p", "on": 1811, "off": 1821 },
-            { "ph": "ä", "on": 1821, "off": 1835 },
-            { "ph": "k̚", "on": 1835, "off": 1836 } ] },
-        { "ch": "首", "rom": "sau",
-          "notes": [
-            { "pitch": 64, "on": 1857, "off": 1893 },
-            { "pitch": 67, "on": 1893, "off": 1929 } ],
-          "ipa": [
-            { "ph": "s", "on": 1836, "off": 1857 },
-            { "ph": "ɐ", "on": 1857, "off": 1885 },
-            { "ph": "u̯", "on": 1885, "off": 1921 } ] },
-        { "ch": "年", "rom": "nin",
-          "notes": [
-            { "pitch": 62, "on": 1929, "off": 1946 },
-            { "pitch": 64, "on": 1946, "off": 1964 } ],
-          "ipa": [
-            { "ph": "n", "on": 1921, "off": 1929 },
-            { "ph": "i", "on": 1929, "off": 1943 },
-            { "ph": "n̩", "on": 1943, "off": 1949 } ] },
-        { "ch": "少", "rom": "siu",
-          "notes": [
-            { "pitch": 62, "on": 1964, "off": 2000 } ],
-          "ipa": [
-            { "ph": "s", "on": 1949, "off": 1964 },
-            { "ph": "i", "on": 1964, "off": 1973 },
-            { "ph": "u̯", "on": 1973, "off": 1993 } ] },
-        { "ch": "犹", "rom": "jau",
-          "notes": [
-            { "pitch": 64, "on": 2000, "off": 2071 } ],
-          "ipa": [
-            { "ph": "j", "on": 1993, "off": 2004 },
-            { "ph": "ɐ", "on": 2004, "off": 2027 },
-            { "ph": "u̯", "on": 2027, "off": 2054 } ] },
-        { "ch": "借", "rom": "ze",
-          "notes": [
-            { "pitch": 71, "on": 2071, "off": 2089 },
-            { "pitch": 74, "on": 2089, "off": 2125 },
-            { "pitch": 71, "on": 2125, "off": 2143 } ],
-          "ipa": [
-            { "ph": "ts", "on": 2054, "off": 2071 },
-            { "ph": "ɛ", "on": 2071, "off": 2135 } ] },
-        { "ch": "银", "rom": "ngan",
-          "notes": [
-            { "pitch": 69, "on": 2143, "off": 2161 },
-            { "pitch": 71, "on": 2161, "off": 2179 } ],
-          "ipa": [
-            { "ph": "ŋ", "on": 2135, "off": 2143 },
-            { "ph": "ɐ", "on": 2143, "off": 2157 },
-            { "ph": "n̩", "on": 2157, "off": 2169 } ] },
-        { "ch": "枪", "rom": "coeng",
-          "notes": [
-            { "pitch": 69, "on": 2179, "off": 2214 } ],
-          "ipa": [
-            { "ph": "tʃʰ", "on": 2169, "off": 2179 },
-            { "ph": "œ", "on": 2179, "off": 2192 },
-            { "ph": "ŋ̍", "on": 2192, "off": 2203 } ] },
-        { "ch": "逞", "rom": "cing",
-          "notes": [
-            { "pitch": 69, "on": 2214, "off": 2232 },
-            { "pitch": 64, "on": 2232, "off": 2250 } ],
-          "ipa": [
-            { "ph": "tsʰ", "on": 2203, "off": 2214 },
-            { "ph": "e", "on": 2214, "off": 2227 },
-            { "ph": "ŋ̍", "on": 2227, "off": 2231 } ] },
-        { "ch": "风", "rom": "fung",
-          "notes": [
-            { "pitch": 64, "on": 2250, "off": 2321 } ],
-          "ipa": [
-            { "ph": "f", "on": 2231, "off": 2250 },
-            { "ph": "o", "on": 2250, "off": 2283 },
-            { "ph": "ŋ̍", "on": 2283, "off": 2297 } ] },
-        { "ch": "流", "rom": "lau",
-          "notes": [
-            { "pitch": 64, "on": 2321, "off": 2357 },
-            { "pitch": 67, "on": 2357, "off": 2500 } ],
-          "ipa": [
-            { "ph": "l", "on": 2297, "off": 2321 },
-            { "ph": "ɐ", "on": 2321, "off": 2430 },
-            { "ph": "u̯", "on": 2430, "off": 2500 } ] },
-        { "ch": null, "rom": null,
-          "ipa": [
-            { "ph": null, "on": 2500, "off": 2571 } ] } ] } ] }
+{
+  "utts": [
+    {
+      "notes": [
+        { "pitch": 62, "lyric": "我", "rom": "ngo", "on": 1440, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 1560, "dur": 120 },
+        { "pitch": 62, "lyric": "自", "rom": "zi", "on": 1680, "dur": 240 },
+        { "pitch": 64, "lyric": "关", "rom": "gwaan", "on": 1920, "dur": 480 },
+        { "pitch": 71, "lyric": "山", "rom": "saan", "on": 2400, "dur": 120 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 2520, "dur": 240 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 2760, "dur": 120 },
+        { "pitch": 71, "lyric": "点", "rom": "dim", "on": 2880, "dur": 240 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 3120, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 3240, "dur": 120 },
+        { "pitch": 69, "lyric": "酒", "rom": "zau", "on": 3360, "dur": 480 },
+        { "pitch": 69, "lyric": "千", "rom": "cin", "on": 3840, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 3960, "dur": 120 },
+        { "pitch": 69, "lyric": "秋", "rom": "cau", "on": 4080, "dur": 240 },
+        { "pitch": 69, "lyric": "皆", "rom": "gaai", "on": 4320, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 4440, "dur": 120 },
+        { "pitch": 64, "lyric": "入", "rom": "jap", "on": 4560, "dur": 240 },
+        { "pitch": 64, "lyric": "喉", "rom": "hau", "on": 4800, "dur": 240 },
+        { "pitch": 67, "lyric": "-", "rom": "-", "on": 5040, "dur": 240 },
+        { "pitch": 62, "lyric": "更", "rom": "gang", "on": 5280, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 5400, "dur": 120 },
+        { "pitch": 62, "lyric": "有", "rom": "jau", "on": 5520, "dur": 240 },
+        { "pitch": 64, "lyric": "沸", "rom": "fai", "on": 5760, "dur": 480 },
+        { "pitch": 71, "lyric": "雪", "rom": "syut", "on": 6240, "dur": 120 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 6360, "dur": 240 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 6600, "dur": 120 },
+        { "pitch": 71, "lyric": "酌", "rom": "zoek", "on": 6720, "dur": 120 },
+        { "pitch": 69, "lyric": "-", "rom": "-", "on": 6840, "dur": 120 },
+        { "pitch": 69, "lyric": "与", "rom": "jyu", "on": 6960, "dur": 240 },
+        { "pitch": 71, "lyric": "风", "rom": "fung", "on": 7200, "dur": 240 },
+        { "pitch": 71, "lyric": "云", "rom": "wan", "on": 7440, "dur": 240 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 7680, "dur": 240 },
+        { "pitch": 71, "lyric": "某", "rom": "mau", "on": 7920, "dur": 120 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 8040, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 8160, "dur": 720 } ] },
+    {
+      "notes": [
+        { "pitch": 62, "lyric": "我", "rom": "ngo", "on": 9120, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 9240, "dur": 120 },
+        { "pitch": 62, "lyric": "是", "rom": "si", "on": 9360, "dur": 240 },
+        { "pitch": 64, "lyric": "千", "rom": "cin", "on": 9600, "dur": 480 },
+        { "pitch": 71, "lyric": "里", "rom": "lei", "on": 10080, "dur": 120 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 10200, "dur": 240 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 10440, "dur": 120 },
+        { "pitch": 71, "lyric": "故", "rom": "gu", "on": 10560, "dur": 240 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 10800, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 10920, "dur": 120 },
+        { "pitch": 69, "lyric": "人", "rom": "jan", "on": 11040, "dur": 480 },
+        { "pitch": 69, "lyric": "青", "rom": "ceng", "on": 11520, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 11640, "dur": 120 },
+        { "pitch": 69, "lyric": "山", "rom": "saan", "on": 11760, "dur": 240 },
+        { "pitch": 69, "lyric": "应", "rom": "jing", "on": 12000, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 12120, "dur": 120 },
+        { "pitch": 64, "lyric": "白", "rom": "baak", "on": 12240, "dur": 240 },
+        { "pitch": 64, "lyric": "首", "rom": "sau", "on": 12480, "dur": 240 },
+        { "pitch": 67, "lyric": "-", "rom": "-", "on": 12720, "dur": 240 },
+        { "pitch": 62, "lyric": "年", "rom": "nin", "on": 12960, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 13080, "dur": 120 },
+        { "pitch": 62, "lyric": "少", "rom": "siu", "on": 13200, "dur": 240 },
+        { "pitch": 64, "lyric": "犹", "rom": "jau", "on": 13440, "dur": 480 },
+        { "pitch": 71, "lyric": "借", "rom": "ze", "on": 13920, "dur": 120 },
+        { "pitch": 74, "lyric": "-", "rom": "-", "on": 14040, "dur": 240 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 14280, "dur": 120 },
+        { "pitch": 69, "lyric": "银", "rom": "ngan", "on": 14400, "dur": 120 },
+        { "pitch": 71, "lyric": "-", "rom": "-", "on": 14520, "dur": 120 },
+        { "pitch": 69, "lyric": "枪", "rom": "coeng", "on": 14640, "dur": 240 },
+        { "pitch": 69, "lyric": "逞", "rom": "cing", "on": 14880, "dur": 120 },
+        { "pitch": 64, "lyric": "-", "rom": "-", "on": 15000, "dur": 120 },
+        { "pitch": 64, "lyric": "风", "rom": "fung", "on": 15120, "dur": 480 },
+        { "pitch": 64, "lyric": "流", "rom": "lau", "on": 15600, "dur": 240 },
+        { "pitch": 67, "lyric": "-", "rom": "-", "on": 15840, "dur": 960 } ] } ] }

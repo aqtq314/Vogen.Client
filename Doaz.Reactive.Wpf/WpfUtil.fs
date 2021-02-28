@@ -59,6 +59,22 @@ module WpfUtil =
         static member ofWpfRect (r : System.Windows.Rect) =
             RectF (r.X, r.Y, r.Right, r.Bottom)
 
+    let makeFormattedText text x =
+        let typeface =
+            Typeface(
+                TextBlock.GetFontFamily x,
+                TextBlock.GetFontStyle x,
+                TextBlock.GetFontWeight x,
+                TextBlock.GetFontStretch x)
+        FormattedText(
+            text,
+            Globalization.CultureInfo.CurrentUICulture,
+            TextBlock.GetFlowDirection x,
+            typeface,
+            TextBlock.GetFontSize x,
+            TextBlock.GetForeground x,
+            (let dpi = VisualTreeHelper.GetDpi x in dpi.PixelsPerDip))
+
 
 
 module BooleanBoxes =

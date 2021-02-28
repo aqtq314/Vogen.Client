@@ -10,9 +10,10 @@
   <ItemGroup>
     <EmbeddedResource Include="testComp.json" />
     <Compile Include="JsonModels.fs" />
+    <Compile Include="Controls.Midi.fs" />
+    <Compile Include="Controls.Charting.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="DesignerModels.fs" />
-    <Compile Include="Controls.Midi.fs" />
   </ItemGroup>
 
   <ItemGroup>

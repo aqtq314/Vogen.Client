@@ -10,26 +10,36 @@ open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Input
 open System.Windows.Media
-open Vogen.Client.ViewModel
 
 
 [<AutoOpen>]
-module ControlUtils =
-    let makeFormattedText text x =
-        let typeface =
-            Typeface(
-                TextBlock.GetFontFamily x,
-                TextBlock.GetFontStyle x,
-                TextBlock.GetFontWeight x,
-                TextBlock.GetFontStretch x)
-        FormattedText(
-            text,
-            Globalization.CultureInfo.CurrentUICulture,
-            TextBlock.GetFlowDirection x,
-            typeface,
-            TextBlock.GetFontSize x,
-            TextBlock.GetForeground x,
-            (let dpi = VisualTreeHelper.GetDpi x in dpi.PixelsPerDip))
+module ChartUnitConversion =
+    let pulseToPixel quarterWidth hOffset pulses =
+        (pulses - hOffset) / float Midi.ppqn * quarterWidth
+
+    let pixelToPulse quarterWidth hOffset xPos =
+        hOffset + xPos * float Midi.ppqn / quarterWidth
+
+    let pitchToPixel keyHeight actualHeight vOffset pitch : float =
+        actualHeight - (pitch - vOffset) * keyHeight
+
+    let pixelToPitch keyHeight actualHeight vOffset yPos : float =
+        vOffset + (actualHeight - yPos) / keyHeight
+
+module TimeScale =
+    let minMajorHopWidth = 80.0     // in screen pixels
+    let minMinorHopWidth = 25.0
+
+    let findHop(timeSig : TimeSignature) quarterWidth minHopWidth =
+        seq {
+            yield 1L
+            yield 5L
+            yield! Seq.initInfinite(fun i -> 15L <<< i)
+                |> Seq.takeWhile(fun length -> length < timeSig.PulsesPerBeat)
+            yield timeSig.PulsesPerBeat
+            yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i) }
+        |> Seq.find(fun hop ->
+            pulseToPixel quarterWidth 0.0 (float hop) >= minHopWidth)
 
 type WorkspaceProperties() =
     inherit DependencyObject()
@@ -106,8 +116,10 @@ type SideKeyboard() =
         let blackKeyWidth = whiteKeyWidth * x.BlackKeyLengthRatio |> clamp 0.0 whiteKeyWidth
         let cornerRadius = 2.0 |> min(half keyHeight) |> min(half blackKeyWidth)
 
-        let botPitch = int vOffset
-        let topPitch = min maxKey (int(vOffset + actualHeight / keyHeight))
+        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight)
+        let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0) |> min maxKey
+
+        // white keys
         for pitch in botPitch .. topPitch do
             if not(Midi.isBlackKey pitch) then
                 let keyOffset = keyOffsetLookup.[pitch % 12] / 12.0
@@ -117,6 +129,7 @@ type SideKeyboard() =
                 let width = max 0.0 (whiteKeyWidth - x * 2.0)
                 dc.DrawRoundedRectangle(whiteKeyFill, whiteKeyPen, Rect(x, y, width, height), cornerRadius, cornerRadius)
 
+        // black keys
         for pitch in botPitch .. topPitch do
             if Midi.isBlackKey pitch then
                 let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight
@@ -125,6 +138,7 @@ type SideKeyboard() =
                 let width = max 0.0 (blackKeyWidth - x * 2.0)
                 dc.DrawRoundedRectangle(blackKeyFill, blackKeyPen, Rect(0.0, y, width, height), cornerRadius, cornerRadius)
 
+        // text labels
         for pitch in botPitch .. topPitch do
             if pitch % 12 = 0 then
                 let ft = x |> makeFormattedText(sprintf "C%d" (pitch / 12 - 1))
@@ -132,26 +146,13 @@ type SideKeyboard() =
                 let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight + half(keyHeight - ft.Height)
                 dc.DrawText(ft, Point(x, y))
 
-module TimeScale =
-    let minMajorHop = 80.0
-    let minMinorHop = 25.0
-
-    let findHop(timeSig : TimeSignature) quarterWidth minHop =
-        seq {
-            yield 1L
-            yield 5L
-            yield! Seq.initInfinite(fun i -> 15L <<< i)
-                |> Seq.takeWhile(fun length -> length < timeSig.PulsesPerBeat)
-            yield timeSig.PulsesPerBeat
-            yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i) }
-        |> Seq.find(fun hop ->
-            float hop / float Midi.ppqn * quarterWidth >= minHop)
-
 type Ruler() =
     inherit FrameworkElement()
 
     static let majorTickHeight = 6.0
     static let minorTickHeight = 4.0
+
+    static let tickPen = Pen(SolidColorBrush((0xFF000000u).AsColor()), 1.0) |>! freeze
 
     override x.MeasureOverride s =
         let fontFamily = TextBlock.GetFontFamily x
@@ -172,44 +173,31 @@ type Ruler() =
         let quarterWidth = WorkspaceProperties.GetQuarterWidth x
         let timeSig = WorkspaceProperties.GetTimeSignature x
 
-        let tickPen = Pen(SolidColorBrush((0xFF000000u).AsColor()), 1.0) |>! freeze
+        let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
+        let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth)
 
-        let minTick = int64 hOffset
-        let maxTick = int64(hOffset + actualWidth / quarterWidth * float Midi.ppqn)
-        let typeface =
-            Typeface(
-                TextBlock.GetFontFamily x,
-                TextBlock.GetFontStyle x,
-                TextBlock.GetFontWeight x,
-                TextBlock.GetFontStretch x)
-        let makeText text =
-            FormattedText(
-                text,
-                Globalization.CultureInfo.CurrentUICulture,
-                TextBlock.GetFlowDirection x,
-                typeface,
-                TextBlock.GetFontSize x,
-                TextBlock.GetForeground x,
-                (let dpi = VisualTreeHelper.GetDpi x in dpi.PixelsPerDip))
+        let majorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMajorHopWidth
+        let minorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMinorHopWidth
 
-        let majorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMajorHop
-        let minorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMinorHop
+        // bottom border
+        dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, actualHeight - 0.5, actualWidth, 0.5))
 
-        for currTick in minTick / minorHop * minorHop .. minorHop .. maxTick do
-            let isMajor = currTick % majorHop = 0L
-            let x = (float currTick - hOffset) / float Midi.ppqn * quarterWidth
+        // tickmarks
+        for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
+            let isMajor = currPulse % majorHop = 0L
+            let xPos = pulseToPixel quarterWidth hOffset (float currPulse)
             let height = if isMajor then majorTickHeight else minorTickHeight
-            dc.DrawLine(tickPen, Point(x, actualHeight - height), Point(x, actualHeight))
+            dc.DrawLine(tickPen, Point(xPos, actualHeight - height), Point(xPos, actualHeight))
 
             if isMajor then
                 let textStr =
-                    if majorHop % timeSig.PulsesPerMeasure = 0L then MidiTime.formatMeasures timeSig currTick
-                    elif majorHop % timeSig.PulsesPerBeat = 0L then MidiTime.formatMeasureBeats timeSig currTick
-                    else MidiTime.formatFull timeSig currTick
-                let ft = makeText textStr
+                    if majorHop % timeSig.PulsesPerMeasure = 0L then MidiTime.formatMeasures timeSig currPulse
+                    elif majorHop % timeSig.PulsesPerBeat = 0L then MidiTime.formatMeasureBeats timeSig currPulse
+                    else MidiTime.formatFull timeSig currPulse
+                let ft = x |> makeFormattedText textStr
                 let halfTextWidth = half ft.Width
-                if x - halfTextWidth >= 0.0 && x + halfTextWidth <= actualWidth then
-                    dc.DrawText(ft, new Point(x - halfTextWidth, 0.0))
+                if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
+                    dc.DrawText(ft, new Point(xPos - halfTextWidth, 0.0))
 
 type ChartGrid() =
     inherit BasicPanel()
@@ -234,20 +222,21 @@ type ChartGrid() =
         dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
 
         // time grids
-        let minTick = int64 hOffset
-        let maxTick = int64(hOffset + actualWidth / quarterWidth * float Midi.ppqn)
+        let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
+        let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth)
 
-        let majorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMajorHop
-        let minorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMinorHop
+        let majorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMajorHopWidth
+        let minorHop = TimeScale.findHop timeSig quarterWidth TimeScale.minMinorHopWidth
 
-        for currTick in minTick / minorHop * minorHop .. minorHop .. maxTick do
-            let x = (float currTick - hOffset) / float Midi.ppqn * quarterWidth
-            let pen = if currTick % majorHop = 0L then majorTickPen else minorTickPen
+        for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
+            let x = pulseToPixel quarterWidth hOffset (float currPulse)
+            let pen = if currPulse % majorHop = 0L then majorTickPen else minorTickPen
             dc.DrawLine(pen, Point(x, 0.0), Point(x, actualHeight))
 
         // pitch grids
-        let botPitch = int vOffset
-        let topPitch = min maxKey (int(vOffset + actualHeight / keyHeight))
+        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight)
+        let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0) |> min maxKey
+
         for pitch in botPitch .. topPitch do
             match pitch % 12 with
             | 0 | 5 ->
@@ -266,7 +255,7 @@ module ChartConverters =
             let quarterWidth = Convert.ToDouble quarterWidth
             let chartWidth = Convert.ToDouble chartWidth
             let scale = if isNull p then 1.0 else Convert.ToDouble p
-            chartWidth * scale / quarterWidth * float Midi.ppqn
+            scale * pixelToPulse quarterWidth 0.0 chartWidth
         | _ ->
             raise(ArgumentException()))
 
