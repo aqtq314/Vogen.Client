@@ -9,10 +9,10 @@ open Vogen.Client.Controls
 
 type WorkspaceModel() =
     let activeComp = rp(None : Composition option)
-    let activeCompOrNull = activeComp |> Rpo.map(Option.defaultValue Unchecked.defaultof<_>)
+    let activeCompOrEmpty = activeComp |> Rpo.map(Option.defaultValue Composition.Empty)
 
     member x.ActiveComp = activeComp
-    member x.ActiveCompOrNull = activeCompOrNull
+    member x.ActiveCompOrEmpty = activeCompOrEmpty
 
     member x.Load comp =
         activeComp |> Rp.set(Some comp)

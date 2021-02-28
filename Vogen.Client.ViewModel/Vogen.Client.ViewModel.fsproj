@@ -14,6 +14,7 @@
     <Compile Include="Controls.Charting.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="DesignerModels.fs" />
+    <Compile Include="Behaviors.fs" />
   </ItemGroup>
 
   <ItemGroup>

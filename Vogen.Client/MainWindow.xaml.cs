@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Vogen.Client.Controls;
+using Vogen.Client.ViewModel;
 
 namespace Vogen.Client
 {
@@ -21,6 +22,7 @@ namespace Vogen.Client
         public MainWindow()
         {
             InitializeComponent();
+            Behaviors.bindWorkspace(workspaceRoot, chartGrid);
         }
     }
 }

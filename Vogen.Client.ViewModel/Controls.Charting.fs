@@ -70,11 +70,13 @@ type NoteDisplay() =
                     let x0 = pulseToPixel quarterWidth hOffset (float note.On)
                     let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
                     let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
-                    dc.DrawLine(noteBgPen, new Point(x0, yMid), new Point(x1, yMid))
-                    dc.DrawEllipse(noteBgPen.Brush, null, new Point(x0, yMid), 5.0, 5.0)
+                    dc.DrawLine(noteBgPen, Point(x0, yMid), Point(x1, yMid))
+                    dc.DrawEllipse(noteBgPen.Brush, null, Point(x0, yMid), 5.0, 5.0)
                     if note.Lyric <> "-" then
                         let ft = x |> makeFormattedText note.Lyric
-                        dc.DrawText(ft, new Point(x0, yMid - ft.Height))
+                        dc.DrawText(ft, Point(x0, yMid - ft.Height))
+                        let ft = x |> makeFormattedText note.Rom
+                        dc.DrawText(ft, Point(x0, yMid))
 
 
 

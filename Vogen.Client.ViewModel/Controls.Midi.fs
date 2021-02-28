@@ -202,6 +202,26 @@ type Ruler() =
 type ChartGrid() =
     inherit BasicPanel()
 
+    member val private MouseDownButton = None with get, set
+
+    override x.OnMouseDown e =
+        if x.CaptureMouse() then
+            x.MouseDownButton <- Some e.ChangedButton
+        base.OnMouseDown e
+
+    override x.OnMouseUp e =
+        x.MouseDownButton
+        |> Option.filter((=) e.ChangedButton)
+        |> Option.iter(fun mouseDownButton ->
+            x.ReleaseMouseCapture())
+        base.OnMouseUp e
+
+    override x.OnLostMouseCapture e =
+        x.MouseDownButton
+        |> Option.iter(fun mouseDownButton ->
+            x.MouseDownButton <- None)
+        base.OnLostMouseCapture e
+
     override x.OnRender dc =
         let hOffset = WorkspaceProperties.GetHOffset x
         let vOffset = WorkspaceProperties.GetVOffset x
