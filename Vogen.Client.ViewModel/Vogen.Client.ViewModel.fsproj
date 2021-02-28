@@ -4,10 +4,14 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ViewModel.fs" />
+    <EmbeddedResource Include="testComp.json" />
+    <Compile Include="JsonModels.fs" />
+    <Compile Include="ViewModels.fs" />
+    <Compile Include="DesignerModels.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,9 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Vogen.Client"
+        xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
         mc:Ignorable="d"
-        Title="Vogen" Width="800" Height="450">
-    <Grid>
+        Title="Vogen" Width="800" Height="450"
+        DataContext="{x:Static vm:DesignerModels.program}">
+  <Grid>
 
-    </Grid>
+  </Grid>
 </Window>

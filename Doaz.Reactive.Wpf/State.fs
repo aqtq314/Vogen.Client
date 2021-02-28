@@ -104,6 +104,8 @@ type ReactiveList<'a> () =
     member x.CopyTo (array : Array, arrayIndex) =
         for i in 0 .. x.Count - 1 do
             array.SetValue(x.[i], i + arrayIndex)
+    member x.GetReverseIndex (rank, offset) =
+        x.Count - 1 - offset
     interface IListPublisher<'a> with
         member x.Subscribe child = x.Subscribe child
         member x.Unsubscribe child = x.Unsubscribe child
