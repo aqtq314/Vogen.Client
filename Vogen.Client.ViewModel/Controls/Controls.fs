@@ -68,10 +68,13 @@ type SideKeyboard() =
         let blackKeyWidth = whiteKeyWidth * x.BlackKeyLengthRatio |> clamp 0.0 whiteKeyWidth
         let cornerRadius = 2.0 |> min(half keyHeight) |> min(half blackKeyWidth)
 
-        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight)
+        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight) |> max minKey
         let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0) |> min maxKey
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
+
+        // background
+        dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
 
         // white keys
         for pitch in botPitch .. topPitch do
@@ -172,7 +175,7 @@ type Ruler() =
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
                     dc.DrawText(ft, new Point(xPos - halfTextWidth, 0.0))
 
-type ChartGrid() =
+type Chart() =
     inherit DraggableBase()
 
     static let majorTickPen = Pen(SolidColorBrush((0x30000000u).AsColor()), 0.5) |>! freeze
@@ -192,7 +195,7 @@ type ChartGrid() =
         let maxKey = ChartProperties.GetMaxKey x
         let hOffset = ChartProperties.GetHOffset x
         let vOffset = ChartProperties.GetVOffset x
-        let playbackPos = ChartProperties.GetPlaybackPosition x
+        let playbackPos = ChartProperties.GetCursorPosition x
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
@@ -212,7 +215,7 @@ type ChartGrid() =
             dc.DrawLine(pen, Point(x, 0.0), Point(x, actualHeight))
 
         // pitch grids
-        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight)
+        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight) |> max minKey
         let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil) |> min maxKey
 
         for pitch in botPitch .. topPitch do
@@ -225,11 +228,6 @@ type ChartGrid() =
             if pitch |> Midi.isBlackKey then
                 let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
-
-        // playback cursor
-        let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
-        if xPos >= 0.0 && xPos <= actualWidth then
-            dc.DrawLine(playbackCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
 
         // notes
         let comp = ChartProperties.GetComposition x
@@ -246,6 +244,13 @@ type ChartGrid() =
                         dc.DrawText(ft, Point(x0, yMid - ft.Height))
                         let ft = x |> makeFormattedText note.Rom
                         dc.DrawText(ft, Point(x0, yMid))
+
+        dc.Pop()
+
+        // playback cursor
+        let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
+        if xPos >= 0.0 && xPos <= actualWidth then
+            dc.DrawLine(playbackCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
 
 
 

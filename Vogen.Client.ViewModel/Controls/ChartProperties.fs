@@ -47,7 +47,7 @@ type ChartProperties() =
     static member SetHOffset(d : DependencyObject, value : float) = d.SetValue(ChartProperties.HOffsetProperty, value)
     static member val HOffsetProperty =
         Dp.rega<float, ChartProperties> "HOffset"
-            (Dp.Meta(0.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+            (Dp.Meta(0.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits, (fun _ _ -> ()), (fun _ v -> max 0.0 v)))
 
     static member GetVOffset(d : DependencyObject) = d.GetValue ChartProperties.VOffsetProperty :?> float
     static member SetVOffset(d : DependencyObject, value : float) = d.SetValue(ChartProperties.VOffsetProperty, value)
@@ -55,11 +55,11 @@ type ChartProperties() =
         Dp.rega<float, ChartProperties> "VOffset"
             (Dp.Meta(57.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
 
-    static member GetPlaybackPosition(d : DependencyObject) = d.GetValue ChartProperties.PlaybackPositionProperty :?> int64
-    static member SetPlaybackPosition(d : DependencyObject, value : int64) = d.SetValue(ChartProperties.PlaybackPositionProperty, value)
-    static member val PlaybackPositionProperty =
-        Dp.rega<int64, ChartProperties> "PlaybackPosition"
-            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+    static member GetCursorPosition(d : DependencyObject) = d.GetValue ChartProperties.CursorPositionProperty :?> int64
+    static member SetCursorPosition(d : DependencyObject, value : int64) = d.SetValue(ChartProperties.CursorPositionProperty, value)
+    static member val CursorPositionProperty =
+        Dp.rega<int64, ChartProperties> "CursorPosition"
+            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits, (fun _ _ -> ()), (fun _ v -> max 0L v)))
 
     static member GetComposition(d : DependencyObject) = d.GetValue ChartProperties.CompositionProperty :?> Composition
     static member SetComposition(d : DependencyObject, value : Composition) = d.SetValue(ChartProperties.CompositionProperty, value)

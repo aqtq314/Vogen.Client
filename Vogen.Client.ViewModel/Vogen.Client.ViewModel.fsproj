@@ -18,8 +18,8 @@
     <Compile Include="Controls\ChartProperties.fs" />
     <Compile Include="Controls\Controls.fs" />
     <Compile Include="ViewModels.fs" />
-    <Compile Include="DesignerModels.fs" />
     <Compile Include="Behaviors.fs" />
+    <Compile Include="DesignerModels.fs" />
   </ItemGroup>
 
   <ItemGroup>

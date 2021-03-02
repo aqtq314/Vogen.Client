@@ -24,7 +24,7 @@
     </Grid.RowDefinitions>
     <vc:Ruler x:Name="ruler" Grid.Column="1"/>
     <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"/>
-    <vc:ChartGrid x:Name="chartGrid" Grid.Row="1" Grid.Column="1"/>
+    <vc:Chart x:Name="chart" Grid.Row="1" Grid.Column="1"/>
     <Grid Grid.Row="2" Grid.Column="1">
       <Grid.ColumnDefinitions>
         <ColumnDefinition/>
@@ -35,19 +35,19 @@
         <ScrollBar.ViewportSize>
           <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}">
             <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+            <Binding Path="ActualWidth" ElementName="chart"/>
           </MultiBinding>
         </ScrollBar.ViewportSize>
         <ScrollBar.LargeChange>
           <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.8">
             <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+            <Binding Path="ActualWidth" ElementName="chart"/>
           </MultiBinding>
         </ScrollBar.LargeChange>
         <ScrollBar.SmallChange>
           <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.1">
             <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-            <Binding Path="ActualWidth" ElementName="chartGrid"/>
+            <Binding Path="ActualWidth" ElementName="chart"/>
           </MultiBinding>
         </ScrollBar.SmallChange>
       </ScrollBar>
@@ -64,13 +64,13 @@
           <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollMaximumConverter}">
             <Binding Path="(vc:ChartProperties.MaxKey)" ElementName="workspaceRoot"/>
             <Binding Path="(vc:ChartProperties.KeyHeight)" ElementName="workspaceRoot"/>
-            <Binding Path="ActualHeight" ElementName="chartGrid"/>
+            <Binding Path="ActualHeight" ElementName="chart"/>
           </MultiBinding>
         </ScrollBar.Minimum>
         <ScrollBar.ViewportSize>
           <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollViewportConverter}">
             <Binding Path="(vc:ChartProperties.KeyHeight)" ElementName="workspaceRoot"/>
-            <Binding Path="ActualHeight" ElementName="chartGrid"/>
+            <Binding Path="ActualHeight" ElementName="chart"/>
           </MultiBinding>
         </ScrollBar.ViewportSize>
       </ScrollBar>
