@@ -19,10 +19,10 @@ module ChartUnitConversion =
         hOffset + xPos * float Midi.ppqn / quarterWidth
 
     let pitchToPixel keyHeight actualHeight vOffset pitch : float =
-        actualHeight - (pitch - vOffset) * keyHeight
+        half actualHeight - (pitch - vOffset) * keyHeight
 
     let pixelToPitch keyHeight actualHeight vOffset yPos : float =
-        vOffset + (actualHeight - yPos) / keyHeight
+        vOffset + (half actualHeight - yPos) / keyHeight
 
 module ChartConverters =
     let hScrollSpanConverter = ValueConverter.CreateMulti(fun vs p ->       // unit in midi pulses
@@ -35,12 +35,13 @@ module ChartConverters =
         | _ ->
             raise(ArgumentException()))
 
-    let vScrollViewportConverter = ValueConverter.CreateMulti(fun vs ->     // unit in key indices
+    let vScrollSpanConverter = ValueConverter.CreateMulti(fun vs p ->   // unit in key indices
         match vs with
         | [| keyHeight; chartHeight |] ->
             let keyHeight = Convert.ToDouble keyHeight
             let chartHeight = Convert.ToDouble chartHeight
-            chartHeight / keyHeight
+            let scale = if isNull p then 1.0 else Convert.ToDouble p
+            scale * pixelToPitch keyHeight 0.0 0.0 -chartHeight
         | _ ->
             raise(ArgumentException()))
 
@@ -48,21 +49,6 @@ module ChartConverters =
         ValueConverter.Create(
             (fun vOffset -> -Convert.ToDouble(vOffset : obj) |> box),
             (fun sliderValue -> -Convert.ToDouble(sliderValue : obj) |> box))
-
-    let vScrollMinimumConverter = ValueConverter.Create(fun minKey ->
-        let minKey = Convert.ToDouble(minKey : obj)
-        -minKey)
-
-    let vScrollMaximumConverter = ValueConverter.CreateMulti(fun vs ->      // unit in key indices
-        match vs with
-        | [| maxKey; keyHeight; chartHeight |] ->
-            let maxKey = Convert.ToInt32 maxKey
-            let keyHeight = Convert.ToDouble keyHeight
-            let chartHeight = Convert.ToDouble chartHeight
-            let extent = float(maxKey + 1) - chartHeight / keyHeight
-            -(max extent 0.0)
-        | _ ->
-            raise(ArgumentException()))
 
     let hZoomToQuarterLength =
         ValueConverter.Create(

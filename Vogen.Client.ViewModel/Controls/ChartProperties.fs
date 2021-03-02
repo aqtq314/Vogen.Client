@@ -35,13 +35,15 @@ type ChartProperties() =
     static member SetMinKey(d : DependencyObject, value : int) = d.SetValue(ChartProperties.MinKeyProperty, value)
     static member val MinKeyProperty =
         Dp.rega<int, ChartProperties> "MinKey"
-            (Dp.Meta(23, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+            (Dp.Meta(45, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits, (fun x (v0, v) ->
+                x.CoerceValue ChartProperties.VOffsetProperty)))
 
     static member GetMaxKey(d : DependencyObject) = d.GetValue ChartProperties.MaxKeyProperty :?> int
     static member SetMaxKey(d : DependencyObject, value : int) = d.SetValue(ChartProperties.MaxKeyProperty, value)
     static member val MaxKeyProperty =
         Dp.rega<int, ChartProperties> "MaxKey"
-            (Dp.Meta(105, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+            (Dp.Meta(93, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits, (fun x (v0, v) ->
+                x.CoerceValue ChartProperties.VOffsetProperty)))
 
     static member GetHOffset(d : DependencyObject) = d.GetValue ChartProperties.HOffsetProperty :?> float
     static member SetHOffset(d : DependencyObject, value : float) = d.SetValue(ChartProperties.HOffsetProperty, value)
@@ -53,7 +55,8 @@ type ChartProperties() =
     static member SetVOffset(d : DependencyObject, value : float) = d.SetValue(ChartProperties.VOffsetProperty, value)
     static member val VOffsetProperty =
         Dp.rega<float, ChartProperties> "VOffset"
-            (Dp.Meta(57.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+            (Dp.Meta(69.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits, (fun _ _ -> ()), (fun x v ->
+                v |> min (float(ChartProperties.GetMaxKey x)) |> max (float(ChartProperties.GetMinKey x)))))
 
     static member GetCursorPosition(d : DependencyObject) = d.GetValue ChartProperties.CursorPositionProperty :?> int64
     static member SetCursorPosition(d : DependencyObject, value : int64) = d.SetValue(ChartProperties.CursorPositionProperty, value)

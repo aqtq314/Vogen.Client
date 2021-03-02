@@ -9,13 +9,19 @@ open Vogen.Client.Model
 
 
 type WorkspaceModel() =
-    let activeComp = rp(None : Composition option)
-    let activeCompOrEmpty = activeComp |> Rpo.map(Option.defaultValue Composition.Empty)
+    let activeComp = rp Composition.Empty
+
+    let hScrollMax = activeComp |> Rpo.map(fun comp ->
+        15360L + (comp.Utts
+            |> Seq.collect(fun utt -> utt.Notes)
+            |> Seq.map(fun note -> note.Off)
+            |> Seq.appendItem 0L
+            |> Seq.max))
 
     member x.ActiveComp = activeComp
-    member x.ActiveCompOrEmpty = activeCompOrEmpty
+    member x.HScrollMax = hScrollMax
 
     member x.Load comp =
-        activeComp |> Rp.set(Some comp)
+        activeComp |> Rp.set comp
 
 

@@ -80,7 +80,7 @@ type SideKeyboard() =
         for pitch in botPitch .. topPitch do
             if not(Midi.isBlackKey pitch) then
                 let keyOffset = keyOffsetLookup.[pitch % 12] / 12.0
-                let y = actualHeight - (float(pitch + 1) - vOffset - keyOffset) * keyHeight
+                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1) - keyOffset)
                 let height = keyHeightLookup.[pitch % 12] / 12.0 * keyHeight
                 let x = if isNull whiteKeyPen then 0.0 else half whiteKeyPen.Thickness
                 let width = max 0.0 (whiteKeyWidth - x * 2.0)
@@ -89,7 +89,7 @@ type SideKeyboard() =
         // black keys
         for pitch in botPitch .. topPitch do
             if Midi.isBlackKey pitch then
-                let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight
+                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
                 let height = keyHeight
                 let x = if isNull blackKeyPen then 0.0 else half blackKeyPen.Thickness
                 let width = max 0.0 (blackKeyWidth - x * 2.0)
@@ -100,7 +100,7 @@ type SideKeyboard() =
             if pitch % 12 = 0 then
                 let ft = x |> makeFormattedText(sprintf "C%d" (pitch / 12 - 1))
                 let x = whiteKeyWidth - 2.0 - ft.Width
-                let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight + half(keyHeight - ft.Height)
+                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1)) + half(keyHeight - ft.Height)
                 dc.DrawText(ft, Point(x, y))
 
 type Ruler() =
@@ -221,12 +221,12 @@ type Chart() =
         for pitch in botPitch .. topPitch do
             match pitch % 12 with
             | 0 | 5 ->
-                let y = actualHeight - (float pitch - vOffset) * keyHeight - half octavePen.Thickness
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch) - half octavePen.Thickness
                 dc.DrawLine(octavePen, Point(0.0, y), Point(actualWidth, y))
             | _ -> ()
 
             if pitch |> Midi.isBlackKey then
-                let y = actualHeight - (float(pitch + 1) - vOffset) * keyHeight
+                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
 
         // notes
