@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="C:\Users\User\.nuget\packages\fsharp.core\5.0.1\contentFiles\any\netstandard2.0\FSharp.Core.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Util.fs" />
     <Compile Include="ArraySeg.fs" />
     <Compile Include="SuccessFailure.fs" />

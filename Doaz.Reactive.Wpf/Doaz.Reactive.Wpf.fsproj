@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="C:\Users\User\.nuget\packages\fsharp.core\5.0.1\contentFiles\any\netstandard2.0\FSharp.Core.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="WpfUtil.fs" />
     <Compile Include="WpfOption.fs" />
     <Compile Include="MarkupExtensions.fs" />

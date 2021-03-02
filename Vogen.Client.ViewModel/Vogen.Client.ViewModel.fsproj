@@ -8,10 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="C:\Users\User\.nuget\packages\fsharp.core\5.0.1\contentFiles\any\netstandard2.0\FSharp.Core.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="testComp.json" />
-    <Compile Include="JsonModels.fs" />
-    <Compile Include="Controls.Midi.fs" />
-    <Compile Include="Controls.Charting.fs" />
+    <Compile Include="Models.fs" />
+    <Compile Include="Controls\UnitConversion.fs" />
+    <Compile Include="Controls\ChartProperties.fs" />
+    <Compile Include="Controls\Controls.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="DesignerModels.fs" />
     <Compile Include="Behaviors.fs" />

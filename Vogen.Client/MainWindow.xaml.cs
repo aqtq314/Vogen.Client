@@ -22,7 +22,7 @@ namespace Vogen.Client
         public MainWindow()
         {
             InitializeComponent();
-            Behaviors.bindWorkspace(workspaceRoot, chartGrid);
+            Behaviors.bindWorkspace(workspaceRoot, chartGrid, ruler, sideKeyboard);
         }
     }
 }

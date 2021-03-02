@@ -7,6 +7,7 @@ open System.IO
 open System.Reflection
 open System.Windows
 open Vogen.Client.Controls
+open Vogen.Client.Model
 
 
 let comp =

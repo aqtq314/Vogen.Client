@@ -7,6 +7,7 @@ open System.Collections.Generic
 open System.Windows
 open System.Windows.Input
 open Vogen.Client.Controls
+open Vogen.Client.Model
 
 #nowarn "40"
 
@@ -16,7 +17,7 @@ type ChartMouseEvent =
     | ChartMouseMove of e : MouseEventArgs
     | ChartMouseRelease of e : MouseEventArgs
 
-let bindWorkspace(workspaceRoot : FrameworkElement, chartGrid : ChartGrid) =
+let bindWorkspace(workspaceRoot : FrameworkElement, chartGrid : ChartGrid, ruler : Ruler, sideKeyboard : SideKeyboard) =
     let pushChartMouseEvent =
         let x = chartGrid
 
@@ -34,16 +35,16 @@ let bindWorkspace(workspaceRoot : FrameworkElement, chartGrid : ChartGrid) =
         and midMouseDown prevMousePos = behavior {
             match! () with
             | ChartMouseMove e ->
-                let hOffset = WorkspaceProperties.GetHOffset x
-                let vOffset = WorkspaceProperties.GetVOffset x
-                let quarterWidth = WorkspaceProperties.GetQuarterWidth x
-                let keyHeight = WorkspaceProperties.GetKeyHeight x
+                let hOffset = ChartProperties.GetHOffset x
+                let vOffset = ChartProperties.GetVOffset x
+                let quarterWidth = ChartProperties.GetQuarterWidth x
+                let keyHeight = ChartProperties.GetKeyHeight x
 
                 let mousePos = e.GetPosition x
                 let xDelta = pixelToPulse quarterWidth 0.0 (mousePos.X - prevMousePos.X)
                 let yDelta = pixelToPitch keyHeight 0.0 0.0 (mousePos.Y - prevMousePos.Y)
-                WorkspaceProperties.SetHOffset(workspaceRoot, hOffset - xDelta)
-                WorkspaceProperties.SetVOffset(workspaceRoot, vOffset - yDelta)
+                ChartProperties.SetHOffset(workspaceRoot, hOffset - xDelta)
+                ChartProperties.SetVOffset(workspaceRoot, vOffset - yDelta)
 
                 return! midMouseDown mousePos
 
