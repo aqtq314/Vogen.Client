@@ -10,12 +10,11 @@ open Vogen.Client.Controls
 open Vogen.Client.Model
 
 
-let comp =
-    use reader = new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream @"Vogen.Client.ViewModel.testComp.json")
-    reader.ReadToEnd()
-    |> JsonConvert.DeserializeObject<Composition>
+let comp, audioLib =
+    use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream @"Vogen.Client.ViewModel.testComp.vog"
+    FilePackage.read stream
 
-let workspace = WorkspaceModel()
-do  workspace.Load comp
+let programModel = ProgramModel()
+do  programModel.Load comp audioLib
 
 

@@ -35,7 +35,7 @@ module ChartConverters =
         | _ ->
             raise(ArgumentException()))
 
-    let vScrollSpanConverter = ValueConverter.CreateMulti(fun vs p ->   // unit in key indices
+    let vScrollSpanConverter = ValueConverter.CreateMulti(fun vs p ->       // unit in key indices
         match vs with
         | [| keyHeight; chartHeight |] ->
             let keyHeight = Convert.ToDouble keyHeight
