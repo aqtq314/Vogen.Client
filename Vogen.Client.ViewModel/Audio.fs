@@ -37,7 +37,9 @@ module Audio =
                 sampleChunks.Add buffer.[..bytesRead]
                 readBuffer()
         readBuffer()
-        Array.concat sampleChunks
+        let outSamples = Array.concat sampleChunks
+        outSamples.[^0] <- 0f
+        outSamples
 
     let loadFromFile filePath =
         use fileStream = File.OpenRead filePath

@@ -10,8 +10,6 @@ open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
 
-#nowarn "40"
-
 
 type ChartMouseEvent =
     | ChartMouseDown of e : MouseButtonEventArgs
@@ -22,7 +20,7 @@ let bindWorkspace(workspaceRoot : FrameworkElement, programModel : ProgramModel,
     let rec mouseMidDownDragging(prevMousePos : Point, idle, moveX, moveY) x = behavior {
         match! () with
         | ChartMouseMove e ->
-            let hOffset = ChartProperties.GetHOffset x
+            let hOffset = ChartProperties.GetHOffsetAnimated x
             let vOffset = ChartProperties.GetVOffset x
             let quarterWidth = ChartProperties.GetQuarterWidth x
             let keyHeight = ChartProperties.GetKeyHeight x
@@ -42,7 +40,7 @@ let bindWorkspace(workspaceRoot : FrameworkElement, programModel : ProgramModel,
         | _ -> return! x |> mouseMidDownDragging(prevMousePos, idle, moveX, moveY) }
 
     let updateCursorPos(e : MouseEventArgs) x =
-        let hOffset = ChartProperties.GetHOffset x
+        let hOffset = ChartProperties.GetHOffsetAnimated x
         let quarterWidth = ChartProperties.GetQuarterWidth x
 
         let mousePos = e.GetPosition x

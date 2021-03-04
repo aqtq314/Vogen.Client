@@ -142,7 +142,7 @@ type Ruler() =
         let actualHeight = x.ActualHeight
         let timeSig = ChartProperties.GetTimeSignature x
         let quarterWidth = ChartProperties.GetQuarterWidth x
-        let hOffset = ChartProperties.GetHOffset x
+        let hOffset = ChartProperties.GetHOffsetAnimated x
 
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth)
@@ -193,7 +193,7 @@ type Chart() =
         let keyHeight = ChartProperties.GetKeyHeight x
         let minKey = ChartProperties.GetMinKey x
         let maxKey = ChartProperties.GetMaxKey x
-        let hOffset = ChartProperties.GetHOffset x
+        let hOffset = ChartProperties.GetHOffsetAnimated x
         let vOffset = ChartProperties.GetVOffset x
         let playbackPos = ChartProperties.GetCursorPosition x
 
