@@ -47,7 +47,7 @@ let bindWorkspace(workspaceRoot : FrameworkElement, programModel : ProgramModel,
 
         let mousePos = e.GetPosition x
         let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X)
-        programModel.ManualUpdateCursorPos newCursorPos
+        programModel.ManualSetCursorPos newCursorPos
 
     let pushChartMouseEvent =
         let x = chart

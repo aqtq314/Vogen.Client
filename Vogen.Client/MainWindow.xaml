@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Vogen.Client"
-        xmlns:c="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
+        xmlns:c="clr-namespace:Vogen.Client.Controls"
+        xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
         xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
         xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
         mc:Ignorable="d"
@@ -18,7 +19,8 @@
     <!--All chart properties bind to workspaceRoot-->
     <Grid x:Name="workspaceRoot"
           vc:ChartProperties.Composition="{Binding ActiveComp.Value}"
-          vc:ChartProperties.CursorPosition="{Binding CursorPosition.Value}">
+          vc:ChartProperties.CursorPosition="{Binding CursorPosition.Value}"
+          vc:ChartProperties.HScrollMax="{Binding HScrollMax.Value}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition/>
@@ -32,63 +34,12 @@
       <vc:Ruler x:Name="ruler" Grid.Column="1"/>
       <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"/>
       <vc:Chart x:Name="chart" Grid.Row="1" Grid.Column="1"/>
-      <Grid Grid.Row="2" Grid.Column="1">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <ScrollBar x:Name="hScroll" Orientation="Horizontal"
-                   Maximum="{Binding HScrollMax.Value}"
-                   Value="{Binding Path=(vc:ChartProperties.HOffset), ElementName=workspaceRoot, Mode=TwoWay}">
-          <ScrollBar.ViewportSize>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}">
-              <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualWidth" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.ViewportSize>
-          <ScrollBar.LargeChange>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.8">
-              <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualWidth" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.LargeChange>
-          <ScrollBar.SmallChange>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.1">
-              <Binding Path="(vc:ChartProperties.QuarterWidth)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualWidth" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.SmallChange>
-        </ScrollBar>
-      </Grid>
-      <Grid Grid.Row="1" Grid.Column="2">
-        <Grid.RowDefinitions>
-          <RowDefinition/>
-          <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <ScrollBar x:Name="vScroll" Orientation="Vertical"
-                   Maximum="{Binding Path=(vc:ChartProperties.MinKey), ElementName=workspaceRoot, Converter={x:Static vc:ChartConverters.vScrollValueConverter}}"
-                   Minimum="{Binding Path=(vc:ChartProperties.MaxKey), ElementName=workspaceRoot, Converter={x:Static vc:ChartConverters.vScrollValueConverter}}"
-                   Value="{Binding Path=(vc:ChartProperties.VOffset), ElementName=workspaceRoot, Mode=TwoWay, Converter={x:Static vc:ChartConverters.vScrollValueConverter}}">
-          <ScrollBar.ViewportSize>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollSpanConverter}">
-              <Binding Path="(vc:ChartProperties.KeyHeight)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualHeight" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.ViewportSize>
-          <ScrollBar.LargeChange>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollSpanConverter}" ConverterParameter="0.8">
-              <Binding Path="(vc:ChartProperties.KeyHeight)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualHeight" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.LargeChange>
-          <ScrollBar.SmallChange>
-            <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollSpanConverter}" ConverterParameter="0.1">
-              <Binding Path="(vc:ChartProperties.KeyHeight)" ElementName="workspaceRoot"/>
-              <Binding Path="ActualHeight" ElementName="chart"/>
-            </MultiBinding>
-          </ScrollBar.SmallChange>
-        </ScrollBar>
-      </Grid>
+      <c:ChartHScrollBar Grid.Row="2" Grid.Column="1"
+                         ScrollValue="{Binding Path=(vc:ChartProperties.HOffset), ElementName=workspaceRoot, Mode=TwoWay}"
+                         ViewportSize="{Binding Path=ActualWidth, ElementName=chart}"/>
+      <c:ChartVScrollBar Grid.Row="1" Grid.Column="2"
+                         ScrollValue="{Binding Path=(vc:ChartProperties.VOffset), ElementName=workspaceRoot, Mode=TwoWay}"
+                         ViewportSize="{Binding Path=ActualHeight, ElementName=chart}"/>
     </Grid>
   </DockPanel>
 </Window>

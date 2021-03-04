@@ -32,7 +32,7 @@ type ProgramModel() as x =
     let cursorPos = rp 0L
     do  CompositionTarget.Rendering.Add <| fun e ->
             if isPlaying |> Rp.get then
-                x.SyncCursorToPlayback()
+                x.PlaybackSyncCursorPos()
 
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
@@ -43,18 +43,18 @@ type ProgramModel() as x =
     member val CursorPosition = cursorPos |> Rpo.map id
     member val ActiveAudioLib = activeAudioLib |> Rpo.map id
 
-    member x.ManualUpdateCursorPos newCursorPos =
+    member x.Load comp audioLib =
+        activeComp |> Rp.set comp
+        activeAudioLib |> Rp.set audioLib
+
+    member x.ManualSetCursorPos newCursorPos =
         audioEngine.PlaybackSamplePosition <-
             newCursorPos
             |> Midi.toTimeSpan (!!activeComp).Bpm0
             |> Audio.timeToSample
         cursorPos |> Rp.set newCursorPos
 
-    member x.Load comp audioLib =
-        activeComp |> Rp.set comp
-        activeAudioLib |> Rp.set audioLib
-
-    member x.SyncCursorToPlayback() =
+    member x.PlaybackSyncCursorPos() =
         cursorPos |> Rp.set(
             audioEngine.PlaybackSamplePosition
             |> Audio.sampleToTime
@@ -66,10 +66,11 @@ type ProgramModel() as x =
         waveOut.Play()
         isPlaying |> Rp.set true
         audioEngine.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
+        x.PlaybackSyncCursorPos()
 
     member x.Stop() =
         waveOut.Stop()
         isPlaying |> Rp.set false
-        x.SyncCursorToPlayback()
+        x.PlaybackSyncCursorPos()
 
 

@@ -25,6 +25,12 @@ type ChartProperties() =
         Dp.rega<float, ChartProperties> "QuarterWidth"
             (Dp.Meta(100.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
 
+    static member GetHScrollMax(d : DependencyObject) = d.GetValue ChartProperties.HScrollMaxProperty :?> float
+    static member SetHScrollMax(d : DependencyObject, value : float) = d.SetValue(ChartProperties.HScrollMaxProperty, value)
+    static member val HScrollMaxProperty =
+        Dp.rega<float, ChartProperties> "HScrollMax"
+            (Dp.Meta(9600.0, Dp.MetaFlags.AffectsRender ||| Dp.MetaFlags.Inherits))
+
     static member GetKeyHeight(d : DependencyObject) = d.GetValue ChartProperties.KeyHeightProperty :?> float
     static member SetKeyHeight(d : DependencyObject, value : float) = d.SetValue(ChartProperties.KeyHeightProperty, value)
     static member val KeyHeightProperty =
