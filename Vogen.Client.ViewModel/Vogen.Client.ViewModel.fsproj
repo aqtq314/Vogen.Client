@@ -16,7 +16,6 @@
     <Compile Include="Audio.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="Controls\UnitConversion.fs" />
-    <Compile Include="Controls\ChartProperties.fs" />
     <Compile Include="Controls\ScrollZoomKit.fs" />
     <Compile Include="Controls\Controls.fs" />
     <Compile Include="ViewModels.fs" />

@@ -70,35 +70,40 @@ type NoteChartEditBase() =
         and set(v : int) = x.SetValue(NoteChartEditBase.MinKeyProperty, box v)
     static member val MinKeyProperty =
         Dp.reg<int, NoteChartEditBase> "MinKey"
-            (Dp.Meta(45, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(45, Dp.MetaFlags.AffectsRender, (fun x _ ->
+                x.CoerceValue NoteChartEditBase.VOffsetAnimatedProperty)))
 
     member x.MaxKey
         with get() = x.GetValue NoteChartEditBase.MaxKeyProperty :?> int
         and set(v : int) = x.SetValue(NoteChartEditBase.MaxKeyProperty, box v)
     static member val MaxKeyProperty =
         Dp.reg<int, NoteChartEditBase> "MaxKey"
-            (Dp.Meta(93, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(93, Dp.MetaFlags.AffectsRender, (fun x _ ->
+                x.CoerceValue NoteChartEditBase.VOffsetAnimatedProperty)))
 
     member x.HOffsetAnimated
         with get() = x.GetValue NoteChartEditBase.HOffsetAnimatedProperty :?> float
         and set(v : float) = x.SetValue(NoteChartEditBase.HOffsetAnimatedProperty, box v)
+    static member CoerceHOffsetAnimated x v = max 0.0 v
     static member val HOffsetAnimatedProperty =
         Dp.reg<float, NoteChartEditBase> "HOffsetAnimated"
-            (Dp.Meta(0.0, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(0.0, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceHOffsetAnimated))
 
     member x.VOffsetAnimated
         with get() = x.GetValue NoteChartEditBase.VOffsetAnimatedProperty :?> float
         and set(v : float) = x.SetValue(NoteChartEditBase.VOffsetAnimatedProperty, box v)
+    static member CoerceVOffsetAnimated x v = v |> min(float x.MaxKey) |> max(float x.MinKey)
     static member val VOffsetAnimatedProperty =
         Dp.reg<float, NoteChartEditBase> "VOffsetAnimated"
-            (Dp.Meta(69.0, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(69.0, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceVOffsetAnimated))
 
     member x.CursorPosition
         with get() = x.GetValue NoteChartEditBase.CursorPositionProperty :?> int64
         and set(v : int64) = x.SetValue(NoteChartEditBase.CursorPositionProperty, box v)
+    static member CoerceCursorPosition x v = max 0L v
     static member val CursorPositionProperty =
         Dp.reg<int64, NoteChartEditBase> "CursorPosition"
-            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceCursorPosition))
 
     member x.Composition
         with get() = x.GetValue NoteChartEditBase.CompositionProperty :?> Composition
