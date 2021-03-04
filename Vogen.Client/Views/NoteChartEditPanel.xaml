@@ -24,16 +24,22 @@
     <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1"
       HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
       VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
+      KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
       CursorPosition="{Binding CursorPosition.Value}"
       Composition="{Binding ActiveComp.Value}"/>
     <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"
       HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
       VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
+      KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
       CursorPosition="{Binding CursorPosition.Value}"
       Composition="{Binding ActiveComp.Value}"/>
     <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1"
       HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
       VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
+      KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
       CursorPosition="{Binding CursorPosition.Value}"
       Composition="{Binding ActiveComp.Value}"/>
     <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
@@ -41,14 +47,14 @@
       ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
       Log2ZoomMinimum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
       Log2ZoomMaximum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
-      Log2ZoomValue="{Binding Path=QuarterWidth, ElementName=chartEditor, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
+      Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
     <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
       ScrollMinimum="{Binding Path=MinKey, ElementName=chartEditor}"
       ScrollMaximum="{Binding Path=MaxKey, ElementName=chartEditor}"
       ScrollValue="69"
       ScrollViewport="{Binding Path=ActualHeight, ElementName=chartEditor}"
-      Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
-      Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
-      Log2ZoomValue="{Binding Path=KeyHeight, ElementName=chartEditor, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
+      Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-2, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=2, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
   </Grid>
 </vv:NoteChartEditPanelBase>

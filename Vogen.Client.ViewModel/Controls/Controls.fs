@@ -52,16 +52,18 @@ type NoteChartEditBase() =
     member x.QuarterWidth
         with get() = x.GetValue NoteChartEditBase.QuarterWidthProperty :?> float
         and set(v : float) = x.SetValue(NoteChartEditBase.QuarterWidthProperty, box v)
+    static member DefaultQuarterWidth = 100.0
     static member val QuarterWidthProperty =
         Dp.reg<float, NoteChartEditBase> "QuarterWidth"
-            (Dp.Meta(100.0, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(NoteChartEditBase.DefaultQuarterWidth, Dp.MetaFlags.AffectsRender))
 
     member x.KeyHeight
         with get() = x.GetValue NoteChartEditBase.KeyHeightProperty :?> float
         and set(v : float) = x.SetValue(NoteChartEditBase.KeyHeightProperty, box v)
+    static member DefaultKeyHeight = 12.0
     static member val KeyHeightProperty =
         Dp.reg<float, NoteChartEditBase> "KeyHeight"
-            (Dp.Meta(12.0, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(NoteChartEditBase.DefaultKeyHeight, Dp.MetaFlags.AffectsRender))
 
     member x.MinKey
         with get() = x.GetValue NoteChartEditBase.MinKeyProperty :?> int
