@@ -15,11 +15,11 @@ using System.Windows.Shapes;
 
 namespace Vogen.Client.Controls
 {
-    public class ChartVScrollBar : ChartScrollBarBase
+    public class ChartScrollZoomH : ChartScrollZoomKitBase
     {
-        static ChartVScrollBar()
+        static ChartScrollZoomH()
         {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(ChartVScrollBar), new FrameworkPropertyMetadata(typeof(ChartVScrollBar)));
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(ChartScrollZoomH), new FrameworkPropertyMetadata(typeof(ChartScrollZoomH)));
         }
     }
 }

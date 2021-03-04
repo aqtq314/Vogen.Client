@@ -24,7 +24,6 @@ namespace Vogen.Client
         public MainWindow()
         {
             InitializeComponent();
-            Behaviors.bindWorkspace(workspaceRoot, DataContext, chart, ruler, sideKeyboard);
         }
 
         private void OnClickPlayButton(object sender, RoutedEventArgs e)

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Vogen.Client"
         xmlns:c="clr-namespace:Vogen.Client.Controls"
+        xmlns:v="clr-namespace:Vogen.Client.Views"
         xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
         xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
         xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
@@ -16,30 +17,6 @@
       <Button x:Name="playButton" Content="Play" Click="OnClickPlayButton"/>
       <Button x:Name="stopButton" Content="Stop" Click="OnClickStopButton"/>
     </ToolBar>
-    <!--All chart properties bind to workspaceRoot-->
-    <Grid x:Name="workspaceRoot"
-          vc:ChartProperties.Composition="{Binding ActiveComp.Value}"
-          vc:ChartProperties.CursorPosition="{Binding CursorPosition.Value}"
-          vc:ChartProperties.HScrollMax="{Binding HScrollMax.Value}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition/>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition/>
-        <RowDefinition Height="Auto"/>
-      </Grid.RowDefinitions>
-      <vc:Ruler x:Name="ruler" Grid.Column="1"/>
-      <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"/>
-      <vc:Chart x:Name="chart" Grid.Row="1" Grid.Column="1"/>
-      <c:ChartHScrollBar Grid.Row="2" Grid.Column="1"
-                         ScrollValue="{Binding Path=(vc:ChartProperties.HOffset), ElementName=workspaceRoot, Mode=TwoWay}"
-                         ViewportSize="{Binding Path=ActualWidth, ElementName=chart}"/>
-      <c:ChartVScrollBar Grid.Row="1" Grid.Column="2"
-                         ScrollValue="{Binding Path=(vc:ChartProperties.VOffset), ElementName=workspaceRoot, Mode=TwoWay}"
-                         ViewportSize="{Binding Path=ActualHeight, ElementName=chart}"/>
-    </Grid>
+    <v:NoteChartEditPanel/>
   </DockPanel>
 </Window>

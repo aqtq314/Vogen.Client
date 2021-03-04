@@ -13,13 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Vogen.Client.Controls
+namespace Vogen.Client.Views
 {
-    public class ChartHScrollBar : ChartScrollBarBase
+    public partial class NoteChartEditPanel : NoteChartEditPanelBase
     {
-        static ChartHScrollBar()
+        public NoteChartEditPanel()
         {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(ChartHScrollBar), new FrameworkPropertyMetadata(typeof(ChartHScrollBar)));
+            InitializeComponent();
+            BindBehaviors(this, chartEditor, rulerGrid, sideKeyboard, hScrollZoom, vScrollZoom);
         }
     }
 }

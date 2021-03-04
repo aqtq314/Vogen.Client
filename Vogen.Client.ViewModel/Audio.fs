@@ -72,10 +72,11 @@ type AudioPlaybackEngine() =
     member val AudioLib = AudioLibrary.Empty with get, set
 
     member val PlaybackPositionRefTicks = 0L with get, set
-    member x.PlaybackSamplePosition
-        with get() = playbackSamplePos
-        and set value = lock x <| fun () ->
-            playbackSamplePos <- value
+    member x.PlaybackSamplePosition = playbackSamplePos
+
+    member x.ManualSetPlaybackSamplePosition newPos =
+        lock x <| fun () ->
+            playbackSamplePos <- newPos
             x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
 
     interface ISampleProvider with

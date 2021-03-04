@@ -1,0 +1,54 @@
+﻿<vv:NoteChartEditPanelBase x:Class="Vogen.Client.Views.NoteChartEditPanel"
+                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                           xmlns:c="clr-namespace:Vogen.Client.Controls"
+                           xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
+                           xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
+                           xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
+                           mc:Ignorable="d" 
+                           d:DesignHeight="450" d:DesignWidth="800"
+                           d:DataContext="{x:Static vm:DesignerModels.programModel}">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition/>
+      <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1"
+      HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
+      VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      CursorPosition="{Binding CursorPosition.Value}"
+      Composition="{Binding ActiveComp.Value}"/>
+    <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"
+      HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
+      VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      CursorPosition="{Binding CursorPosition.Value}"
+      Composition="{Binding ActiveComp.Value}"/>
+    <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1"
+      HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
+      VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
+      CursorPosition="{Binding CursorPosition.Value}"
+      Composition="{Binding ActiveComp.Value}"/>
+    <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
+      ScrollMaximum="{Binding ActiveComp.Value, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
+      ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
+      Log2ZoomMinimum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomMaximum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomValue="{Binding Path=QuarterWidth, ElementName=chartEditor, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
+    <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
+      ScrollMinimum="{Binding Path=MinKey, ElementName=chartEditor}"
+      ScrollMaximum="{Binding Path=MaxKey, ElementName=chartEditor}"
+      ScrollValue="69"
+      ScrollViewport="{Binding Path=ActualHeight, ElementName=chartEditor}"
+      Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
+      Log2ZoomValue="{Binding Path=KeyHeight, ElementName=chartEditor, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
+  </Grid>
+</vv:NoteChartEditPanelBase>

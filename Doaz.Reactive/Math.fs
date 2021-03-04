@@ -7,8 +7,8 @@ open System.Collections.Generic
 [<AutoOpen>]
 module Math =
     let [<Literal>] pi = Math.PI
-
     let [<Literal>] eps = 1e-8
+    let [<Literal>] natlog2 = 0.69314718055994529
 
     let inline lerp (a : ^a) (b : ^a) amount : ^a =
         amount * (b - a) + a
@@ -25,6 +25,8 @@ module Math =
     let inline cube v = v * v * v
 
     let inline inv v = 1.0 / v
+
+    let inline log2 v = log v / natlog2
 
     let [<NoDynamicInvocation>] inline (/%) dividend divisor =
         dividend / divisor, dividend % divisor

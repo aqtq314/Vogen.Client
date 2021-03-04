@@ -1,4 +1,4 @@
-﻿module Vogen.Client.ViewModel.Behaviors
+﻿namespace Vogen.Client.Views
 
 open Doaz.Reactive
 open Doaz.Reactive.Controls
@@ -9,6 +9,7 @@ open System.Windows.Controls
 open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
+open Vogen.Client.ViewModel
 
 
 type ChartMouseEvent =
@@ -16,147 +17,126 @@ type ChartMouseEvent =
     | ChartMouseMove of e : MouseEventArgs
     | ChartMouseRelease of e : MouseEventArgs
 
-let bindWorkspace(workspaceRoot : FrameworkElement, programModel : ProgramModel, chart : Chart, ruler : Ruler, sideKeyboard : SideKeyboard) =
-    let rec mouseMidDownDragging(prevMousePos : Point, idle, moveX, moveY) x = behavior {
-        match! () with
-        | ChartMouseMove e ->
-            let hOffset = ChartProperties.GetHOffsetAnimated x
-            let vOffset = ChartProperties.GetVOffset x
-            let quarterWidth = ChartProperties.GetQuarterWidth x
-            let keyHeight = ChartProperties.GetKeyHeight x
+    static member BindControl push (x : NoteChartEditBase) =
+        x.MouseDown.Add(fun e ->
+            push(ChartMouseDown e)
+            e.Handled <- true)
+
+        x.MouseMove.Add(fun e ->
+            push(ChartMouseMove e)
+            e.Handled <- true)
+
+        x.LostMouseCapture.Add(fun e ->
+            push(ChartMouseRelease e)
+            e.Handled <- true)
+
+type NoteChartEditPanelBase() =
+    inherit UserControl()
+
+    static member BindBehaviors(x : NoteChartEditPanelBase, chartEditor, rulerGrid, sideKeyboard, hScrollZoom, vScrollZoom) =
+        let getProgramModel() = x.DataContext :?> ProgramModel
+        let chartEditor : ChartEditor = chartEditor
+        let rulerGrid : RulerGrid = rulerGrid
+        let sideKeyboard : SideKeyboard = sideKeyboard
+        let hScrollZoom : ChartScrollZoomKitBase = hScrollZoom
+        let vScrollZoom : ChartScrollZoomKitBase = vScrollZoom
+
+        let rec mouseMidDownDragging(prevMousePos : Point, idle)(x : NoteChartEditBase) = behavior {
+            match! () with
+            | ChartMouseMove e ->
+                let hOffset = x.HOffsetAnimated
+                let vOffset = x.VOffsetAnimated
+                let quarterWidth = x.QuarterWidth
+                let keyHeight = x.KeyHeight
+
+                let mousePos = e.GetPosition x
+                if x.CanScrollH then
+                    let xDelta = pixelToPulse quarterWidth 0.0 (mousePos.X - prevMousePos.X)
+                    hScrollZoom.EnableAnimation <- false
+                    hScrollZoom.ScrollValue <- hOffset - xDelta
+                    hScrollZoom.EnableAnimation <- true
+                if x.CanScrollV then
+                    let yDelta = pixelToPitch keyHeight 0.0 0.0 (mousePos.Y - prevMousePos.Y)
+                    vScrollZoom.EnableAnimation <- false
+                    vScrollZoom.ScrollValue <- vOffset - yDelta
+                    vScrollZoom.EnableAnimation <- true
+
+                return! x |> mouseMidDownDragging(mousePos, idle)
+
+            | ChartMouseRelease e -> return! idle()
+
+            | _ -> return! x |> mouseMidDownDragging(prevMousePos, idle) }
+
+        let updateCursorPos(e : MouseEventArgs)(x : NoteChartEditBase) =
+            let hOffset = x.HOffsetAnimated
+            let quarterWidth = x.QuarterWidth
 
             let mousePos = e.GetPosition x
-            if moveX then
-                let xDelta = pixelToPulse quarterWidth 0.0 (mousePos.X - prevMousePos.X)
-                ChartProperties.SetHOffset(workspaceRoot, hOffset - xDelta)
-            if moveY then
-                let yDelta = pixelToPitch keyHeight 0.0 0.0 (mousePos.Y - prevMousePos.Y)
-                ChartProperties.SetVOffset(workspaceRoot, vOffset - yDelta)
+            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X)
+            getProgramModel().ManualSetCursorPos newCursorPos
 
-            return! x |> mouseMidDownDragging(mousePos, idle, moveX, moveY)
+        chartEditor |> ChartMouseEvent.BindControl(
+            let x = chartEditor
 
-        | ChartMouseRelease e -> return! idle
+            let rec idle() = behavior {
+                match! () with
+                | ChartMouseDown e ->
+                    match e.ChangedButton with
+                    | MouseButton.Left ->
+                        x |> updateCursorPos e
+                        return! mouseLeftDown updateCursorPos
+                    | MouseButton.Middle ->
+                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                    | _ -> return! idle()
+                | _ -> return! idle() }
 
-        | _ -> return! x |> mouseMidDownDragging(prevMousePos, idle, moveX, moveY) }
-
-    let updateCursorPos(e : MouseEventArgs) x =
-        let hOffset = ChartProperties.GetHOffsetAnimated x
-        let quarterWidth = ChartProperties.GetQuarterWidth x
-
-        let mousePos = e.GetPosition x
-        let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X)
-        programModel.ManualSetCursorPos newCursorPos
-
-    let pushChartMouseEvent =
-        let x = chart
-
-        let rec idle() = behavior {
-            match! () with
-            | ChartMouseDown e ->
-                match e.ChangedButton with
-                | MouseButton.Left ->
+            and mouseLeftDown updateCursorPos = behavior {
+                match! () with
+                | ChartMouseMove e ->
                     x |> updateCursorPos e
                     return! mouseLeftDown updateCursorPos
+                | ChartMouseRelease e -> return! idle()
+                | _ -> return! mouseLeftDown updateCursorPos }
 
-                | MouseButton.Middle ->
-                    return! x |> mouseMidDownDragging(e.GetPosition x, idle(), true, true)
+            Behavior.agent(idle()))
 
-                | _ -> return! idle()
+        rulerGrid |> ChartMouseEvent.BindControl(
+            let x = rulerGrid
 
-            | _ -> return! idle() }
+            let rec idle() = behavior {
+                match! () with
+                | ChartMouseDown e ->
+                    match e.ChangedButton with
+                    | MouseButton.Left ->
+                        x |> updateCursorPos e
+                        return! mouseLeftDown updateCursorPos
+                    | MouseButton.Middle ->
+                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                    | _ -> return! idle()
+                | _ -> return! idle() }
 
-        and mouseLeftDown updateCursorPos = behavior {
-            match! () with
-            | ChartMouseMove e ->
-                x |> updateCursorPos e
-                return! mouseLeftDown updateCursorPos
-
-            | ChartMouseRelease e -> return! idle()
-
-            | _ -> return! mouseLeftDown updateCursorPos }
-
-        Behavior.agent(idle())
-
-    chart.MouseDown.Add(fun e ->
-        pushChartMouseEvent(ChartMouseDown e)
-        e.Handled <- true)
-
-    chart.MouseMove.Add(fun e ->
-        pushChartMouseEvent(ChartMouseMove e)
-        e.Handled <- true)
-
-    chart.LostMouseCapture.Add(fun e ->
-        pushChartMouseEvent(ChartMouseRelease e)
-        e.Handled <- true)
-
-    let pushRulerMouseEvent =
-        let x = ruler
-
-        let rec idle() = behavior {
-            match! () with
-            | ChartMouseDown e ->
-                match e.ChangedButton with
-                | MouseButton.Left ->
+            and mouseLeftDown updateCursorPos = behavior {
+                match! () with
+                | ChartMouseMove e ->
                     x |> updateCursorPos e
                     return! mouseLeftDown updateCursorPos
+                | ChartMouseRelease e -> return! idle()
+                | _ -> return! mouseLeftDown updateCursorPos }
 
-                | MouseButton.Middle ->
-                    return! x |> mouseMidDownDragging(e.GetPosition x, idle(), true, false)
+            Behavior.agent(idle()))
 
-                | _ -> return! idle()
+        rulerGrid |> ChartMouseEvent.BindControl(
+            let x = sideKeyboard
 
-            | _ -> return! idle() }
+            let rec idle() = behavior {
+                match! () with
+                | ChartMouseDown e ->
+                    match e.ChangedButton with
+                    | MouseButton.Middle ->
+                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                    | _ -> return! idle()
+                | _ -> return! idle() }
 
-        and mouseLeftDown updateCursorPos = behavior {
-            match! () with
-            | ChartMouseMove e ->
-                x |> updateCursorPos e
-                return! mouseLeftDown updateCursorPos
-
-            | ChartMouseRelease e -> return! idle()
-
-            | _ -> return! mouseLeftDown updateCursorPos }
-
-        Behavior.agent(idle())
-
-    ruler.MouseDown.Add(fun e ->
-        pushRulerMouseEvent(ChartMouseDown e)
-        e.Handled <- true)
-
-    ruler.MouseMove.Add(fun e ->
-        pushRulerMouseEvent(ChartMouseMove e)
-        e.Handled <- true)
-
-    ruler.LostMouseCapture.Add(fun e ->
-        pushRulerMouseEvent(ChartMouseRelease e)
-        e.Handled <- true)
-
-    let pushSideKeyboardMouseEvent =
-        let x = sideKeyboard
-
-        let rec idle() = behavior {
-            match! () with
-            | ChartMouseDown e ->
-                match e.ChangedButton with
-                | MouseButton.Middle ->
-                    return! x |> mouseMidDownDragging(e.GetPosition x, idle(), false, true)
-
-                | _ -> return! idle()
-
-            | _ -> return! idle() }
-
-        Behavior.agent(idle())
-
-    sideKeyboard.MouseDown.Add(fun e ->
-        pushSideKeyboardMouseEvent(ChartMouseDown e)
-        e.Handled <- true)
-
-    sideKeyboard.MouseMove.Add(fun e ->
-        pushSideKeyboardMouseEvent(ChartMouseMove e)
-        e.Handled <- true)
-
-    sideKeyboard.LostMouseCapture.Add(fun e ->
-        pushSideKeyboardMouseEvent(ChartMouseRelease e)
-        e.Handled <- true)
+            Behavior.agent(idle()))
 
 

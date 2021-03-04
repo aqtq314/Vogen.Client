@@ -15,7 +15,8 @@ open System.Windows.Media
 open Vogen.Client.Model
 
 
-type DraggableBase() =
+[<AbstractClass>]
+type NoteChartEditBase() =
     inherit FrameworkElement()
 
     member val private MouseDownButton = None with get, set
@@ -38,8 +39,74 @@ type DraggableBase() =
             x.MouseDownButton <- None)
         base.OnLostMouseCapture e
 
+    abstract CanScrollH : bool
+    abstract CanScrollV : bool
+
+    member x.TimeSignature
+        with get() = x.GetValue NoteChartEditBase.TimeSignatureProperty :?> TimeSignature
+        and set(v : TimeSignature) = x.SetValue(NoteChartEditBase.TimeSignatureProperty, box v)
+    static member val TimeSignatureProperty =
+        Dp.reg<TimeSignature, NoteChartEditBase> "TimeSignature"
+            (Dp.Meta(timeSignature 4 4, Dp.MetaFlags.AffectsRender))
+
+    member x.QuarterWidth
+        with get() = x.GetValue NoteChartEditBase.QuarterWidthProperty :?> float
+        and set(v : float) = x.SetValue(NoteChartEditBase.QuarterWidthProperty, box v)
+    static member val QuarterWidthProperty =
+        Dp.reg<float, NoteChartEditBase> "QuarterWidth"
+            (Dp.Meta(100.0, Dp.MetaFlags.AffectsRender))
+
+    member x.KeyHeight
+        with get() = x.GetValue NoteChartEditBase.KeyHeightProperty :?> float
+        and set(v : float) = x.SetValue(NoteChartEditBase.KeyHeightProperty, box v)
+    static member val KeyHeightProperty =
+        Dp.reg<float, NoteChartEditBase> "KeyHeight"
+            (Dp.Meta(12.0, Dp.MetaFlags.AffectsRender))
+
+    member x.MinKey
+        with get() = x.GetValue NoteChartEditBase.MinKeyProperty :?> int
+        and set(v : int) = x.SetValue(NoteChartEditBase.MinKeyProperty, box v)
+    static member val MinKeyProperty =
+        Dp.reg<int, NoteChartEditBase> "MinKey"
+            (Dp.Meta(45, Dp.MetaFlags.AffectsRender))
+
+    member x.MaxKey
+        with get() = x.GetValue NoteChartEditBase.MaxKeyProperty :?> int
+        and set(v : int) = x.SetValue(NoteChartEditBase.MaxKeyProperty, box v)
+    static member val MaxKeyProperty =
+        Dp.reg<int, NoteChartEditBase> "MaxKey"
+            (Dp.Meta(93, Dp.MetaFlags.AffectsRender))
+
+    member x.HOffsetAnimated
+        with get() = x.GetValue NoteChartEditBase.HOffsetAnimatedProperty :?> float
+        and set(v : float) = x.SetValue(NoteChartEditBase.HOffsetAnimatedProperty, box v)
+    static member val HOffsetAnimatedProperty =
+        Dp.reg<float, NoteChartEditBase> "HOffsetAnimated"
+            (Dp.Meta(0.0, Dp.MetaFlags.AffectsRender))
+
+    member x.VOffsetAnimated
+        with get() = x.GetValue NoteChartEditBase.VOffsetAnimatedProperty :?> float
+        and set(v : float) = x.SetValue(NoteChartEditBase.VOffsetAnimatedProperty, box v)
+    static member val VOffsetAnimatedProperty =
+        Dp.reg<float, NoteChartEditBase> "VOffsetAnimated"
+            (Dp.Meta(69.0, Dp.MetaFlags.AffectsRender))
+
+    member x.CursorPosition
+        with get() = x.GetValue NoteChartEditBase.CursorPositionProperty :?> int64
+        and set(v : int64) = x.SetValue(NoteChartEditBase.CursorPositionProperty, box v)
+    static member val CursorPositionProperty =
+        Dp.reg<int64, NoteChartEditBase> "CursorPosition"
+            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender))
+
+    member x.Composition
+        with get() = x.GetValue NoteChartEditBase.CompositionProperty :?> Composition
+        and set(v : Composition) = x.SetValue(NoteChartEditBase.CompositionProperty, box v)
+    static member val CompositionProperty =
+        Dp.reg<Composition, NoteChartEditBase> "Composition"
+            (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender))
+
 type SideKeyboard() =
-    inherit DraggableBase()
+    inherit NoteChartEditBase()
 
     static let whiteKeyFill = Brushes.White
     static let whiteKeyPen : Pen = Pen(Brushes.Black, 0.6) |>! freeze
@@ -56,13 +123,16 @@ type SideKeyboard() =
         Dp.reg<float, SideKeyboard> "BlackKeyLengthRatio"
             (Dp.Meta(0.6, Dp.MetaFlags.AffectsRender))
 
+    override x.CanScrollH = false
+    override x.CanScrollV = true
+
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
-        let keyHeight = ChartProperties.GetKeyHeight x
-        let minKey = ChartProperties.GetMinKey x
-        let maxKey = ChartProperties.GetMaxKey x
-        let vOffset = ChartProperties.GetVOffset x
+        let keyHeight = x.KeyHeight
+        let minKey = x.MinKey
+        let maxKey = x.MaxKey
+        let vOffset = x.VOffsetAnimated
 
         let whiteKeyWidth = actualWidth
         let blackKeyWidth = whiteKeyWidth * x.BlackKeyLengthRatio |> clamp 0.0 whiteKeyWidth
@@ -103,8 +173,8 @@ type SideKeyboard() =
                 let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1)) + half(keyHeight - ft.Height)
                 dc.DrawText(ft, Point(x, y))
 
-type Ruler() =
-    inherit DraggableBase()
+type RulerGrid() =
+    inherit NoteChartEditBase()
 
     static let majorTickHeight = 6.0
     static let minorTickHeight = 4.0
@@ -124,6 +194,9 @@ type Ruler() =
             yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i) }
         |> Seq.find(fun hop ->
             pulseToPixel quarterWidth 0.0 (float hop) >= minTickHop)
+    
+    override x.CanScrollH = true
+    override x.CanScrollV = false
 
     override x.MeasureOverride s =
         let fontFamily = TextBlock.GetFontFamily x
@@ -140,15 +213,15 @@ type Ruler() =
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
-        let timeSig = ChartProperties.GetTimeSignature x
-        let quarterWidth = ChartProperties.GetQuarterWidth x
-        let hOffset = ChartProperties.GetHOffsetAnimated x
+        let timeSig = x.TimeSignature
+        let quarterWidth = x.QuarterWidth
+        let hOffset = x.HOffsetAnimated
 
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth)
 
-        let majorHop = Ruler.FindTickHop timeSig quarterWidth Ruler.MinMajorTickHop
-        let minorHop = Ruler.FindTickHop timeSig quarterWidth Ruler.MinMinorTickHop
+        let majorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMajorTickHop
+        let minorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMinorTickHop
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
@@ -175,8 +248,8 @@ type Ruler() =
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
                     dc.DrawText(ft, new Point(xPos - halfTextWidth, 0.0))
 
-type Chart() =
-    inherit DraggableBase()
+type ChartEditor() =
+    inherit NoteChartEditBase()
 
     static let majorTickPen = Pen(SolidColorBrush((0x30000000u).AsColor()), 0.5) |>! freeze
     static let minorTickPen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
@@ -184,18 +257,21 @@ type Chart() =
     static let blackKeyFill = SolidColorBrush((0x10000000u).AsColor()) |>! freeze
     static let playbackCursorPen = Pen(SolidColorBrush((0xFFFF0000u).AsColor()), 0.5) |>! freeze
     static let noteBgPen = Pen(SolidColorBrush((0xFFFFBB77u).AsColor()), 3.0) |>! freeze
+    
+    override x.CanScrollH = true
+    override x.CanScrollV = true
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
-        let timeSig = ChartProperties.GetTimeSignature x
-        let quarterWidth = ChartProperties.GetQuarterWidth x
-        let keyHeight = ChartProperties.GetKeyHeight x
-        let minKey = ChartProperties.GetMinKey x
-        let maxKey = ChartProperties.GetMaxKey x
-        let hOffset = ChartProperties.GetHOffsetAnimated x
-        let vOffset = ChartProperties.GetVOffset x
-        let playbackPos = ChartProperties.GetCursorPosition x
+        let timeSig = x.TimeSignature
+        let quarterWidth = x.QuarterWidth
+        let keyHeight = x.KeyHeight
+        let minKey = x.MinKey
+        let maxKey = x.MaxKey
+        let hOffset = x.HOffsetAnimated
+        let vOffset = x.VOffsetAnimated
+        let playbackPos = x.CursorPosition
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
@@ -206,8 +282,8 @@ type Chart() =
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth |> ceil)
 
-        let majorHop = Ruler.FindTickHop timeSig quarterWidth Ruler.MinMajorTickHop
-        let minorHop = Ruler.FindTickHop timeSig quarterWidth Ruler.MinMinorTickHop
+        let majorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMajorTickHop
+        let minorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMinorTickHop
 
         for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
             let x = pulseToPixel quarterWidth hOffset (float currPulse)
@@ -230,7 +306,7 @@ type Chart() =
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
 
         // notes
-        let comp = ChartProperties.GetComposition x
+        let comp = x.Composition
         for utt in comp.Utts do
             for note in utt.Notes do
                 if note.Off >= minPulse && note.On <= maxPulse && note.Pitch >= botPitch && note.Pitch <= topPitch then
