@@ -19,10 +19,22 @@ namespace Vogen.Client
 {
     public partial class MainWindow : Window
     {
+        public new ProgramModel DataContext => (ProgramModel)base.DataContext;
+
         public MainWindow()
         {
             InitializeComponent();
-            Behaviors.bindWorkspace(workspaceRoot, chart, ruler, sideKeyboard);
+            Behaviors.bindWorkspace(workspaceRoot, DataContext, chart, ruler, sideKeyboard);
+        }
+
+        private void OnClickPlayButton(object sender, RoutedEventArgs e)
+        {
+            DataContext.Play();
+        }
+
+        private void OnClickStopButton(object sender, RoutedEventArgs e)
+        {
+            DataContext.Stop();
         }
     }
 }

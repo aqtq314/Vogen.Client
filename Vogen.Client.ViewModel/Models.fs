@@ -65,7 +65,7 @@ module FilePackage =
                     let samples = Audio.loadFromStream cachedStream
                     let sampleOffset =
                         utt.Notes.[0].On
-                        |> MidiTime.toTimeSpan comp.Bpm0
+                        |> Midi.toTimeSpan comp.Bpm0
                         |> (+) -AlgorithmConfig.UttLeadingSil
                         |> Audio.timeToSample
                     let audioSeg = {

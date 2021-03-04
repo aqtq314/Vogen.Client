@@ -7,6 +7,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Collections.ObjectModel
+open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
 
@@ -55,23 +56,25 @@ type AudioLibrary = {
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, audioLib, buffer : float32 [], bufferOffset, bufferLength) =
         let { Segments = audioSegs } = audioLib
-        Array.Clear(buffer, bufferOffset, bufferLength)
+        Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
         for audioSeg in audioSegs.Values do
             let { SampleOffset = sampleOffset; Samples = samples } = audioSeg
             let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
             let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
             for i in startIndex .. endIndex - 1 do
-                buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + sampleOffset - playbackSamplePos]
+                buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset]
 
 type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0
 
     member val AudioLib = AudioLibrary.Empty with get, set
 
+    member val PlaybackPositionRefTicks = 0L with get, set
     member x.PlaybackSamplePosition
         with get() = playbackSamplePos
         and set value = lock x <| fun () ->
             playbackSamplePos <- value
+            x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
 
     interface ISampleProvider with
         member x.WaveFormat = Audio.waveFormat
@@ -79,6 +82,7 @@ type AudioPlaybackEngine() =
             lock x <| fun () ->
                 AudioPlayback.fillBuffer(playbackSamplePos, x.AudioLib, buffer, offset, count)
                 playbackSamplePos <- playbackSamplePos + count
+                x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
             count
 
 

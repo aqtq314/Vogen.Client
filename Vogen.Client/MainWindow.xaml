@@ -12,11 +12,13 @@
         DataContext="{x:Static vm:DesignerModels.programModel}">
   <DockPanel>
     <ToolBar DockPanel.Dock="Bottom">
-      <Button Content="Play"/>
-      <Button Content="Stop"/>
+      <Button x:Name="playButton" Content="Play" Click="OnClickPlayButton"/>
+      <Button x:Name="stopButton" Content="Stop" Click="OnClickStopButton"/>
     </ToolBar>
     <!--All chart properties bind to workspaceRoot-->
-    <Grid x:Name="workspaceRoot" vc:ChartProperties.Composition="{Binding ActiveComp.Value}">
+    <Grid x:Name="workspaceRoot"
+          vc:ChartProperties.Composition="{Binding ActiveComp.Value}"
+          vc:ChartProperties.CursorPosition="{Binding CursorPosition.Value}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition/>

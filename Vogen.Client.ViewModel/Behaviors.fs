@@ -5,6 +5,7 @@ open Doaz.Reactive.Controls
 open System
 open System.Collections.Generic
 open System.Windows
+open System.Windows.Controls
 open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
@@ -17,7 +18,7 @@ type ChartMouseEvent =
     | ChartMouseMove of e : MouseEventArgs
     | ChartMouseRelease of e : MouseEventArgs
 
-let bindWorkspace(workspaceRoot : FrameworkElement, chart : Chart, ruler : Ruler, sideKeyboard : SideKeyboard) =
+let bindWorkspace(workspaceRoot : FrameworkElement, programModel : ProgramModel, chart : Chart, ruler : Ruler, sideKeyboard : SideKeyboard) =
     let rec mouseMidDownDragging(prevMousePos : Point, idle, moveX, moveY) x = behavior {
         match! () with
         | ChartMouseMove e ->
@@ -46,7 +47,7 @@ let bindWorkspace(workspaceRoot : FrameworkElement, chart : Chart, ruler : Ruler
 
         let mousePos = e.GetPosition x
         let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X)
-        ChartProperties.SetCursorPosition(workspaceRoot, newCursorPos)
+        programModel.ManualUpdateCursorPos newCursorPos
 
     let pushChartMouseEvent =
         let x = chart
@@ -78,17 +79,17 @@ let bindWorkspace(workspaceRoot : FrameworkElement, chart : Chart, ruler : Ruler
 
         Behavior.agent(idle())
 
-    chart.MouseDown.AddHandler(MouseButtonEventHandler(fun sender e ->
+    chart.MouseDown.Add(fun e ->
         pushChartMouseEvent(ChartMouseDown e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    chart.MouseMove.AddHandler(MouseEventHandler(fun sender e ->
+    chart.MouseMove.Add(fun e ->
         pushChartMouseEvent(ChartMouseMove e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    chart.LostMouseCapture.AddHandler(MouseEventHandler(fun sender e ->
+    chart.LostMouseCapture.Add(fun e ->
         pushChartMouseEvent(ChartMouseRelease e)
-        e.Handled <- true))
+        e.Handled <- true)
 
     let pushRulerMouseEvent =
         let x = ruler
@@ -120,17 +121,17 @@ let bindWorkspace(workspaceRoot : FrameworkElement, chart : Chart, ruler : Ruler
 
         Behavior.agent(idle())
 
-    ruler.MouseDown.AddHandler(MouseButtonEventHandler(fun sender e ->
+    ruler.MouseDown.Add(fun e ->
         pushRulerMouseEvent(ChartMouseDown e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    ruler.MouseMove.AddHandler(MouseEventHandler(fun sender e ->
+    ruler.MouseMove.Add(fun e ->
         pushRulerMouseEvent(ChartMouseMove e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    ruler.LostMouseCapture.AddHandler(MouseEventHandler(fun sender e ->
+    ruler.LostMouseCapture.Add(fun e ->
         pushRulerMouseEvent(ChartMouseRelease e)
-        e.Handled <- true))
+        e.Handled <- true)
 
     let pushSideKeyboardMouseEvent =
         let x = sideKeyboard
@@ -148,16 +149,16 @@ let bindWorkspace(workspaceRoot : FrameworkElement, chart : Chart, ruler : Ruler
 
         Behavior.agent(idle())
 
-    sideKeyboard.MouseDown.AddHandler(MouseButtonEventHandler(fun sender e ->
+    sideKeyboard.MouseDown.Add(fun e ->
         pushSideKeyboardMouseEvent(ChartMouseDown e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    sideKeyboard.MouseMove.AddHandler(MouseEventHandler(fun sender e ->
+    sideKeyboard.MouseMove.Add(fun e ->
         pushSideKeyboardMouseEvent(ChartMouseMove e)
-        e.Handled <- true))
+        e.Handled <- true)
 
-    sideKeyboard.LostMouseCapture.AddHandler(MouseEventHandler(fun sender e ->
+    sideKeyboard.LostMouseCapture.Add(fun e ->
         pushSideKeyboardMouseEvent(ChartMouseRelease e)
-        e.Handled <- true))
+        e.Handled <- true)
 
 

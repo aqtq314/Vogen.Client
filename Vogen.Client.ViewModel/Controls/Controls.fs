@@ -167,9 +167,9 @@ type Ruler() =
 
             if isMajor then
                 let textStr =
-                    if majorHop % timeSig.PulsesPerMeasure = 0L then MidiTime.formatMeasures timeSig currPulse
-                    elif majorHop % timeSig.PulsesPerBeat = 0L then MidiTime.formatMeasureBeats timeSig currPulse
-                    else MidiTime.formatFull timeSig currPulse
+                    if majorHop % timeSig.PulsesPerMeasure = 0L then Midi.formatMeasures timeSig currPulse
+                    elif majorHop % timeSig.PulsesPerBeat = 0L then Midi.formatMeasureBeats timeSig currPulse
+                    else Midi.formatFull timeSig currPulse
                 let ft = x |> makeFormattedText textStr
                 let halfTextWidth = half ft.Width
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then

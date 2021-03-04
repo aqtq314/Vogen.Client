@@ -278,6 +278,14 @@ module Rpo =
         parentList.Subscribe(rp |> ListSubscriber.bindToProperty ops onFinalUnblock)
         Rp.createBase rp
 
+    let leaf handler (rp : ReactiveProperty<_>) =
+        let valueChanged = ref false
+        let onFinalUnblock() =
+            if valueChanged.Value then
+                handler !!rp
+                valueChanged := false
+        rp.Subscribe(PropertySubscriber.leaf valueChanged onFinalUnblock)
+
 
 module Rlo =
     let ofOption rp =

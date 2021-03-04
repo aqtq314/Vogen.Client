@@ -1,4 +1,4 @@
-﻿namespace Doaz.Reactive
+﻿namespace rec Doaz.Reactive
 
 open Doaz.Reactive.Math
 open System
@@ -16,6 +16,26 @@ module Midi =
 
     let toFreq pitch = Math.Pow(2.0, (pitch - 69.0) / 12.0) * 440.0
     let ofFreq f0 = 12.0 * log(f0 / 440.0) / log 2.0 + 69.0
+
+    let formatMeasures(timeSig : TimeSignature)(pulses : int64) =
+        let measure = pulses / timeSig.PulsesPerMeasure
+        sprintf "%d" (measure + 1L)
+
+    let formatMeasureBeats(timeSig : TimeSignature)(pulses : int64) =
+        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
+        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
+        sprintf "%d:%d" (measure + 1L) (beats + 1L)
+
+    let formatFull(timeSig : TimeSignature)(pulses : int64) =
+        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
+        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
+        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
+
+    let toTimeSpan bpm (pulses : int64) =
+        float pulses / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
+
+    let ofTimeSpan bpm (timeSpan : TimeSpan) =
+        timeSpan.TotalMinutes * bpm * float Midi.ppqn |> round |> int64
 
 
 type TimeSignature(numerator, denominator) =
@@ -51,27 +71,5 @@ type TimeSignature(numerator, denominator) =
 [<AutoOpen>]
 module TimeSignatureUtils =
     let inline timeSignature num denom = TimeSignature(int num, int denom)
-
-
-module MidiTime =
-    let formatMeasures(timeSig : TimeSignature)(pulses : int64) =
-        let measure = pulses / timeSig.PulsesPerMeasure
-        sprintf "%d" (measure + 1L)
-
-    let formatMeasureBeats(timeSig : TimeSignature)(pulses : int64) =
-        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
-        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
-        sprintf "%d:%d" (measure + 1L) (beats + 1L)
-
-    let formatFull(timeSig : TimeSignature)(pulses : int64) =
-        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
-        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
-        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
-
-    let toTimeSpan bpm (pulses : int64) =
-        float pulses / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
-
-    let ofTimeSpan bpm (timeSpan : TimeSpan) =
-        timeSpan.TotalMinutes * bpm * float Midi.ppqn |> round |> int64
 
 
