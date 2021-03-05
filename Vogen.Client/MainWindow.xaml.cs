@@ -24,6 +24,7 @@ namespace Vogen.Client
         public MainWindow()
         {
             InitializeComponent();
+            noteChartEditPanel.Focus();
         }
 
         private void OnClickPlayButton(object sender, RoutedEventArgs e)

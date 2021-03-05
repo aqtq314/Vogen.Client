@@ -13,10 +13,10 @@
         Title="Vogen" Width="800" Height="450"
         DataContext="{x:Static vm:DesignerModels.programModel}">
   <DockPanel>
-    <ToolBar DockPanel.Dock="Bottom">
+    <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
       <Button x:Name="playButton" Content="Play" Click="OnClickPlayButton"/>
       <Button x:Name="stopButton" Content="Stop" Click="OnClickStopButton"/>
     </ToolBar>
-    <v:NoteChartEditPanel/>
+    <v:NoteChartEditPanel x:Name="noteChartEditPanel"/>
   </DockPanel>
 </Window>

@@ -21,6 +21,19 @@ namespace Vogen.Client.Views
         {
             InitializeComponent();
             BindBehaviors(this, chartEditor, rulerGrid, sideKeyboard, hScrollZoom, vScrollZoom);
+
+            PreviewMouseDown += (sender, e) =>
+            {
+                Focus();
+            };
+
+            IsKeyboardFocusedChanged += (sender, e) =>
+            {
+                if ((bool)e.NewValue)
+                    border.BorderBrush = Brushes.LightSalmon ;
+                else
+                    border.BorderBrush = null;
+            };
         }
     }
 }

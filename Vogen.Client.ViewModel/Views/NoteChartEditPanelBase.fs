@@ -73,7 +73,7 @@ type NoteChartEditPanelBase() =
             let quarterWidth = x.QuarterWidth
 
             let mousePos = e.GetPosition x
-            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X)
+            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x
             getProgramModel().ManualSetCursorPos newCursorPos
 
         chartEditor |> ChartMouseEvent.BindEvents(
@@ -186,4 +186,14 @@ type NoteChartEditPanelBase() =
                 if float prevPlayPos < hRightOffset && float playPos >= hRightOffset then
                     hScrollZoom.ScrollValue <- hRightOffset
 
+        x.KeyDown.Add <| fun e ->
+            match e.Key with
+            | Key.Space ->
+                let programModel = getProgramModel()
+                if not programModel.IsPlaying.Value then
+                    programModel.Play()
+                else
+                    programModel.Stop()
+
+            | _ -> ()
 
