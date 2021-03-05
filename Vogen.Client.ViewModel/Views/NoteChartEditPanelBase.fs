@@ -176,4 +176,14 @@ type NoteChartEditPanelBase() =
         rulerGrid.MouseWheel.Add(onMouseWheel rulerGrid)
         sideKeyboard.MouseWheel.Add(onMouseWheel sideKeyboard)
 
+        chartEditor.OnCursorPositionChanged.Add <| fun (prevPlayPos, playPos) ->
+            let x = chartEditor
+            if x.IsPlaying then
+                let quarterWidth = x.QuarterWidth
+                let hOffset = hScrollZoom.ScrollValue
+                let actualWidth = x.ActualWidth
+                let hRightOffset = pixelToPulse quarterWidth hOffset actualWidth
+                if float prevPlayPos < hRightOffset && float playPos >= hRightOffset then
+                    hScrollZoom.ScrollValue <- hRightOffset
+
 

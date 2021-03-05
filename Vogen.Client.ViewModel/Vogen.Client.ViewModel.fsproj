@@ -19,7 +19,7 @@
     <Compile Include="Controls\ScrollZoomKit.fs" />
     <Compile Include="Controls\Controls.fs" />
     <Compile Include="ViewModels.fs" />
-    <Compile Include="Behaviors.fs" />
+    <Compile Include="Views\NoteChartEditPanelBase.fs" />
     <Compile Include="DesignerModels.fs" />
   </ItemGroup>
 

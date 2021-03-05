@@ -20,6 +20,7 @@ module AlgorithmConfig =
 
     let UttLeadingSil = TimeSpan.FromSeconds 0.5
 
+[<NoComparison; ReferenceEquality>]
 type Note = {
     [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
     [<JsonProperty("lyric", Required=Required.Always)>] Lyric : string
@@ -27,16 +28,19 @@ type Note = {
     [<JsonProperty("on", Required=Required.Always)>]    On : int64
     [<JsonProperty("dur", Required=Required.Always)>]   Dur : int64 }
 
+[<NoComparison; ReferenceEquality>]
 type Utterance = {
     [<JsonProperty("name", Required=Required.Always)>]  Name : string
     [<JsonProperty("notes", Required=Required.Always)>] Notes : ImmutableList<Note> }
 
+[<NoComparison; ReferenceEquality>]
 type Composition = {
     [<JsonProperty("bpm0", Required=Required.Always)>]  Bpm0 : float
     [<JsonProperty("utts", Required=Required.Always)>]  Utts : ImmutableList<Utterance> }
 
 type Note with
     [<JsonIgnore>] member x.Off = x.On + x.Dur
+    [<JsonIgnore>] member x.IsHyphen = x.Lyric = "-"
 
 type Composition with
     static member Empty = {

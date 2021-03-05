@@ -100,17 +100,32 @@ type NoteChartEditBase() =
     member x.CursorPosition
         with get() = x.GetValue NoteChartEditBase.CursorPositionProperty :?> int64
         and set(v : int64) = x.SetValue(NoteChartEditBase.CursorPositionProperty, box v)
+    member val OnCursorPositionChangedEvent : Event<_> = Event<_>()
+    [<CLIEvent>] member x.OnCursorPositionChanged = x.OnCursorPositionChangedEvent.Publish
     static member CoerceCursorPosition x v = max 0L v
     static member val CursorPositionProperty =
         Dp.reg<int64, NoteChartEditBase> "CursorPosition"
-            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceCursorPosition))
+            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender,
+                (fun (x : NoteChartEditBase)(oldValue, newValue) ->
+                    x.OnCursorPositionChangedEvent.Trigger((oldValue, NoteChartEditBase.CoerceCursorPosition x newValue))),
+                NoteChartEditBase.CoerceCursorPosition))
+
+    member x.IsPlaying
+        with get() = x.GetValue NoteChartEditBase.IsPlayingProperty :?> bool
+        and set(v : bool) = x.SetValue(NoteChartEditBase.IsPlayingProperty, box v)
+    static member val IsPlayingProperty =
+        Dp.reg<bool, NoteChartEditBase> "IsPlaying"
+            (Dp.Meta(false, Dp.MetaFlags.AffectsRender))
 
     member x.Composition
         with get() = x.GetValue NoteChartEditBase.CompositionProperty :?> Composition
         and set(v : Composition) = x.SetValue(NoteChartEditBase.CompositionProperty, box v)
+    abstract OnCompositionChanged : oldValue : Composition * newValue : Composition -> unit
+    default x.OnCompositionChanged(oldValue, newValue) = ()
     static member val CompositionProperty =
         Dp.reg<Composition, NoteChartEditBase> "Composition"
-            (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender))
+            (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender,
+                (fun (x : NoteChartEditBase)(oldValue, newValue) -> x.OnCompositionChanged(oldValue, newValue))))
 
 type SideKeyboard() =
     inherit NoteChartEditBase()
@@ -263,10 +278,29 @@ type ChartEditor() =
     static let octavePen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
     static let blackKeyFill = SolidColorBrush((0x10000000u).AsColor()) |>! freeze
     static let playbackCursorPen = Pen(SolidColorBrush((0xFFFF0000u).AsColor()), 0.5) |>! freeze
-    static let noteBgPen = Pen(SolidColorBrush((0xFFFFBB77u).AsColor()), 3.0) |>! freeze
+    static let noteRowBgBrushCursorActive = SolidColorBrush((0x20FFAA55u).AsColor()) |>! freeze
+    static let noteBgBrush = SolidColorBrush((0xFFFFAA55u).AsColor()) |>! freeze
+    static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
+    static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
+    static let noteConnectSolidPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
+    static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
     
     override x.CanScrollH = true
     override x.CanScrollV = true
+
+    member val private UttGetChars = ImmutableDictionary.Empty with get, set
+
+    override x.OnCompositionChanged(_, comp) =
+        x.UttGetChars <-
+            comp.Utts
+            |> Seq.map(fun utt ->
+                let chars =
+                    utt.Notes
+                    |> Seq.partitionBeforeWhen(fun note -> not note.IsHyphen)
+                    |> Seq.map(fun notes -> {| Ch = notes.[0].Lyric; Notes = notes |})
+                    |> ImmutableArray.CreateRange
+                KeyValuePair(utt, chars))
+            |> ImmutableDictionary.CreateRange
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -279,6 +313,7 @@ type ChartEditor() =
         let hOffset = x.HOffsetAnimated
         let vOffset = x.VOffsetAnimated
         let playbackPos = x.CursorPosition
+        let comp = x.Composition
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
@@ -312,21 +347,65 @@ type ChartEditor() =
                 let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
 
-        // notes
-        let comp = x.Composition
         for utt in comp.Utts do
             for note in utt.Notes do
-                if note.Off >= minPulse && note.On <= maxPulse && note.Pitch >= botPitch && note.Pitch <= topPitch then
-                    let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-                    let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
-                    let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
-                    dc.DrawLine(noteBgPen, Point(x0, yMid), Point(x1, yMid))
-                    dc.DrawEllipse(noteBgPen.Brush, null, Point(x0, yMid), 5.0, 5.0)
-                    if note.Lyric <> "-" then
-                        let ft = x |> makeFormattedText note.Lyric
-                        dc.DrawText(ft, Point(x0, yMid - ft.Height))
-                        let ft = x |> makeFormattedText note.Rom
-                        dc.DrawText(ft, Point(x0, yMid))
+                if (note.On <= playbackPos && note.Off > playbackPos &&
+                    note.Pitch >= botPitch && note.Pitch <= topPitch) then
+                    let y = pitchToPixel keyHeight actualHeight vOffset (float(note.Pitch + 1))
+                    dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
+
+        // notes
+        for utt in comp.Utts do
+            let chars = x.UttGetChars.[utt]
+
+            // char connection
+            for ch0, ch1 in Seq.pairwise chars do
+                let n0 = ch0.Notes.[^0]
+                let n1 = ch1.Notes.[0]
+                if (max n0.Off n1.Off >= minPulse && min n0.On n1.On <= maxPulse &&
+                    max n0.Pitch n1.Pitch >= botPitch && min n0.Pitch n1.Pitch <= topPitch) then
+                    let n0x1 = pulseToPixel quarterWidth hOffset (float n0.Off)
+                    let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch + 0.5)
+                    let n1x0 = pulseToPixel quarterWidth hOffset (float n1.On)
+                    let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch + 0.5)
+                    dc.DrawLine(charConnectPen, Point(n0x1, n0yMid), Point(n1x0, n1yMid))
+
+            for ch in chars do
+                let charCursorActive = ch.Notes.[0].On <= playbackPos && ch.Notes.[^0].Off > playbackPos
+                let noteBgPen = if charCursorActive then noteBgPenCursorActive else noteBgPen
+
+                // note connection inside char
+                for n0, n1 in Seq.pairwise ch.Notes do
+                    if (max n0.Off n1.Off >= minPulse && min n0.On n1.On <= maxPulse &&
+                        max n0.Pitch n1.Pitch >= botPitch && min n0.Pitch n1.Pitch <= topPitch) then
+                        let n0x1 = pulseToPixel quarterWidth hOffset (float n0.Off)
+                        let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch + 0.5)
+                        let n1x0 = pulseToPixel quarterWidth hOffset (float n1.On)
+                        let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch + 0.5)
+                        dc.DrawLine(noteBgPen, Point(n0x1, n0yMid), Point(n1x0, n1yMid))
+
+                // notes
+                for note in ch.Notes do
+                    if note.Off >= minPulse && note.On <= maxPulse && note.Pitch >= botPitch && note.Pitch <= topPitch then
+                        let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                        let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                        let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
+                        dc.DrawLine(noteBgPen, Point(x0, yMid), Point(x1, yMid))
+                    
+                let note = ch.Notes.[0]
+                let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
+                dc.DrawEllipse(Brushes.White, noteBgPen, Point(x0, yMid), 5.0, 5.0)
+
+                // text
+                let textOpacity = if charCursorActive then 1.0 else 0.5
+                dc.PushOpacity textOpacity
+                let ft = x |> makeFormattedText note.Lyric
+                ft.SetFontSize(1.25 * TextBlock.GetFontSize x)
+                dc.DrawText(ft, Point(x0, yMid - ft.Height))
+                let ft = x |> makeFormattedText note.Rom
+                dc.DrawText(ft, Point(x0, yMid))
+                dc.Pop()
 
         dc.Pop()
 

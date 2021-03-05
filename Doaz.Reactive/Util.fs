@@ -166,25 +166,48 @@ module Seq =
         Seq.zip (Seq.zip3 s1 s2 s3) s4
         |> Seq.map (fun ((a1, a2, a3), a4) -> a1, a2, a3, a4)
 
-    let partitionBy proj source =
+    let partitionBy (proj : 'a -> 'key) source =
         seq {
-            match headTailEnumerator source with
-            | None -> ()
-            | Some (head, tail) ->
-                let mutable currKey = proj head
-                let mutable currHead = head
+            let enumerator = (source : seq<_>).GetEnumerator ()
+            if enumerator.MoveNext () then
                 let acc = List ()
-                while tail.MoveNext () do
-                    let item = tail.Current
-                    let itemKey = proj item
+                acc.Add enumerator.Current
+                let mutable currKey = proj enumerator.Current
+                while enumerator.MoveNext () do
+                    let itemKey = proj enumerator.Current
                     if itemKey = currKey then
-                        acc.Add item
+                        acc.Add enumerator.Current
                     else
-                        yield currHead, acc.ToArray ()
+                        yield currKey, acc.ToArray ()
                         acc.Clear ()
+                        acc.Add enumerator.Current
                         currKey <- itemKey
-                        currHead <- item
-                yield currHead, acc.ToArray () }
+                yield currKey, acc.ToArray () }
+
+    let partitionBeforeWhen pred source =
+        seq {
+            let enumerator = (source : seq<_>).GetEnumerator ()
+            if enumerator.MoveNext () then
+                let acc = List ()
+                acc.Add enumerator.Current
+                while enumerator.MoveNext () do
+                    if pred enumerator.Current then
+                        yield acc.ToArray ()
+                        acc.Clear ()
+                    acc.Add enumerator.Current
+                yield acc.ToArray () }
+
+    let partitionAfterWhen pred source =
+        seq {
+            let enumerator = (source : seq<_>).GetEnumerator ()
+            let acc = List ()
+            while enumerator.MoveNext () do
+                acc.Add enumerator.Current
+                if pred enumerator.Current then
+                    yield acc.ToArray ()
+                    acc.Clear ()
+            if acc.Count > 0 then
+                yield acc.ToArray () }
 
     let prepend source1 source2 =
         seq {
