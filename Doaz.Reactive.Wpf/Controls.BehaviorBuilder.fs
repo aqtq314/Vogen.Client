@@ -23,6 +23,12 @@ type 'e BehaviorAction =
         let (BehaviorAction action) = x
         action e
 
+module BehaviorAction =
+    let rec simple handler =
+        BehaviorAction(fun e ->
+            handler e
+            simple handler)
+
 type BehaviorBuilder () =
     member x.Bind ((), f) =
         BehaviorAction f
