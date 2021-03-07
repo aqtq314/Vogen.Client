@@ -3,6 +3,9 @@
 open Doaz.Reactive
 open Doaz.Reactive.Controls
 open Doaz.Reactive.Math
+open NAudio
+open NAudio.MediaFoundation
+open NAudio.Wave
 open System
 open System.Collections.Generic
 open System.Windows
@@ -194,6 +197,20 @@ type NoteChartEditPanelBase() =
                     programModel.Play()
                 else
                     programModel.Stop()
+
+            | Key.D0 ->
+                // Test request
+                let programModel = getProgramModel()
+                let comp = programModel.ActiveComp.Value
+                let tUtt = TimeTable.ofUtt comp.Bpm0 comp.Utts.[0]
+                let __ = Async.Start <| async {
+                    printfn "%A" DateTime.Now
+                    Console.WriteLine DateTime.Now
+                    let! samples = Synth.request "yue" "gloria" tUtt
+                    printfn "%A" DateTime.Now
+                    use writer = new WaveFileWriter(@"C:\Users\User\Desktop\test-out.wav", Audio.waveFormat)
+                    writer.WriteSamples(samples, 0, samples.Length) }
+                ()
 
             | _ -> ()
 

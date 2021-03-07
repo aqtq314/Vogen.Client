@@ -2,6 +2,7 @@
 
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.Collections.ObjectModel
 open System.Collections.Specialized
 open System.ComponentModel
@@ -208,6 +209,28 @@ module Seq =
                     acc.Clear ()
             if acc.Count > 0 then
                 yield acc.ToArray () }
+
+    let partitionBetween pred source =
+        seq {
+            let enumerator = (source : seq<_>).GetEnumerator ()
+            if enumerator.MoveNext () then
+                let acc = List ()
+                acc.Add enumerator.Current
+                while enumerator.MoveNext () do
+                    if pred acc.[acc.Count - 1] enumerator.Current then
+                        yield acc.ToArray ()
+                        acc.Clear ()
+                    acc.Add enumerator.Current
+                yield acc.ToArray () }
+
+    let join separator source =
+        seq {
+            let enumerator = (source : seq<_>).GetEnumerator ()
+            if enumerator.MoveNext () then
+                yield! enumerator.Current
+            while enumerator.MoveNext () do
+                yield! separator
+                yield! enumerator.Current }
 
     let prepend source1 source2 =
         seq {
@@ -427,5 +450,23 @@ module ReadOnlyCollection =
         interface System.Collections.IEnumerable with
             member __.GetEnumerator () =
                 collection.GetEnumerator () :> _ }
+
+
+[<AutoOpen>]
+module ReverseIndexExtensions =
+    type List<'a> with
+        member x.GetReverseIndex(_, i) = x.Count - 1 - i
+
+    type IList<'a> with
+        member x.GetReverseIndex(_, i) = x.Count - 1 - i
+
+    type IReadOnlyList<'a> with
+        member x.GetReverseIndex(_, i) = x.Count - 1 - i
+
+    type ImmutableArray<'a> with
+        member x.GetReverseIndex(_, i) = x.Length - 1 - i
+
+    type ImmutableList<'a> with
+        member x.GetReverseIndex(_, i) = x.Count - 1 - i
 
 

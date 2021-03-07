@@ -13,8 +13,7 @@ open System.Runtime.InteropServices
 
 
 module Audio =
-    //let [<Literal>] fs = 44100
-    let [<Literal>] fs = 32000
+    let [<Literal>] fs = 44100
     let [<Literal>] channels = 1
     let waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
 
