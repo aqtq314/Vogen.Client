@@ -10,11 +10,11 @@ open Vogen.Client.Controls
 open Vogen.Client.Model
 
 
-let comp, audioLib =
+let comp =
     use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream @"Vogen.Client.ViewModel.testComp.vog"
     FilePackage.read stream
 
 let programModel = ProgramModel()
-do  programModel.Load comp audioLib
+do  programModel.Load comp
 
 

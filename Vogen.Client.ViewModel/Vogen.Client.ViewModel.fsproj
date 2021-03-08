@@ -13,8 +13,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="testComp.vog" />
-    <Compile Include="Audio.fs" />
-    <Compile Include="Model\Composition.fs" />
+    <Compile Include="Model\Utils.fs" />
+    <Compile Include="Model\Comp.fs" />
+    <Compile Include="Model\AudioPlayback.fs" />
+    <Compile Include="Model\FilePackage.fs" />
     <Compile Include="Model\SynthRequests.fs" />
     <Compile Include="Controls\UnitConversion.fs" />
     <Compile Include="Controls\ScrollZoomKit.fs" />

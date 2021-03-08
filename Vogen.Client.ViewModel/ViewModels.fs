@@ -14,10 +14,7 @@ open Vogen.Client.Model
 
 type ProgramModel() as x =
     let activeComp = rp Composition.Empty
-    let activeAudioLib = rp AudioLibrary.Empty
     let audioEngine = AudioPlaybackEngine()
-    do  activeAudioLib |> Rpo.leaf(fun activeAudioLib ->
-            audioEngine.AudioLib <- activeAudioLib)
 
     static let latency = 40
     static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
@@ -31,13 +28,12 @@ type ProgramModel() as x =
     do  waveOut.Init audioEngine
 
     member val ActiveComp = activeComp |> Rpo.map id
-    member val ActiveAudioLib = activeAudioLib |> Rpo.map id
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
 
-    member x.Load comp audioLib =
+    member x.Load comp =
         activeComp |> Rp.set comp
-        activeAudioLib |> Rp.set audioLib
+        audioEngine.Comp <- comp
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(

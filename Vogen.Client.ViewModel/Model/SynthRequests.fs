@@ -16,42 +16,37 @@ open System.Text.Encodings
 open System.Web
 
 
-[<NoComparison; ReferenceEquality>]
-type TPhoneme = {
-    [<JsonProperty("ph", Required=Required.AllowNull)>] Ph : string
-    [<JsonProperty("on", Required=Required.Always)>]    On : int
-    [<JsonProperty("off", Required=Required.Always)>]   Off : int }
-
-[<NoComparison; ReferenceEquality>]
-type TNote = {
-    [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
-    [<JsonProperty("on", Required=Required.Always)>]    On : int
-    [<JsonProperty("off", Required=Required.Always)>]   Off : int }
-
-[<NoComparison; ReferenceEquality>]
-type TChar = {
-    [<JsonProperty("ch", Required=Required.AllowNull)>]                   Ch : string
-    [<JsonProperty("rom", Required=Required.AllowNull)>]                  Rom : string
-    [<JsonProperty("notes", NullValueHandling=NullValueHandling.Ignore)>] Notes : ImmutableList<TNote>
-    [<JsonProperty("ipa", NullValueHandling=NullValueHandling.Ignore)>]   Ipa : ImmutableList<TPhoneme> }
-
-[<NoComparison; ReferenceEquality>]
-type TUtterance = {
-    [<JsonProperty("uttStartSec", Required=Required.Always)>] UttStartSec : float
-    [<JsonProperty("uttDur", Required=Required.Always)>]      UttDur : int
-    [<JsonProperty("chars", Required=Required.Always)>]       Chars : ImmutableList<TChar> }
-
 module TimeTable =
-    let hopSize = TimeSpan.FromMilliseconds 10.0
-    let headSil = TimeSpan.FromSeconds 0.5
-    let tailSil = TimeSpan.FromSeconds 0.5
-
     let timeToFrame(timeSpan : TimeSpan) = timeSpan / hopSize
     let frameToTime(frames : float) = frames * hopSize
 
-    let ofUtt bpm0 utt =
-        let { Name = name; Notes = allNotes } = utt
-        let allNotes = allNotes.ToList()
+    [<NoComparison; ReferenceEquality>]
+    type TPhoneme = {
+        [<JsonProperty("ph", Required=Required.AllowNull)>] Ph : string
+        [<JsonProperty("on", Required=Required.Always)>]    On : int
+        [<JsonProperty("off", Required=Required.Always)>]   Off : int }
+
+    [<NoComparison; ReferenceEquality>]
+    type TNote = {
+        [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
+        [<JsonProperty("on", Required=Required.Always)>]    On : int
+        [<JsonProperty("off", Required=Required.Always)>]   Off : int }
+
+    [<NoComparison; ReferenceEquality>]
+    type TChar = {
+        [<JsonProperty("ch", Required=Required.AllowNull)>]                   Ch : string
+        [<JsonProperty("rom", Required=Required.AllowNull)>]                  Rom : string
+        [<JsonProperty("notes", NullValueHandling=NullValueHandling.Ignore)>] Notes : ImmutableList<TNote>
+        [<JsonProperty("ipa", NullValueHandling=NullValueHandling.Ignore)>]   Ipa : ImmutableList<TPhoneme> }
+
+    [<NoComparison; ReferenceEquality>]
+    type TUtt = {
+        [<JsonProperty("uttStartSec", Required=Required.Always)>] UttStartSec : float
+        [<JsonProperty("uttDur", Required=Required.Always)>]      UttDur : int
+        [<JsonProperty("chars", Required=Required.Always)>]       Chars : ImmutableList<TChar> }
+
+    let ofUtt bpm0 (utt : Utterance) =
+        let allNotes = utt.Notes.ToList()
         let uttStart = (allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
         let uttEnd = (allNotes.[^0].Off |> Midi.toTimeSpan bpm0) + tailSil
         let uttDur = uttEnd - uttStart
@@ -66,7 +61,7 @@ module TimeTable =
         for i in 0 .. allNotes.Count - 2 do
             let note, nextNote = allNotes.[i], allNotes.[i + 1]
             if note.Off <> nextNote.On then
-                allNotes.[i] <- { note with Dur = nextNote.On - note.On }
+                allNotes.[i] <- note.SetOff nextNote.On
 
         // remove in-char sils
         let charNotes = allNotes |> Seq.partitionBeforeWhen(fun note -> not note.IsHyphen) |> Array.ofSeq
@@ -74,7 +69,7 @@ module TimeTable =
             for i in 0 .. notes.Length - 2 do
                 let note, nextNote = notes.[i], notes.[i + 1]
                 if note.Off <> nextNote.On then
-                    notes.[i] <- { note with Dur = nextNote.On - note.On }
+                    notes.[i] <- note.SetOff nextNote.On
 
         // convert to tchars
         let chars =
@@ -107,7 +102,8 @@ module TimeTable =
         utt
 
 module Synth =
-    let baseUrl = Uri(@"http://localhost:24678")
+    //let baseUrl = Uri(@"http://localhost:24678")
+    let baseUrl = Uri(@"http://166.111.121.42:24678")
     let poSynthUrl = Uri(baseUrl, "poSynth")
     let f0SynthUrl = Uri(baseUrl, "f0Synth")
     let acSynthUrl = Uri(baseUrl, "acSynth")
@@ -120,7 +116,7 @@ module Synth =
             GC.KeepAlive content
             return result.EnsureSuccessStatusCode() }
 
-    let request(romScheme : string)(singerName : string)(tUtt : TUtterance) =
+    let request(romScheme : string)(singerName : string)(tUtt : TimeTable.TUtt) =
         async {
             use httpClient = new HttpClient()
 
@@ -129,7 +125,7 @@ module Synth =
                 "uttDur", box tUtt.UttDur
                 "romScheme", box romScheme |]))
             let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
-            let chars = JsonConvert.DeserializeObject<ImmutableList<TChar>> resultBodyStr
+            let chars = JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr
 
             let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict([|
                 "chars", box chars
@@ -143,6 +139,6 @@ module Synth =
                 "singerName", box singerName |]))
             let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
 
-            return Audio.loadFromStream resultBodyByteStream }
+            return AudioSamples.loadFromStream resultBodyByteStream }
     
 

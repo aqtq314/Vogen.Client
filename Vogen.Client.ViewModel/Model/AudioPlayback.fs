@@ -10,19 +10,10 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
+open Audio
 
 
-module Audio =
-    let [<Literal>] fs = 44100
-    let [<Literal>] channels = 1
-    let waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
-
-    let sampleToTime(sampleTime : int) =
-        TimeSpan.FromSeconds(float sampleTime / float fs)
-
-    let timeToSample(time : TimeSpan) =
-        int(time.TotalSeconds * float fs)
-
+module AudioSamples =
     let loadFromStream(fileStream : Stream) =
         use reader = new StreamMediaFoundationReader(fileStream)
         use reader = new MediaFoundationResampler(reader, waveFormat)
@@ -44,22 +35,12 @@ module Audio =
         use fileStream = File.OpenRead filePath
         loadFromStream fileStream
 
-type AudioSegment = {
-    SampleOffset : int
-    Samples : float32 [] }
-
-type AudioLibrary = {
-    Segments : ImmutableDictionary<string, AudioSegment> } with
-
-    static member Empty = {
-        Segments = ImmutableDictionary.Empty }
-
 module AudioPlayback =
-    let fillBuffer(playbackSamplePos, audioLib, buffer : float32 [], bufferOffset, bufferLength) =
-        let { Segments = audioSegs } = audioLib
+    let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
-        for audioSeg in audioSegs.Values do
-            let { SampleOffset = sampleOffset; Samples = samples } = audioSeg
+        for keyValuePair in comp.AudioSegments do
+            let uttName, samples = keyValuePair.Deconstruct()
+            let sampleOffset = comp.AudioSampleOffsets.[uttName]
             let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
             let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
             for i in startIndex .. endIndex - 1 do
@@ -68,7 +49,7 @@ module AudioPlayback =
 type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0
 
-    member val AudioLib = AudioLibrary.Empty with get, set
+    member val Comp = Composition.Empty with get, set
 
     member val PlaybackPositionRefTicks = 0L with get, set
     member x.PlaybackSamplePosition = playbackSamplePos
@@ -82,7 +63,7 @@ type AudioPlaybackEngine() =
         member x.WaveFormat = Audio.waveFormat
         member x.Read(buffer, offset, count) =
             lock x <| fun () ->
-                AudioPlayback.fillBuffer(playbackSamplePos, x.AudioLib, buffer, offset, count)
+                AudioPlayback.fillBuffer(playbackSamplePos, x.Comp, buffer, offset, count)
                 playbackSamplePos <- playbackSamplePos + count
                 x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
             count

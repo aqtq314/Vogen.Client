@@ -203,7 +203,7 @@ type RulerGrid() =
 
     static let tickPen = Pen(SolidColorBrush((0xFF000000u).AsColor()), 1.0) |>! freeze
 
-    static member MinMajorTickHop = 80.0    // in screen pixels
+    static member MinMajorTickHop = 60.0    // in screen pixels
     static member MinMinorTickHop = 25.0
 
     static member FindTickHop(timeSig : TimeSignature) quarterWidth minTickHop =
@@ -213,6 +213,9 @@ type RulerGrid() =
             yield! Seq.initInfinite(fun i -> 15L <<< i)
                 |> Seq.takeWhile(fun length -> length < timeSig.PulsesPerBeat)
             yield timeSig.PulsesPerBeat
+            yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure >>> (i + 1))
+                |> Seq.takeWhile(fun length -> length > timeSig.PulsesPerBeat && length % timeSig.PulsesPerBeat = 0L)
+                |> Seq.rev
             yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i) }
         |> Seq.find(fun hop ->
             pulseToPixel quarterWidth 0.0 (float hop) >= minTickHop)
@@ -282,7 +285,6 @@ type ChartEditor() =
     static let noteBgBrush = SolidColorBrush((0xFFFFAA55u).AsColor()) |>! freeze
     static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
-    static let noteConnectSolidPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
     
     override x.CanScrollH = true
