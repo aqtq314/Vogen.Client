@@ -105,7 +105,7 @@ type NoteChartEditBase() =
     static member CoerceCursorPosition x v = max 0L v
     static member val CursorPositionProperty =
         Dp.reg<int64, NoteChartEditBase> "CursorPosition"
-            (Dp.Meta(0L, Dp.MetaFlags.AffectsRender,
+            (Dp.Meta(0L,
                 (fun (x : NoteChartEditBase)(oldValue, newValue) ->
                     x.OnCursorPositionChangedEvent.Trigger((oldValue, NoteChartEditBase.CoerceCursorPosition x newValue))),
                 NoteChartEditBase.CoerceCursorPosition))
@@ -120,12 +120,12 @@ type NoteChartEditBase() =
     member x.Composition
         with get() = x.GetValue NoteChartEditBase.CompositionProperty :?> Composition
         and set(v : Composition) = x.SetValue(NoteChartEditBase.CompositionProperty, box v)
-    abstract OnCompositionChanged : oldValue : Composition * newValue : Composition -> unit
-    default x.OnCompositionChanged(oldValue, newValue) = ()
+    member val OnCompositionChangedEvent : Event<_> = Event<_>()
+    [<CLIEvent>] member x.OnCompositionChanged = x.OnCompositionChangedEvent.Publish
     static member val CompositionProperty =
         Dp.reg<Composition, NoteChartEditBase> "Composition"
             (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender,
-                (fun (x : NoteChartEditBase)(oldValue, newValue) -> x.OnCompositionChanged(oldValue, newValue))))
+                (fun (x : NoteChartEditBase)(oldValue, newValue) -> x.OnCompositionChangedEvent.Trigger(oldValue, newValue))))
 
 type SideKeyboard() =
     inherit NoteChartEditBase()
@@ -273,27 +273,12 @@ type RulerGrid() =
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
                     dc.DrawText(ft, new Point(xPos - halfTextWidth, 0.0))
 
-type ChartEditor() =
+type ChartEditor() as x =
     inherit NoteChartEditBase()
 
-    static let majorTickPen = Pen(SolidColorBrush((0x30000000u).AsColor()), 0.5) |>! freeze
-    static let minorTickPen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
-    static let octavePen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
-    static let blackKeyFill = SolidColorBrush((0x10000000u).AsColor()) |>! freeze
-    static let playbackCursorPen = Pen(SolidColorBrush((0xFFFF0000u).AsColor()), 0.5) |>! freeze
-    static let noteRowBgBrushCursorActive = SolidColorBrush((0x20FFAA55u).AsColor()) |>! freeze
-    static let noteBgBrush = SolidColorBrush((0xFFFFAA55u).AsColor()) |>! freeze
-    static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
-    static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
-    static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
-    
-    override x.CanScrollH = true
-    override x.CanScrollV = true
-
-    member val private UttGetChars = ImmutableDictionary.Empty with get, set
-
-    override x.OnCompositionChanged(_, comp) =
-        x.UttGetChars <-
+    let mutable uttGetChars = ImmutableDictionary.Empty
+    do x.OnCompositionChanged.Add <| fun (_, comp) ->
+        uttGetChars <-
             comp.Utts
             |> Seq.map(fun utt ->
                 let chars =
@@ -303,6 +288,30 @@ type ChartEditor() =
                     |> ImmutableArray.CreateRange
                 KeyValuePair(utt, chars))
             |> ImmutableDictionary.CreateRange
+
+    let mutable cursorActiveNotes = ImmutableHashSet.Empty
+    do x.OnCursorPositionChanged.Add <| fun (_, playbackPos) ->
+        let newCursorActiveNotes =
+            x.Composition.Utts
+            |> Seq.collect(fun utt -> utt.Notes)
+            |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
+            |> ImmutableHashSet.CreateRange
+        if not(cursorActiveNotes.SetEquals newCursorActiveNotes) then
+            cursorActiveNotes <- newCursorActiveNotes
+            x.InvalidateVisual()
+
+    static let majorTickPen = Pen(SolidColorBrush((0x30000000u).AsColor()), 0.5) |>! freeze
+    static let minorTickPen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
+    static let octavePen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
+    static let blackKeyFill = SolidColorBrush((0x10000000u).AsColor()) |>! freeze
+    static let noteRowBgBrushCursorActive = SolidColorBrush((0x20FFAA55u).AsColor()) |>! freeze
+    static let noteBgBrush = SolidColorBrush((0xFFFFAA55u).AsColor()) |>! freeze
+    static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
+    static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
+    static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
+    
+    override x.CanScrollH = true
+    override x.CanScrollV = true
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -349,16 +358,14 @@ type ChartEditor() =
                 let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
 
-        for utt in comp.Utts do
-            for note in utt.Notes do
-                if (note.On <= playbackPos && note.Off > playbackPos &&
-                    note.Pitch >= botPitch && note.Pitch <= topPitch) then
-                    let y = pitchToPixel keyHeight actualHeight vOffset (float(note.Pitch + 1))
-                    dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
+        for note in cursorActiveNotes do
+            if note.Pitch >= botPitch && note.Pitch <= topPitch then
+                let y = pitchToPixel keyHeight actualHeight vOffset (float(note.Pitch + 1))
+                dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
 
         // notes
         for utt in comp.Utts do
-            let chars = x.UttGetChars.[utt]
+            let chars = uttGetChars.[utt]
 
             // char connection
             for ch0, ch1 in Seq.pairwise chars do
@@ -409,12 +416,32 @@ type ChartEditor() =
                 dc.DrawText(ft, Point(x0, yMid))
                 dc.Pop()
 
-        dc.Pop()
+type ChartEditorAdornerLayer() =
+    inherit NoteChartEditBase()
+
+    static do
+        let baseMeta = NoteChartEditBase.CursorPositionProperty.DefaultMetadata
+        NoteChartEditBase.CursorPositionProperty.OverrideMetadata(
+            typeof<ChartEditorAdornerLayer>, FrameworkPropertyMetadata(
+                0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
+
+    static let playbackCursorPen = Pen(SolidColorBrush((0xFFFF0000u).AsColor()), 0.5) |>! freeze
+
+    override x.CanScrollH = true
+    override x.CanScrollV = true
+
+    override x.OnRender dc =
+        let actualWidth = x.ActualWidth
+        let actualHeight = x.ActualHeight
+        let quarterWidth = x.QuarterWidth
+        let hOffset = x.HOffsetAnimated
+        let vOffset = x.VOffsetAnimated
+        let playbackPos = x.CursorPosition
+        let comp = x.Composition
 
         // playback cursor
         let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
         if xPos >= 0.0 && xPos <= actualWidth then
             dc.DrawLine(playbackCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
-
 
 
