@@ -379,7 +379,7 @@ type ChartEditor() as x =
                     let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch + 0.5)
                     dc.DrawLine(charConnectPen, Point(n0x1, n0yMid), Point(n1x0, n1yMid))
 
-            for ch in chars do
+            chars |> Seq.iteri(fun i ch ->
                 let charCursorActive = ch.Notes.[0].On <= playbackPos && ch.Notes.[^0].Off > playbackPos
                 let noteBgPen = if charCursorActive then noteBgPenCursorActive else noteBgPen
 
@@ -404,7 +404,8 @@ type ChartEditor() as x =
                 let note = ch.Notes.[0]
                 let x0 = pulseToPixel quarterWidth hOffset (float note.On)
                 let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
-                dc.DrawEllipse(Brushes.White, noteBgPen, Point(x0, yMid), 5.0, 5.0)
+                let fillBrush = if i = 0 then noteBgPen.Brush else Brushes.White :> _
+                dc.DrawEllipse(fillBrush, noteBgPen, Point(x0, yMid), 5.0, 5.0)
 
                 // text
                 let textOpacity = if charCursorActive then 1.0 else 0.5
@@ -414,7 +415,7 @@ type ChartEditor() as x =
                 dc.DrawText(ft, Point(x0, yMid - ft.Height))
                 let ft = x |> makeFormattedText note.Rom
                 dc.DrawText(ft, Point(x0, yMid))
-                dc.Pop()
+                dc.Pop())
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()

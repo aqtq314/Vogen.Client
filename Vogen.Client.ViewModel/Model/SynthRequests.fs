@@ -43,6 +43,7 @@ module TimeTable =
     type TUtt = {
         [<JsonProperty("uttStartSec", Required=Required.Always)>] UttStartSec : float
         [<JsonProperty("uttDur", Required=Required.Always)>]      UttDur : int
+        [<JsonProperty("romScheme", Required=Required.Always)>]   RomScheme : string
         [<JsonProperty("chars", Required=Required.Always)>]       Chars : ImmutableList<TChar> }
 
     let ofUtt bpm0 (utt : Utterance) =
@@ -98,6 +99,7 @@ module TimeTable =
         let utt = {
             UttStartSec = uttStart.TotalSeconds
             UttDur = timeToFrame uttDur |> int
+            RomScheme = utt.RomScheme
             Chars = ImmutableList.CreateRange chars }
         utt
 
@@ -116,27 +118,27 @@ module Synth =
             GC.KeepAlive content
             return result.EnsureSuccessStatusCode() }
 
-    let request(romScheme : string)(singerName : string)(tUtt : TimeTable.TUtt) =
+    let request(singerName : string)(tUtt : TimeTable.TUtt) =
         async {
             use httpClient = new HttpClient()
 
-            let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict([|
+            let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
                 "chars", box tUtt.Chars
                 "uttDur", box tUtt.UttDur
-                "romScheme", box romScheme |]))
+                "romScheme", box tUtt.RomScheme |])
             let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
             let chars = JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr
 
-            let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict([|
+            let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict [|
                 "chars", box chars
-                "romScheme", box romScheme |]))
+                "romScheme", box tUtt.RomScheme |])
             let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
             let f0 = JsonConvert.DeserializeObject<float []> resultBodyStr
 
-            let! synthResult = httpClient.PostJsonAsync(acSynthUrl, dict([|
+            let! synthResult = httpClient.PostJsonAsync(acSynthUrl, dict [|
                 "chars", box chars
                 "f0", box f0
-                "singerName", box singerName |]))
+                "singerName", box singerName |])
             let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
 
             return AudioSamples.loadFromStream resultBodyByteStream }

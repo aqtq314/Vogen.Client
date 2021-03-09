@@ -19,6 +19,8 @@ open Vogen.Client.Model
 type ChartScrollZoomKitBase() =
     inherit Control()
 
+    static let animationDuration = TimeSpan.FromSeconds 0.1
+
     member x.EnableAnimation
         with get() = x.GetValue ChartScrollZoomKitBase.EnableAnimationProperty :?> bool
         and set(v : bool) = x.SetValue(ChartScrollZoomKitBase.EnableAnimationProperty, box v)
@@ -56,7 +58,7 @@ type ChartScrollZoomKitBase() =
         let newValue = ChartScrollZoomKitBase.CoerceScrollValue x newValue
         let animation = DoubleAnimation(newValue, Duration(TimeSpan.Zero))
         if x.EnableAnimation then
-            animation.Duration <- Duration(TimeSpan.FromSeconds 0.2)
+            animation.Duration <- Duration(animationDuration)
             animation.EasingFunction <- QuadraticEase(EasingMode = EasingMode.EaseOut)
         x.BeginAnimation(ChartScrollZoomKitBase.ScrollValueAnimatedProperty, animation)
     static member CoerceScrollValue x v = v |> min x.ScrollMaximum |> max x.ScrollMinimum
@@ -94,7 +96,7 @@ type ChartScrollZoomKitBase() =
         let newValue = ChartScrollZoomKitBase.CoerceLog2ZoomValue x newValue
         let animation = DoubleAnimation(newValue, Duration(TimeSpan.Zero))
         if x.EnableAnimation then
-            animation.Duration <- Duration(TimeSpan.FromSeconds 0.2)
+            animation.Duration <- Duration(animationDuration)
             animation.EasingFunction <- QuadraticEase(EasingMode = EasingMode.EaseOut)
         x.BeginAnimation(ChartScrollZoomKitBase.Log2ZoomValueAnimatedProperty, animation)
     static member CoerceLog2ZoomValue x v = v |> min x.Log2ZoomMaximum |> max x.Log2ZoomMinimum

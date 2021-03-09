@@ -14,6 +14,17 @@ open System.Text
 open System.Text.Encodings
 
 
+type RomScheme(code, charName) =
+    member x.Code : string = code
+    member x.CharName : string = charName
+
+module RomSchemes =
+    let all = ImmutableArray.CreateRange([|
+        RomScheme("man", "普")
+        RomScheme("yue", "粤") |])
+
+    let codeLookup = all.ToImmutableDictionary(fun romScheme -> romScheme.Code)
+
 type Note(pitch, lyric, rom, on, dur) =
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
@@ -28,13 +39,17 @@ type Note(pitch, lyric, rom, on, dur) =
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
 
-type Utterance(name, notes) =
-    let on =
-        notes
-        |> Seq.map(fun (note : Note) -> note.On)
-        |> Seq.min
+    static member CompareByPosition(n1 : Note)(n2 : Note) =
+        let onDiff = compare n1.On n2.On
+        if onDiff <> 0 then onDiff
+        else compare n1.Dur n2.Dur
+
+type Utterance(name, romScheme, notes) =
+    let notes = (notes : ImmutableList<Note>).Sort(Note.CompareByPosition)
+    let on = notes.[0].On
 
     member x.Name : string = name
+    member x.RomScheme : string = romScheme
     member x.Notes : ImmutableList<Note> = notes
 
     member x.On = on

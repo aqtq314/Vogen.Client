@@ -206,7 +206,7 @@ type NoteChartEditPanelBase() =
                 let __ = Async.Start <| async {
                     printfn "%A" DateTime.Now
                     Console.WriteLine DateTime.Now
-                    let! samples = Synth.request "yue" "gloria" tUtt
+                    let! samples = Synth.request "gloria" tUtt
                     printfn "%A" DateTime.Now
                     use writer = new WaveFileWriter(@"C:\Users\User\Desktop\test-out.wav", Audio.waveFormat)
                     writer.WriteSamples(samples, 0, samples.Length) }

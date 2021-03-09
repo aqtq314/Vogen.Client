@@ -33,17 +33,18 @@ module FilePackage =
 
     [<NoComparison; ReferenceEquality>]
     type FUtt = {
-        [<JsonProperty("name", Required=Required.Always)>]  Name : string
-        [<JsonProperty("notes", Required=Required.Always)>] Notes : ImmutableArray<FNote> }
+        [<JsonProperty("name", Required=Required.Always)>]      Name : string
+        [<JsonProperty("romScheme", Required=Required.Always)>] RomScheme : string
+        [<JsonProperty("notes", Required=Required.Always)>]     Notes : ImmutableArray<FNote> }
         with
         static member toUtt x =
-            let { Name = name; Notes = fNotes } = x
+            let { Name = name; RomScheme = romScheme; Notes = fNotes } = x
             let notes = ImmutableList.CreateRange(Seq.map FNote.toNote fNotes)
-            Utterance(name, notes)
+            Utterance(name, romScheme, notes)
 
         static member ofUtt(utt : Utterance) =
             let fNotes = ImmutableArray.CreateRange(Seq.map FNote.ofNote utt.Notes)
-            { Name = utt.Name; Notes = fNotes }
+            { Name = utt.Name; RomScheme = utt.RomScheme; Notes = fNotes }
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
@@ -71,7 +72,7 @@ module FilePackage =
         let audioSegments =
             comp.Utts
             |> Seq.choose(fun utt ->
-                zipEntryDict.TryGetValue $"{utt.Name}.flac"
+                zipEntryDict.TryGetValue $"{utt.Name}.m4a"
                 |> Option.ofByRef
                 |> Option.map(fun zipEntry -> utt, zipEntry))
             |> Seq.map(fun (utt, zipEntry) ->
