@@ -78,8 +78,7 @@ type ProgramModel() as x =
         let comp = x.UpdateComp <| fun comp ->
             comp.SetUttAudioSynthing utt
         Async.Start <| async {
-            let tUtt = TimeTable.ofUtt comp.Bpm0 utt
-            let! audioSamples = Synth.request "gloria" tUtt
+            let! audioSamples = Synth.request "gloria" comp.Bpm0 utt
             dispatcher.BeginInvoke(fun () ->
                 x.UpdateComp <| fun comp ->
                     comp.SetUttAudioSynthed utt audioSamples

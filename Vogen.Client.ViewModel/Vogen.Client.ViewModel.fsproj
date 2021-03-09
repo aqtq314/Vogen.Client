@@ -17,7 +17,7 @@
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
     <Compile Include="Model\FilePackage.fs" />
-    <Compile Include="Model\SynthRequests.fs" />
+    <Compile Include="Model\Synth.fs" />
     <Compile Include="Controls\TextResources.fs" />
     <Compile Include="Controls\UnitConversion.fs" />
     <Compile Include="Controls\ScrollZoomKit.fs" />

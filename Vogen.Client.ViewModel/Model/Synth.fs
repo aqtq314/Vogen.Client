@@ -118,9 +118,11 @@ module Synth =
             GC.KeepAlive content
             return result.EnsureSuccessStatusCode() }
 
-    let request(singerName : string)(tUtt : TimeTable.TUtt) =
+    let request(singerName : string) bpm0 utt =
         async {
+            System.Diagnostics.Trace.WriteLine DateTime.Now
             use httpClient = new HttpClient()
+            let tUtt = TimeTable.ofUtt bpm0 utt
 
             let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
                 "chars", box tUtt.Chars
@@ -141,6 +143,7 @@ module Synth =
                 "singerName", box singerName |])
             let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
 
+            System.Diagnostics.Trace.WriteLine DateTime.Now
             return AudioSamples.loadFromStream resultBodyByteStream }
     
 
