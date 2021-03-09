@@ -38,7 +38,7 @@ type MainWindowBase() =
             MessageBoxButton.OK, MessageBoxImage.Error)
         |> ignore
 
-    member x.SaveAs() =
+    member x.SaveAs() = result {
         try let saveFileDialog =
                 SaveFileDialog(
                     FileName = (!!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName),
@@ -48,61 +48,48 @@ type MainWindowBase() =
             if dialogResult ?= true then
                 let filePath = saveFileDialog.FileName
                 x.ProgramModel.Save filePath
-                Ok()
             else
-                Error()
+                return! Error()
         with ex ->
             x.ShowError ex
-            Error()
+            return! Error() }
 
-    member x.Save() =
+    member x.Save() = result {
         match !!x.ProgramModel.CompFilePathOp with
-        | None -> x.SaveAs()
+        | None ->
+            return! x.SaveAs()
         | Some filePath ->
             try x.ProgramModel.Save filePath
-                Ok()
             with ex ->
                 x.ShowError ex
-                x.SaveAs()
+                return! x.SaveAs() }
 
-    member x.CheckChanges() =
+    member x.CheckChanges() = result {
         if not !!x.ProgramModel.CompIsSaved then
             let messageBoxResult =
                 MessageBox.Show(
                     x, $"Save changes to {!!x.ProgramModel.CompFileName}?", MainWindowBase.AppName,
                     MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes)
             match messageBoxResult with
-            | MessageBoxResult.Yes ->
-                x.Save()
-            | MessageBoxResult.No ->
-                Ok()
-            | _ ->
-                Error()
+            | MessageBoxResult.Yes -> return! x.Save()
+            | MessageBoxResult.No -> ()
+            | _ -> return! Error() }
+
+    member x.New() = result {
+        do! x.CheckChanges()
+        x.ProgramModel.New() }
+
+    member x.Open() = result {
+        do! x.CheckChanges()
+        let openFileDialog =
+            OpenFileDialog(
+                DefaultExt = ".vog",
+                Filter = "Vogen Package|*.vog")
+        let dialogResult = openFileDialog.ShowDialog x
+        if dialogResult ?= true then
+            let filePath = openFileDialog.FileName
+            x.ProgramModel.Open filePath
         else
-            Ok()
+            return! Error() }
 
-    member x.New() =
-        match x.CheckChanges() with
-        | Ok() ->
-            x.ProgramModel.New()
-            Ok()
-        | _ ->
-            Error()
-
-    member x.Open() =
-        match x.CheckChanges() with
-        | Ok() ->
-            let openFileDialog =
-                OpenFileDialog(
-                    DefaultExt = ".vog",
-                    Filter = "Vogen Package|*.vog")
-            let dialogResult = openFileDialog.ShowDialog x
-            if dialogResult ?= true then
-                let filePath = openFileDialog.FileName
-                x.ProgramModel.Open filePath
-                Ok()
-            else
-                Error()
-        | _ ->
-            Error()
 
