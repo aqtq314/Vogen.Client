@@ -19,7 +19,7 @@ namespace Vogen.Client
 {
     public partial class MainWindow : Window
     {
-        public new ProgramModel DataContext => (ProgramModel)base.DataContext;
+        public ProgramModel ProgramModel => (ProgramModel)base.DataContext;
 
         public MainWindow()
         {
@@ -29,12 +29,22 @@ namespace Vogen.Client
 
         private void OnClickPlayButton(object sender, RoutedEventArgs e)
         {
-            DataContext.Play();
+            ProgramModel.Play();
         }
 
         private void OnClickStopButton(object sender, RoutedEventArgs e)
         {
-            DataContext.Stop();
+            ProgramModel.Stop();
+        }
+
+        private void OnClickClearAllSynthButton(object sender, RoutedEventArgs e)
+        {
+            ProgramModel.ClearAllSynth();
+        }
+
+        private void OnClickSynthButton(object sender, RoutedEventArgs e)
+        {
+            ProgramModel.Synth(Dispatcher);
         }
     }
 }

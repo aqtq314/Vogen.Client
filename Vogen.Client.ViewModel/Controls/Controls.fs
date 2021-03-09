@@ -363,6 +363,24 @@ type ChartEditor() as x =
                 let y = pitchToPixel keyHeight actualHeight vOffset (float(note.Pitch + 1))
                 dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
 
+        // utt states
+        dc.PushOpacity 0.5
+        for utt in comp.Utts do
+            let uttAudio = comp.UttAudios.[utt]
+            if utt.On >= minPulse && utt.On <= maxPulse then
+                let x0 = pulseToPixel quarterWidth hOffset (float utt.On)
+                let yMid = pitchToPixel keyHeight actualHeight vOffset (float utt.Notes.[0].Pitch + 0.5)
+                let ft =
+                    let text = String.concat Environment.NewLine [|
+                        $"({TextResources.getRomSchemeChar utt.RomScheme})"
+                        $"({TextResources.getSynthStateDescription uttAudio.SynthState})" |]
+                    x |> makeFormattedText text
+                ft.TextAlignment <- TextAlignment.Right
+                ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
+                dc.DrawText(ft, Point(x0 - 5.0, yMid - half ft.Height))
+
+        dc.Pop()
+
         // notes
         for utt in comp.Utts do
             let chars = uttGetChars.[utt]
@@ -395,27 +413,30 @@ type ChartEditor() as x =
 
                 // notes
                 for note in ch.Notes do
-                    if note.Off >= minPulse && note.On <= maxPulse && note.Pitch >= botPitch && note.Pitch <= topPitch then
+                    if (note.Off >= minPulse && note.On <= maxPulse &&
+                        note.Pitch >= botPitch && note.Pitch <= topPitch) then
                         let x0 = pulseToPixel quarterWidth hOffset (float note.On)
                         let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
                         let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
                         dc.DrawLine(noteBgPen, Point(x0, yMid), Point(x1, yMid))
                     
                 let note = ch.Notes.[0]
-                let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-                let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
-                let fillBrush = if i = 0 then noteBgPen.Brush else Brushes.White :> _
-                dc.DrawEllipse(fillBrush, noteBgPen, Point(x0, yMid), 5.0, 5.0)
+                if (note.Off >= minPulse && note.On <= maxPulse &&
+                    note.Pitch >= botPitch && note.Pitch <= topPitch) then
+                    let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                    let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
+                    let fillBrush = if i = 0 then noteBgPen.Brush else Brushes.White :> _
+                    dc.DrawEllipse(fillBrush, noteBgPen, Point(x0, yMid), 5.0, 5.0)
 
-                // text
-                let textOpacity = if charCursorActive then 1.0 else 0.5
-                dc.PushOpacity textOpacity
-                let ft = x |> makeFormattedText note.Lyric
-                ft.SetFontSize(1.25 * TextBlock.GetFontSize x)
-                dc.DrawText(ft, Point(x0, yMid - ft.Height))
-                let ft = x |> makeFormattedText note.Rom
-                dc.DrawText(ft, Point(x0, yMid))
-                dc.Pop())
+                    // text
+                    let textOpacity = if charCursorActive then 1.0 else 0.5
+                    dc.PushOpacity textOpacity
+                    let ft = x |> makeFormattedText note.Lyric
+                    ft.SetFontSize(1.25 * TextBlock.GetFontSize x)
+                    dc.DrawText(ft, Point(x0, yMid - ft.Height))
+                    let ft = x |> makeFormattedText note.Rom
+                    dc.DrawText(ft, Point(x0, yMid))
+                    dc.Pop())
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()

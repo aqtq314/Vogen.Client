@@ -69,20 +69,17 @@ module FilePackage =
         let comp = FComp.toComp fComp
 
         let zipEntryDict = zipFile.Entries.ToDictionary(fun entry -> entry.Name)
-        let audioSegments =
-            comp.Utts
-            |> Seq.choose(fun utt ->
-                zipEntryDict.TryGetValue $"{utt.Name}.m4a"
-                |> Option.ofByRef
-                |> Option.map(fun zipEntry -> utt, zipEntry))
-            |> Seq.map(fun (utt, zipEntry) ->
-                use fileStream = zipEntry.Open()
-                use cachedStream = fileStream.CacheAsMemoryStream()
-                let samples = AudioSamples.loadFromStream cachedStream
-                KeyValuePair(utt.Name, samples))
-            |> ImmutableDictionary.CreateRange
+        let comp =
+            (comp, comp.Utts)
+            ||> Seq.fold(fun comp utt ->
+                match zipEntryDict.TryGetValue $"{utt.Name}.m4a" |> Option.ofByRef with
+                | None -> comp
+                | Some zipEntry ->
+                    use fileStream = zipEntry.Open()
+                    use cachedStream = fileStream.CacheAsMemoryStream()
+                    let samples = AudioSamples.loadFromStream cachedStream
+                    comp.SetUttAudioSynthed utt samples)
 
-        let comp = comp.SetAudioSegments audioSegments
         comp
 
 

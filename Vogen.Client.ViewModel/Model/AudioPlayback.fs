@@ -38,13 +38,14 @@ module AudioSamples =
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
-        for keyValuePair in comp.AudioSegments do
-            let uttName, samples = keyValuePair.Deconstruct()
-            let sampleOffset = comp.AudioSampleOffsets.[uttName]
-            let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
-            let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
-            for i in startIndex .. endIndex - 1 do
-                buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset]
+        for uttAudio in comp.UttAudios.Values do
+            if uttAudio.IsSynthed then
+                let samples = uttAudio.Samples
+                let sampleOffset = uttAudio.SampleOffset
+                let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
+                let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
+                for i in startIndex .. endIndex - 1 do
+                    buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset]
 
 type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0

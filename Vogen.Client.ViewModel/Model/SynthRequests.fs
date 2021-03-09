@@ -105,7 +105,7 @@ module TimeTable =
 
 module Synth =
     //let baseUrl = Uri(@"http://localhost:24678")
-    let baseUrl = Uri(@"http://166.111.121.42:24678")
+    let baseUrl = Uri(@"http://doaz.tsinghua-csai.edu.cn:24678")
     let poSynthUrl = Uri(baseUrl, "poSynth")
     let f0SynthUrl = Uri(baseUrl, "f0Synth")
     let acSynthUrl = Uri(baseUrl, "acSynth")

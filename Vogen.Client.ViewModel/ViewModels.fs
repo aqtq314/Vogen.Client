@@ -5,9 +5,11 @@ open NAudio
 open NAudio.Wave
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.Diagnostics
 open System.Windows
 open System.Windows.Media
+open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
 
@@ -35,6 +37,11 @@ type ProgramModel() as x =
         activeComp |> Rp.set comp
         audioEngine.Comp <- comp
 
+    member x.UpdateComp update =
+        lock x <| fun () ->
+            update !!activeComp
+            |>! x.Load
+
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
             newCursorPos
@@ -60,5 +67,29 @@ type ProgramModel() as x =
         waveOut.Stop()
         isPlaying |> Rp.set false
         x.PlaybackSyncCursorPos()
+
+    member x.ClearAllSynth() =
+        x.UpdateComp <| fun comp ->
+            (comp, comp.Utts)
+            ||> Seq.fold(fun comp utt ->
+                comp.SetUttAudioNoSynth utt)
+
+    member x.SynthUtt(dispatcher : Dispatcher, utt) =
+        let comp = x.UpdateComp <| fun comp ->
+            comp.SetUttAudioSynthing utt
+        Async.Start <| async {
+            let tUtt = TimeTable.ofUtt comp.Bpm0 utt
+            let! audioSamples = Synth.request "gloria" tUtt
+            dispatcher.BeginInvoke(fun () ->
+                x.UpdateComp <| fun comp ->
+                    comp.SetUttAudioSynthed utt audioSamples
+                |> ignore) |> ignore }
+
+    member x.Synth dispatcher =
+        let comp = !!x.ActiveComp
+        for KeyValue(utt, uttAudio) in comp.UttAudios do
+            match uttAudio.SynthState with
+            | NoSynth -> x.SynthUtt(dispatcher, utt)
+            | Synthing | Synthed -> ()
 
 

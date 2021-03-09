@@ -16,6 +16,9 @@
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
       <Button x:Name="playButton" Content="Play" Click="OnClickPlayButton"/>
       <Button x:Name="stopButton" Content="Stop" Click="OnClickStopButton"/>
+      <Separator/>
+      <Button x:Name="clearAllSynthButton" Content="ClearAllSynth" Click="OnClickClearAllSynthButton"/>
+      <Button x:Name="synthButton" Content="Synth" Click="OnClickSynthButton"/>
     </ToolBar>
     <v:NoteChartEditPanel x:Name="noteChartEditPanel"/>
   </DockPanel>
