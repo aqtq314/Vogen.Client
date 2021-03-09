@@ -30,7 +30,7 @@ namespace Vogen.Client.Views
             IsKeyboardFocusedChanged += (sender, e) =>
             {
                 if ((bool)e.NewValue)
-                    border.BorderBrush = Brushes.LightSalmon ;
+                    border.BorderBrush = Brushes.LightSalmon;
                 else
                     border.BorderBrush = null;
             };

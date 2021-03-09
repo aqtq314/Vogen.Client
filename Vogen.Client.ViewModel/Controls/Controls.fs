@@ -366,7 +366,7 @@ type ChartEditor() as x =
         // utt states
         dc.PushOpacity 0.5
         for utt in comp.Utts do
-            let uttAudio = comp.UttAudios.[utt]
+            let uttAudio = comp.GetUttAudio utt
             if utt.On >= minPulse && utt.On <= maxPulse then
                 let x0 = pulseToPixel quarterWidth hOffset (float utt.On)
                 let yMid = pitchToPixel keyHeight actualHeight vOffset (float utt.Notes.[0].Pitch + 0.5)

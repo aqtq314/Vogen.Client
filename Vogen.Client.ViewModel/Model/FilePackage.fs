@@ -40,11 +40,11 @@ module FilePackage =
         static member toUtt x =
             let { Name = name; RomScheme = romScheme; Notes = fNotes } = x
             let notes = ImmutableList.CreateRange(Seq.map FNote.toNote fNotes)
-            Utterance(name, romScheme, notes)
+            Utterance(romScheme, notes), name
 
-        static member ofUtt(utt : Utterance) =
+        static member ofUtt uttName (utt : Utterance) =
             let fNotes = ImmutableArray.CreateRange(Seq.map FNote.ofNote utt.Notes)
-            { Name = utt.Name; RomScheme = utt.RomScheme; Notes = fNotes }
+            { Name = uttName; RomScheme = utt.RomScheme; Notes = fNotes }
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
@@ -53,12 +53,15 @@ module FilePackage =
         with
         static member toComp x =
             let { Bpm0 = bpm0; Utts = fUtts } = x
-            let utts = ImmutableList.CreateRange(Seq.map FUtt.toUtt fUtts)
-            Composition(bpm0, utts)
+            let uttsByNameDict = dict(Seq.map FUtt.toUtt fUtts)
+            let utts = ImmutableList.CreateRange uttsByNameDict.Keys
+            let getUttName utt = uttsByNameDict.[utt]
+            Composition(bpm0, utts), getUttName
 
-        static member ofComp(comp : Composition) =
-            let utts = ImmutableArray.CreateRange(Seq.map FUtt.ofUtt comp.Utts)
-            { Bpm0 = comp.Bpm0; Utts = utts }
+        static member ofComp getUttName (comp : Composition) =
+            let uttNames = Seq.map getUttName comp.Utts
+            let fUtts = ImmutableArray.CreateRange(Seq.map2 FUtt.ofUtt uttNames comp.Utts)
+            { Bpm0 = comp.Bpm0; Utts = fUtts }
 
     let read stream =
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Read)
@@ -66,20 +69,39 @@ module FilePackage =
         use chartReader = new StreamReader(chartStream)
         let fCompStr = chartReader.ReadToEnd()
         let fComp = JsonConvert.DeserializeObject<FComp> fCompStr
-        let comp = FComp.toComp fComp
+        let comp, getUttName = FComp.toComp fComp
 
         let zipEntryDict = zipFile.Entries.ToDictionary(fun entry -> entry.Name)
-        let comp =
-            (comp, comp.Utts)
-            ||> Seq.fold(fun comp utt ->
-                match zipEntryDict.TryGetValue $"{utt.Name}.m4a" |> Option.ofByRef with
-                | None -> comp
-                | Some zipEntry ->
-                    use fileStream = zipEntry.Open()
-                    use cachedStream = fileStream.CacheAsMemoryStream()
-                    let samples = AudioSamples.loadFromStream cachedStream
-                    comp.SetUttAudioSynthed utt samples)
+        (comp, comp.Utts)
+        ||> Seq.fold(fun comp utt ->
+            let uttName = getUttName utt
+            zipEntryDict.TryGetValue $"{uttName}.m4a" |> Option.ofByRef
+            |> Option.map(fun zipEntry ->
+                use fileStream = zipEntry.Open()
+                let audioContent = AudioSamples.loadFromStream fileStream
+                utt |> comp.SetUttAudioSynthed audioContent)
+            |> Option.defaultValue comp)
 
-        comp
+    let save stream comp =
+        let getUttName =
+            let uttsByNameDict = dict((comp : Composition).Utts |> Seq.mapi(fun i utt -> utt, $"utt-{i}"))
+            fun utt -> uttsByNameDict.[utt]
+
+        use zipFile = new ZipArchive(stream, ZipArchiveMode.Create)
+        do  use chartStream = (zipFile.CreateEntry "chart.json").Open()
+            use chartWriter = new StreamWriter(chartStream)
+            let fComp = FComp.ofComp getUttName comp
+            let fCompStr = JsonConvert.SerializeObject fComp
+            chartWriter.Write fCompStr
+
+        comp.Utts |> Seq.iter(fun utt ->
+            let uttAudio = comp.GetUttAudio utt
+            let uttName = getUttName utt
+            if uttAudio.IsSynthed then
+                use fileStream = (zipFile.CreateEntry $"{uttName}.m4a").Open()
+                fileStream.Write(uttAudio.FileBytes, 0, uttAudio.FileBytes.Length))
+
+
+
 
 

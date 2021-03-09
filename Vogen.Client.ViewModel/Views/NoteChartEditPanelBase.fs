@@ -3,9 +3,6 @@
 open Doaz.Reactive
 open Doaz.Reactive.Controls
 open Doaz.Reactive.Math
-open NAudio
-open NAudio.MediaFoundation
-open NAudio.Wave
 open System
 open System.Collections.Generic
 open System.Windows

@@ -7,6 +7,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
+open System.IO
 open System.Windows
 open System.Windows.Media
 open System.Windows.Threading
@@ -15,6 +16,9 @@ open Vogen.Client.Model
 
 
 type ProgramModel() as x =
+    let compFilePathOp = rp None
+    let compFileName = rp "Untitled.vog"
+    let compIsSaved = rp true
     let activeComp = rp Composition.Empty
     let audioEngine = AudioPlaybackEngine()
 
@@ -29,18 +33,47 @@ type ProgramModel() as x =
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
 
+    member val CompFilePathOp = compFilePathOp |> Rpo.map id
+    member val CompFileName = compFileName |> Rpo.map id
+    member val CompIsSaved = compIsSaved |> Rpo.map id
     member val ActiveComp = activeComp |> Rpo.map id
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
 
-    member x.Load comp =
+    member x.LoadComp(comp, ?isSaved) =
+        let isSaved = defaultArg isSaved false
         activeComp |> Rp.set comp
         audioEngine.Comp <- comp
+        compIsSaved |> Rp.set isSaved
+
+    member x.LoadFromFile filePathOp =
+        let fileName, comp =
+            match filePathOp with
+            | None -> "Untitled.vog", Composition.Empty
+            | Some filePath ->
+                use fileStream = File.OpenRead filePath
+                Path.GetFileName filePath, FilePackage.read fileStream
+        x.LoadComp(comp, isSaved = true)
+        compFilePathOp |> Rp.set filePathOp
+        compFileName |> Rp.set fileName
 
     member x.UpdateComp update =
         lock x <| fun () ->
             update !!activeComp
-            |>! x.Load
+            |>! x.LoadComp
+
+    member x.New() =
+        x.LoadFromFile None
+
+    member x.Open filePath =
+        x.LoadFromFile(Some filePath)
+
+    member x.Save outFilePath =
+        use outFileStream = File.Open(outFilePath, FileMode.Create)
+        !!x.ActiveComp |> FilePackage.save outFileStream
+        compIsSaved |> Rp.set true
+        compFilePathOp |> Rp.set(Some outFilePath)
+        compFileName |> Rp.set(Path.GetFileName outFilePath)
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
@@ -78,15 +111,16 @@ type ProgramModel() as x =
         let comp = x.UpdateComp <| fun comp ->
             comp.SetUttAudioSynthing utt
         Async.Start <| async {
-            let! audioSamples = Synth.request "gloria" comp.Bpm0 utt
+            let! audioContent = Synth.request "gloria" comp.Bpm0 utt
             dispatcher.BeginInvoke(fun () ->
                 x.UpdateComp <| fun comp ->
-                    comp.SetUttAudioSynthed utt audioSamples
+                    utt |> comp.SetUttAudioSynthed audioContent
                 |> ignore) |> ignore }
 
     member x.Synth dispatcher =
         let comp = !!x.ActiveComp
-        for KeyValue(utt, uttAudio) in comp.UttAudios do
+        for utt in comp.Utts do
+            let uttAudio = comp.GetUttAudio utt
             match uttAudio.SynthState with
             | NoSynth -> x.SynthUtt(dispatcher, utt)
             | Synthing | Synthed -> ()

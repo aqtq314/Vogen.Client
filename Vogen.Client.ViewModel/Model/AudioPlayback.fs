@@ -15,7 +15,12 @@ open Audio
 
 module AudioSamples =
     let loadFromStream(fileStream : Stream) =
-        use reader = new StreamMediaFoundationReader(fileStream)
+        use cacheStream = new MemoryStream()
+        fileStream.CopyTo cacheStream
+        let fileBytes = cacheStream.ToArray()
+        cacheStream.Position <- 0L
+
+        use reader = new StreamMediaFoundationReader(cacheStream)
         use reader = new MediaFoundationResampler(reader, waveFormat)
         let sampleReader = reader.ToSampleProvider()
 
@@ -27,9 +32,11 @@ module AudioSamples =
                 sampleChunks.Add buffer.[..bytesRead]
                 readBuffer()
         readBuffer()
+
         let outSamples = Array.concat sampleChunks
         outSamples.[^0] <- 0f
-        outSamples
+
+        fileBytes, outSamples
 
     let loadFromFile filePath =
         use fileStream = File.OpenRead filePath
@@ -38,7 +45,8 @@ module AudioSamples =
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
-        for uttAudio in comp.UttAudios.Values do
+        for utt in comp.Utts do
+            let uttAudio = comp.GetUttAudio utt
             if uttAudio.IsSynthed then
                 let samples = uttAudio.Samples
                 let sampleOffset = uttAudio.SampleOffset

@@ -15,6 +15,6 @@ let comp =
     FilePackage.read stream
 
 let programModel = ProgramModel()
-do  programModel.Load comp
+do  programModel.LoadComp comp
 
 

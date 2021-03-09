@@ -120,7 +120,6 @@ module Synth =
 
     let request(singerName : string) bpm0 utt =
         async {
-            System.Diagnostics.Trace.WriteLine DateTime.Now
             use httpClient = new HttpClient()
             let tUtt = TimeTable.ofUtt bpm0 utt
 
@@ -143,7 +142,6 @@ module Synth =
                 "singerName", box singerName |])
             let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
 
-            System.Diagnostics.Trace.WriteLine DateTime.Now
             return AudioSamples.loadFromStream resultBodyByteStream }
     
 

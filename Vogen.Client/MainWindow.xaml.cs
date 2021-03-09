@@ -14,37 +14,27 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Vogen.Client.Controls;
 using Vogen.Client.ViewModel;
+using Vogen.Client.Views;
 
 namespace Vogen.Client
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : MainWindowBase
     {
-        public ProgramModel ProgramModel => (ProgramModel)base.DataContext;
-
         public MainWindow()
         {
             InitializeComponent();
             noteChartEditPanel.Focus();
-        }
 
-        private void OnClickPlayButton(object sender, RoutedEventArgs e)
-        {
-            ProgramModel.Play();
-        }
+            newButton.Click += (sender, e) => New();
+            openButton.Click += (sender, e) => Open();
+            saveButton.Click += (sender, e) => Save();
+            saveAsButton.Click += (sender, e) => SaveAs();
 
-        private void OnClickStopButton(object sender, RoutedEventArgs e)
-        {
-            ProgramModel.Stop();
-        }
+            playButton.Click += (sender, e) => ProgramModel.Play();
+            stopButton.Click += (sender, e) => ProgramModel.Stop();
 
-        private void OnClickClearAllSynthButton(object sender, RoutedEventArgs e)
-        {
-            ProgramModel.ClearAllSynth();
-        }
-
-        private void OnClickSynthButton(object sender, RoutedEventArgs e)
-        {
-            ProgramModel.Synth(Dispatcher);
+            clearAllSynthButton.Click += (sender, e) => ProgramModel.ClearAllSynth();
+            synthButton.Click += (sender, e) => ProgramModel.Synth(Dispatcher);
         }
     }
 }

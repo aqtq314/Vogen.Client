@@ -1,25 +1,37 @@
-﻿<Window x:Class="Vogen.Client.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Vogen.Client"
-        xmlns:c="clr-namespace:Vogen.Client.Controls"
-        xmlns:v="clr-namespace:Vogen.Client.Views"
-        xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
-        xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
-        xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
-        mc:Ignorable="d"
-        Title="Vogen" Width="800" Height="450"
-        DataContext="{x:Static vm:DesignerModels.programModel}">
+﻿<vv:MainWindowBase x:Class="Vogen.Client.MainWindow"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:local="clr-namespace:Vogen.Client"
+                   xmlns:c="clr-namespace:Vogen.Client.Controls"
+                   xmlns:v="clr-namespace:Vogen.Client.Views"
+                   xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
+                   xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
+                   xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
+                   xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
+                   mc:Ignorable="d"
+                   Width="800" Height="450"
+                   DataContext="{x:Static vm:DesignerModels.programModel}">
+  <Window.Title>
+    <MultiBinding Converter="{x:Static vv:MainWindowBase.WindowTitleConverter}">
+      <Binding Path="CompFileName.Value"/>
+      <Binding Path="CompIsSaved.Value"/>
+    </MultiBinding>
+  </Window.Title>
   <DockPanel>
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
-      <Button x:Name="playButton" Content="Play" Click="OnClickPlayButton"/>
-      <Button x:Name="stopButton" Content="Stop" Click="OnClickStopButton"/>
+      <Button x:Name="newButton" Content="New"/>
+      <Button x:Name="openButton" Content="Open"/>
+      <Button x:Name="saveButton" Content="Save"/>
+      <Button x:Name="saveAsButton" Content="SaveAs"/>
       <Separator/>
-      <Button x:Name="clearAllSynthButton" Content="ClearAllSynth" Click="OnClickClearAllSynthButton"/>
-      <Button x:Name="synthButton" Content="Synth" Click="OnClickSynthButton"/>
+      <Button x:Name="playButton" Content="Play"/>
+      <Button x:Name="stopButton" Content="Stop"/>
+      <Separator/>
+      <Button x:Name="clearAllSynthButton" Content="ClearAllSynth"/>
+      <Button x:Name="synthButton" Content="Synth"/>
     </ToolBar>
     <v:NoteChartEditPanel x:Name="noteChartEditPanel"/>
   </DockPanel>
-</Window>
+</vv:MainWindowBase>
