@@ -61,7 +61,7 @@ module TimeTable =
         // remove note overlapping
         for i in 0 .. allNotes.Count - 2 do
             let note, nextNote = allNotes.[i], allNotes.[i + 1]
-            if note.Off <> nextNote.On then
+            if note.Off > nextNote.On then
                 allNotes.[i] <- note.SetOff nextNote.On
 
         // remove in-char sils
