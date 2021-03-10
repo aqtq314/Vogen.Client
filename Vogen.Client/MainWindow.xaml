@@ -26,6 +26,8 @@
       <Button x:Name="saveButton" Content="Save"/>
       <Button x:Name="saveAsButton" Content="SaveAs"/>
       <Separator/>
+      <Button x:Name="importButton" Content="Import"/>
+      <Separator/>
       <Button x:Name="playButton" Content="Play"/>
       <Button x:Name="stopButton" Content="Stop"/>
       <Separator/>

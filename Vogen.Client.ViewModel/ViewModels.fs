@@ -22,7 +22,7 @@ type ProgramModel() as x =
     let activeComp = rp Composition.Empty
     let audioEngine = AudioPlaybackEngine()
 
-    static let latency = 40
+    static let latency = 100
     static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
     let isPlaying = rp false
     let cursorPos = rp 0L
@@ -63,10 +63,29 @@ type ProgramModel() as x =
             |>! x.LoadComp
 
     member x.New() =
+        x.Stop()
         x.LoadFromFile None
 
     member x.Open filePath =
+        x.Stop()
         x.LoadFromFile(Some filePath)
+
+    member x.Import filePath =
+        x.Stop()
+        let comp =
+            match Path.GetExtension(filePath : string).ToLower() with
+            | ".vog" ->
+                use stream = File.OpenRead filePath
+                FilePackage.read stream
+            | ".vpr" ->
+                use stream = File.OpenRead filePath
+                External.loadVpr "man" stream
+            | ext ->
+                raise(KeyNotFoundException($"Unknwon file extension {ext}"))
+
+        x.LoadComp comp
+        compFilePathOp |> Rp.set None
+        compFileName |> Rp.set(Path.GetFileNameWithoutExtension filePath + ".vog")
 
     member x.Save outFilePath =
         use outFileStream = File.Open(outFilePath, FileMode.Create)
@@ -111,11 +130,16 @@ type ProgramModel() as x =
         let comp = x.UpdateComp <| fun comp ->
             comp.SetUttAudioSynthing utt
         Async.Start <| async {
-            let! audioContent = Synth.request "gloria" comp.Bpm0 utt
-            dispatcher.BeginInvoke(fun () ->
-                x.UpdateComp <| fun comp ->
-                    utt |> comp.SetUttAudioSynthed audioContent
-                |> ignore) |> ignore }
+            try let! audioContent = Synth.request "gloria" comp.Bpm0 utt
+                dispatcher.BeginInvoke(fun () ->
+                    x.UpdateComp <| fun comp ->
+                        utt |> comp.SetUttAudioSynthed audioContent
+                    |> ignore) |> ignore
+            with ex ->
+                dispatcher.BeginInvoke(fun () ->
+                    x.UpdateComp <| fun comp ->
+                        utt |> comp.SetUttAudioNoSynth
+                    |> ignore) |> ignore}
 
     member x.Synth dispatcher =
         let comp = !!x.ActiveComp

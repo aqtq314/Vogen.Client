@@ -30,6 +30,8 @@ namespace Vogen.Client
             saveButton.Click += (sender, e) => Save();
             saveAsButton.Click += (sender, e) => SaveAs();
 
+            importButton.Click += (sender, e) => Import();
+
             playButton.Click += (sender, e) => ProgramModel.Play();
             stopButton.Click += (sender, e) => ProgramModel.Stop();
 

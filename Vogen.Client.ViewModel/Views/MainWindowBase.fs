@@ -81,15 +81,33 @@ type MainWindowBase() =
 
     member x.Open() = result {
         do! x.CheckChanges()
-        let openFileDialog =
-            OpenFileDialog(
-                DefaultExt = ".vog",
-                Filter = "Vogen Package|*.vog")
-        let dialogResult = openFileDialog.ShowDialog x
-        if dialogResult ?= true then
-            let filePath = openFileDialog.FileName
-            x.ProgramModel.Open filePath
-        else
+        try let openFileDialog =
+                OpenFileDialog(
+                    DefaultExt = ".vog",
+                    Filter = "Vogen Package|*.vog")
+            let dialogResult = openFileDialog.ShowDialog x
+            if dialogResult ?= true then
+                let filePath = openFileDialog.FileName
+                x.ProgramModel.Open filePath
+            else
+                return! Error()
+        with ex ->
+            x.ShowError ex
+            return! Error() }
+
+    member x.Import() = result {
+        do! x.CheckChanges()
+        try let openFileDialog =
+                OpenFileDialog(
+                    Filter = "Supported file formats|*.vog;*.vpr")
+            let dialogResult = openFileDialog.ShowDialog x
+            if dialogResult ?= true then
+                let filePath = openFileDialog.FileName
+                x.ProgramModel.Import filePath
+            else
+                return! Error()
+        with ex ->
+            x.ShowError ex
             return! Error() }
 
 
