@@ -1,7 +1,6 @@
 ﻿namespace Vogen.Client.ViewModel
 
 open Doaz.Reactive
-open NAudio
 open NAudio.Wave
 open System
 open System.Collections.Generic
@@ -57,10 +56,13 @@ type ProgramModel() as x =
         compFilePathOp |> Rp.set filePathOp
         compFileName |> Rp.set fileName
 
-    member x.UpdateComp update =
+    member x.UpdateCompReturn update =
         lock x <| fun () ->
             update !!activeComp
             |>! x.LoadComp
+
+    member x.UpdateComp update =
+        x.UpdateCompReturn update |> ignore
 
     member x.New() =
         x.Stop()
@@ -96,7 +98,7 @@ type ProgramModel() as x =
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
-            newCursorPos
+            float newCursorPos
             |> Midi.toTimeSpan (!!activeComp).Bpm0
             |> Audio.timeToSample)
         cursorPos |> Rp.set newCursorPos
@@ -107,7 +109,7 @@ type ProgramModel() as x =
             |> Audio.sampleToTime
             |> (+)(TimeSpan.FromTicks(Stopwatch.GetTimestamp() - audioEngine.PlaybackPositionRefTicks))
             |> (+)(if isPlaying.Value then -latencyTimeSpan else TimeSpan.Zero)
-            |> Midi.ofTimeSpan((!!activeComp).Bpm0))
+            |> Midi.ofTimeSpan((!!activeComp).Bpm0) |> round |> int64)
 
     member x.Play() =
         waveOut.Play()
@@ -124,29 +126,39 @@ type ProgramModel() as x =
         x.UpdateComp <| fun comp ->
             (comp, comp.Utts)
             ||> Seq.fold(fun comp utt ->
-                comp.SetUttAudioNoSynth utt)
+                utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.Clear()))
 
     member x.SynthUtt(dispatcher : Dispatcher, utt) =
-        let comp = x.UpdateComp <| fun comp ->
-            comp.SetUttAudioSynthing utt
+        let bpm0 =
+            let comp = x.UpdateCompReturn <| fun comp ->
+                utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetIsSynthing true)
+            comp.Bpm0
         Async.Start <| async {
-            try let! audioContent = Synth.request "gloria" comp.Bpm0 utt
+            try try let tUtt = TimeTable.ofUtt bpm0 utt
+                    let! tChars = Synth.requestPO tUtt
+                    let! f0Samples = Synth.requestF0 tUtt tChars
+                    dispatcher.BeginInvoke(fun () ->
+                        x.UpdateComp <| fun comp ->
+                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                                uttSynthResult.SetF0Samples f0Samples)) |> ignore
+                    let! audioContent = Synth.requestAc tChars f0Samples "gloria"
+                    dispatcher.BeginInvoke(fun () ->
+                        x.UpdateComp <| fun comp ->
+                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                                uttSynthResult.SetAudio audioContent)) |> ignore
+                with ex ->
+                    Trace.WriteLine ex
+            finally
                 dispatcher.BeginInvoke(fun () ->
                     x.UpdateComp <| fun comp ->
-                        utt |> comp.SetUttAudioSynthed audioContent
-                    |> ignore) |> ignore
-            with ex ->
-                dispatcher.BeginInvoke(fun () ->
-                    x.UpdateComp <| fun comp ->
-                        utt |> comp.SetUttAudioNoSynth
-                    |> ignore) |> ignore}
+                        utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                            uttSynthResult.SetIsSynthing false)) |> ignore}
 
     member x.Synth dispatcher =
         let comp = !!x.ActiveComp
         for utt in comp.Utts do
-            let uttAudio = comp.GetUttAudio utt
-            match uttAudio.SynthState with
-            | NoSynth -> x.SynthUtt(dispatcher, utt)
-            | Synthing | Synthed -> ()
+            let uttSynthResult = comp.GetUttSynthResult utt
+            if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
+                x.SynthUtt(dispatcher, utt)
 
 

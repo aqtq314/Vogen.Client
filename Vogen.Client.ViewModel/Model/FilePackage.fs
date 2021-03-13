@@ -13,6 +13,7 @@ open System.IO.Compression
 open System.Linq
 open System.Text
 open System.Text.Encodings
+open System.Text.RegularExpressions
 
 
 module FilePackage =
@@ -75,12 +76,25 @@ module FilePackage =
         (comp, comp.Utts)
         ||> Seq.fold(fun comp utt ->
             let uttName = getUttName utt
-            zipEntryDict.TryGetValue $"{uttName}.m4a" |> Option.ofByRef
-            |> Option.map(fun zipEntry ->
-                use fileStream = zipEntry.Open()
-                let audioContent = AudioSamples.loadFromStream fileStream
-                utt |> comp.SetUttAudioSynthed audioContent)
-            |> Option.defaultValue comp)
+            let comp =
+                match zipEntryDict.TryGetValue $"{uttName}.f0" |> Option.ofByRef with
+                | None -> comp
+                | Some f0Entry ->
+                    use fileStream = f0Entry.Open()
+                    use byteStream = new MemoryStream()
+                    fileStream.CopyTo byteStream
+                    let f0Bytes = byteStream.ToArray()
+                    let f0Samples = Array.zeroCreate(f0Bytes.Length / sizeof<float32>)
+                    Buffer.BlockCopy(f0Bytes, 0, f0Samples, 0, f0Samples.Length * sizeof<float32>)
+                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
+            let comp =
+                match zipEntryDict.TryGetValue $"{uttName}.m4a" |> Option.ofByRef with
+                | None -> comp
+                | Some audioEntry ->
+                    use fileStream = audioEntry.Open()
+                    let audioContent = AudioSamples.loadFromStream fileStream
+                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
+            comp)
 
     let save stream comp =
         let getUttName =
@@ -88,20 +102,29 @@ module FilePackage =
             fun utt -> uttsByNameDict.[utt]
 
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Create)
-        do  use chartStream = (zipFile.CreateEntry "chart.json").Open()
+        do  use chartStream = zipFile.CreateEntry("chart.json", CompressionLevel.Optimal).Open()
             use chartWriter = new StreamWriter(chartStream)
             let fComp = FComp.ofComp getUttName comp
-            let fCompStr = JsonConvert.SerializeObject fComp
+            let fCompStr =
+                use stringWriter = new StringWriter()
+                use jWriter = new JsonTextWriter(stringWriter, Indentation = 2, Formatting = Formatting.Indented)
+                let jSerializer = JsonSerializer.CreateDefault()
+                jSerializer.Serialize(jWriter, fComp)
+                stringWriter.ToString()
+            let fCompStr = Regex.Replace(fCompStr, @"(?<![\}\]],)(?<!\[)\r\n *(?!.+[\[\{])", " ")
             chartWriter.Write fCompStr
 
         comp.Utts |> Seq.iter(fun utt ->
-            let uttAudio = comp.GetUttAudio utt
+            let uttSynthResult = comp.GetUttSynthResult utt
             let uttName = getUttName utt
-            if uttAudio.IsSynthed then
-                use fileStream = (zipFile.CreateEntry $"{uttName}.m4a").Open()
-                fileStream.Write(uttAudio.FileBytes, 0, uttAudio.FileBytes.Length))
-
-
-
+            if uttSynthResult.HasF0Samples then
+                use fileStream = zipFile.CreateEntry($"{uttName}.f0", CompressionLevel.Optimal).Open()
+                let f0Samples = uttSynthResult.F0Samples
+                let f0Bytes = Array.zeroCreate(f0Samples.Length * sizeof<float32>)
+                Buffer.BlockCopy(f0Samples, 0, f0Bytes, 0, f0Samples.Length * sizeof<float32>)
+                fileStream.Write(f0Bytes, 0, f0Bytes.Length)
+            if uttSynthResult.HasAudio then
+                use fileStream = zipFile.CreateEntry($"{uttName}.m4a", CompressionLevel.Fastest).Open()
+                fileStream.Write(uttSynthResult.AudioFileBytes, 0, uttSynthResult.AudioFileBytes.Length))
 
 

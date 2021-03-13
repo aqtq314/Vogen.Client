@@ -75,6 +75,12 @@ module WpfUtil =
             TextBlock.GetForeground x,
             (let dpi = VisualTreeHelper.GetDpi x in dpi.PixelsPerDip))
 
+    let drawGeometry draw =
+        let g = StreamGeometry()
+        do  use sgc = g.Open()
+            draw sgc
+        g |>! freeze
+
 
 
 module BooleanBoxes =

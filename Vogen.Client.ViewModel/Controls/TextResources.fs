@@ -21,10 +21,14 @@ let getRomSchemeChar romScheme =
     | "yue" -> "粤"
     | _ -> raise(KeyNotFoundException($"Unknown romScheme {romScheme}"))
 
-let getSynthStateDescription synthState =
-    match synthState with
-    | NoSynth -> "未合成"
-    | Synthing -> "合成中"
-    | Synthed -> "合成完毕"
+let getIsSynthingDescription isSynthing =
+    match isSynthing with
+    | false -> "算法待机"
+    | true -> "算法请求中"
+
+let getHasAudioDescription hasAudio =
+    match hasAudio with
+    | false -> "未合成"
+    | true -> "合成完毕"
 
 

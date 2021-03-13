@@ -160,8 +160,8 @@ type SideKeyboard() =
         let blackKeyWidth = whiteKeyWidth * x.BlackKeyLengthRatio |> clamp 0.0 whiteKeyWidth
         let cornerRadius = 2.0 |> min(half keyHeight) |> min(half blackKeyWidth)
 
-        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight) |> max minKey
-        let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0) |> min maxKey
+        let botPitch = pixelToPitch keyHeight actualHeight vOffset actualHeight |> int |> max minKey
+        let topPitch = pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil |> int |> min maxKey
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
@@ -172,7 +172,7 @@ type SideKeyboard() =
         for pitch in botPitch .. topPitch do
             if not(Midi.isBlackKey pitch) then
                 let keyOffset = keyOffsetLookup.[pitch % 12] / 12.0
-                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1) - keyOffset)
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5 - keyOffset)
                 let height = keyHeightLookup.[pitch % 12] / 12.0 * keyHeight
                 let x = if isNull whiteKeyPen then 0.0 else half whiteKeyPen.Thickness
                 let width = max 0.0 (whiteKeyWidth - x * 2.0)
@@ -181,7 +181,7 @@ type SideKeyboard() =
         // black keys
         for pitch in botPitch .. topPitch do
             if Midi.isBlackKey pitch then
-                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5)
                 let height = keyHeight
                 let x = if isNull blackKeyPen then 0.0 else half blackKeyPen.Thickness
                 let width = max 0.0 (blackKeyWidth - x * 2.0)
@@ -192,7 +192,7 @@ type SideKeyboard() =
             if pitch % 12 = 0 then
                 let ft = x |> makeFormattedText(sprintf "C%d" (pitch / 12 - 1))
                 let x = whiteKeyWidth - 2.0 - ft.Width
-                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1)) + half(keyHeight - ft.Height)
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5) + half(keyHeight - ft.Height)
                 dc.DrawText(ft, Point(x, y))
 
 type RulerGrid() =
@@ -309,6 +309,7 @@ type ChartEditor() as x =
     static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
+    static let f0Pen = Pen(Brushes.Red, 1.0) |>! freeze
 
     override x.CanScrollH = true
     override x.CanScrollV = true
@@ -344,42 +345,40 @@ type ChartEditor() as x =
             dc.DrawLine(pen, Point(x, 0.0), Point(x, actualHeight))
 
         // pitch grids
-        let botPitch = int(pixelToPitch keyHeight actualHeight vOffset actualHeight) |> max minKey
-        let topPitch = int(pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil) |> min maxKey
+        let botPitch = pixelToPitch keyHeight actualHeight vOffset actualHeight |> int |> max minKey
+        let topPitch = pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil |> int |> min maxKey
 
         for pitch in botPitch .. topPitch do
             match pitch % 12 with
             | 0 | 5 ->
-                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch) - half octavePen.Thickness
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch - 0.5) - half octavePen.Thickness
                 dc.DrawLine(octavePen, Point(0.0, y), Point(actualWidth, y))
             | _ -> ()
 
             if pitch |> Midi.isBlackKey then
-                let y = pitchToPixel keyHeight actualHeight vOffset (float(pitch + 1))
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5)
                 dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
 
         for note in cursorActiveNotes do
             if note.Pitch >= botPitch && note.Pitch <= topPitch then
-                let y = pitchToPixel keyHeight actualHeight vOffset (float(note.Pitch + 1))
+                let y = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
                 dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
 
         // utt states
-        //dc.PushOpacity 0.5
         for utt in comp.Utts do
-            let uttAudio = comp.GetUttAudio utt
+            let uttSynthResult = comp.GetUttSynthResult utt
             if utt.On >= minPulse && utt.On <= maxPulse then
                 let x0 = pulseToPixel quarterWidth hOffset (float utt.On)
-                let yMid = pitchToPixel keyHeight actualHeight vOffset (float utt.Notes.[0].Pitch + 0.5)
+                let yMid = pitchToPixel keyHeight actualHeight vOffset (float utt.Notes.[0].Pitch)
                 let ft =
                     let text = String.concat Environment.NewLine [|
                         $"({TextResources.getRomSchemeChar utt.RomScheme})"
-                        $"({TextResources.getSynthStateDescription uttAudio.SynthState})" |]
+                        $"({TextResources.getIsSynthingDescription uttSynthResult.IsSynthing})"
+                        $"({TextResources.getHasAudioDescription uttSynthResult.HasAudio})" |]
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
                 ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
                 dc.DrawText(ft, Point(x0 - 5.0, yMid - half ft.Height))
-
-        //dc.Pop()
 
         // notes
         for utt in comp.Utts do
@@ -392,9 +391,9 @@ type ChartEditor() as x =
                 if (max n0.Off n1.Off >= minPulse && min n0.On n1.On <= maxPulse &&
                     max n0.Pitch n1.Pitch >= botPitch && min n0.Pitch n1.Pitch <= topPitch) then
                     let n0x1 = pulseToPixel quarterWidth hOffset (float n0.Off)
-                    let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch + 0.5)
+                    let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch)
                     let n1x0 = pulseToPixel quarterWidth hOffset (float n1.On)
-                    let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch + 0.5)
+                    let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch)
                     dc.DrawLine(charConnectPen, Point(n0x1, n0yMid), Point(n1x0, n1yMid))
 
             chars |> Seq.iteri(fun i ch ->
@@ -406,9 +405,9 @@ type ChartEditor() as x =
                     if (max n0.Off n1.Off >= minPulse && min n0.On n1.On <= maxPulse &&
                         max n0.Pitch n1.Pitch >= botPitch && min n0.Pitch n1.Pitch <= topPitch) then
                         let n0x1 = pulseToPixel quarterWidth hOffset (float n0.Off)
-                        let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch + 0.5)
+                        let n0yMid = pitchToPixel keyHeight actualHeight vOffset (float n0.Pitch)
                         let n1x0 = pulseToPixel quarterWidth hOffset (float n1.On)
-                        let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch + 0.5)
+                        let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float n1.Pitch)
                         dc.DrawLine(noteBgPen, Point(n0x1, n0yMid), Point(n1x0, n1yMid))
 
                 // notes
@@ -417,14 +416,14 @@ type ChartEditor() as x =
                         note.Pitch >= botPitch && note.Pitch <= topPitch) then
                         let x0 = pulseToPixel quarterWidth hOffset (float note.On)
                         let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
-                        let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
+                        let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
                         dc.DrawLine(noteBgPen, Point(x0, yMid), Point(x1, yMid))
                     
                 let note = ch.Notes.[0]
                 if (note.Off >= minPulse && note.On <= maxPulse &&
                     note.Pitch >= botPitch && note.Pitch <= topPitch) then
                     let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-                    let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch + 0.5)
+                    let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
                     let fillBrush = if i = 0 then noteBgPen.Brush else Brushes.White :> _
                     dc.DrawEllipse(fillBrush, noteBgPen, Point(x0, yMid), 5.0, 5.0)
 
@@ -438,6 +437,34 @@ type ChartEditor() as x =
                     ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
                     dc.DrawText(ft, Point(x0, yMid - ft.Height))
                     )
+
+        // utt f0 samples
+        let f0Geometry = drawGeometry <| fun sgc ->
+            let bpm0 = comp.Bpm0
+            for utt in comp.Utts do
+                let uttSynthResult = comp.GetUttSynthResult utt
+                let f0Samples = uttSynthResult.F0Samples
+                let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
+                let startSampleIndex =
+                    (Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) / hopSize - 1.0
+                    |> int |> max 0
+                let endSampleIndex =
+                    (Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) / hopSize + 1.0
+                    |> ceil |> int |> min f0Samples.Length
+                let mutable prevVuv = false
+                for sampleIndex in startSampleIndex .. endSampleIndex - 1 do
+                    let freq = f0Samples.[sampleIndex]
+                    if freq > 0f then
+                        let x = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + hopSize * float sampleIndex))
+                        let y = pitchToPixel keyHeight actualHeight vOffset (Midi.ofFreq(float freq))
+                        if not prevVuv then
+                            sgc.BeginFigure(Point(x, y), false, false)
+                            prevVuv <- true
+                        else
+                            sgc.LineTo(Point(x, y), true, false)
+                    else
+                        prevVuv <- false
+        dc.DrawGeometry(null, f0Pen, f0Geometry)
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()

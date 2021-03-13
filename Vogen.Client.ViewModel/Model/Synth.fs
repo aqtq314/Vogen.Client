@@ -48,8 +48,8 @@ module TimeTable =
 
     let ofUtt bpm0 (utt : Utterance) =
         let allNotes = utt.Notes.ToList()
-        let uttStart = (allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
-        let uttEnd = (allNotes.[^0].Off |> Midi.toTimeSpan bpm0) + tailSil
+        let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
+        let uttEnd = (float allNotes.[^0].Off |> Midi.toTimeSpan bpm0) + tailSil
         let uttDur = uttEnd - uttStart
 
         // remove note with same onset-time
@@ -77,8 +77,8 @@ module TimeTable =
             charNotes
             |> Array.map(fun notes ->
                 let outNotes = notes |> Seq.map(fun note ->
-                    let on = (note.On |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
-                    let off = (note.Off |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
+                    let on = (float note.On |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
+                    let off = (float note.Off |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
                     { Pitch = note.Pitch; On = on; Off = off })
                 { Ch = notes.[0].Lyric; Rom = notes.[0].Rom; Notes = ImmutableList.CreateRange outNotes; Ipa = null })
 
@@ -118,30 +118,30 @@ module Synth =
             GC.KeepAlive content
             return result.EnsureSuccessStatusCode() }
 
-    let request(singerName : string) bpm0 utt =
-        async {
-            use httpClient = new HttpClient()
-            let tUtt = TimeTable.ofUtt bpm0 utt
+    let requestPO(tUtt : TimeTable.TUtt) = async {
+        use httpClient = new HttpClient()
+        let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
+            "chars", box tUtt.Chars
+            "uttDur", box tUtt.UttDur
+            "romScheme", box tUtt.RomScheme |])
+        let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
+        return JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr }
 
-            let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
-                "chars", box tUtt.Chars
-                "uttDur", box tUtt.UttDur
-                "romScheme", box tUtt.RomScheme |])
-            let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
-            let chars = JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr
+    let requestF0(tUtt : TimeTable.TUtt)(tChars : ImmutableList<TimeTable.TChar>) = async {
+        use httpClient = new HttpClient()
+        let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict [|
+            "chars", box tChars
+            "romScheme", box tUtt.RomScheme |])
+        let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
+        return JsonConvert.DeserializeObject<float32 []> resultBodyStr }
 
-            let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict [|
-                "chars", box chars
-                "romScheme", box tUtt.RomScheme |])
-            let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
-            let f0 = JsonConvert.DeserializeObject<float []> resultBodyStr
+    let requestAc(tChars : ImmutableList<TimeTable.TChar>)(f0 : float32 [])(singerName : string) = async {
+        use httpClient = new HttpClient()
+        let! synthResult = httpClient.PostJsonAsync(acSynthUrl, dict [|
+            "chars", box tChars
+            "f0", box f0
+            "singerName", box singerName |])
+        let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
+        return AudioSamples.loadFromStream resultBodyByteStream }
 
-            let! synthResult = httpClient.PostJsonAsync(acSynthUrl, dict [|
-                "chars", box chars
-                "f0", box f0
-                "singerName", box singerName |])
-            let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
-
-            return AudioSamples.loadFromStream resultBodyByteStream }
-    
 

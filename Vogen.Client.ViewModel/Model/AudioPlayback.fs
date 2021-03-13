@@ -46,10 +46,10 @@ module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
         for utt in comp.Utts do
-            let uttAudio = comp.GetUttAudio utt
-            if uttAudio.IsSynthed then
-                let samples = uttAudio.Samples
-                let sampleOffset = uttAudio.SampleOffset
+            let uttSynthResult = comp.GetUttSynthResult utt
+            if uttSynthResult.HasAudio then
+                let samples = uttSynthResult.AudioSamples
+                let sampleOffset = uttSynthResult.SampleOffset
                 let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
                 let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
                 for i in startIndex .. endIndex - 1 do

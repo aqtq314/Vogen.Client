@@ -31,11 +31,11 @@ module Midi =
         let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
         sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
 
-    let toTimeSpan bpm (pulses : int64) =
-        float pulses / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
+    let toTimeSpan bpm pulses =
+        pulses / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
 
     let ofTimeSpan bpm (timeSpan : TimeSpan) =
-        timeSpan.TotalMinutes * bpm * float Midi.ppqn |> round |> int64
+        timeSpan.TotalMinutes * bpm * float Midi.ppqn
 
 
 type TimeSignature(numerator, denominator) =

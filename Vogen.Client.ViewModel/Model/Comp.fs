@@ -14,11 +14,6 @@ open System.Text
 open System.Text.Encodings
 
 
-type SynthState =
-    | NoSynth           // No audio synthesized or synth result outdated
-    | Synthing          // Audio synth in progress, previous synth result may or may not exist
-    | Synthed           // Synth result available and up to date
-
 type Note(pitch, lyric, rom, on, dur) =
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
@@ -49,69 +44,72 @@ type Utterance(romScheme, notes) =
     member x.SetNotes notes = Utterance(romScheme, notes)
 
     static member CompareByPosition(utt1 : Utterance)(utt2 : Utterance) =
-        compare utt1.On utt2.On
+        match compare utt1.On utt2.On with
+        | 0 -> -(compare utt1.Notes.[0].Pitch utt2.Notes.[0].Pitch)
+        | onDiff -> onDiff
 
-type UttAudio private(sampleOffset, fileBytes, samples, synthState) =
+type UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples) =
     member x.SampleOffset : int = sampleOffset
-    member x.FileBytes : byte [] = fileBytes
-    member x.Samples : float32 [] = samples
-    member x.SynthState : SynthState = synthState
+    member x.F0Samples : float32 [] = f0Samples
+    member x.AudioFileBytes : byte [] = audioFileBytes
+    member x.AudioSamples : float32 [] = audioSamples
+    member x.HasAudio : bool = hasAudio
+    member x.IsSynthing : bool = isSynthing
 
-    member x.IsSynthed =
-        match synthState with
-        | NoSynth | Synthing -> false
-        | Synthed -> true
+    member x.HasF0Samples = x.F0Samples.Length > 0
 
-    new(sampleOffset) = UttAudio(sampleOffset, Array.empty, Array.empty, NoSynth)
+    new(sampleOffset) = UttSynthResult(sampleOffset, false, Array.empty, false, Array.empty, Array.empty)
 
     static member Create bpm0 (utt : Utterance) =
         let sampleOffset =
-            utt.Notes.[0].On
+            float utt.Notes.[0].On
             |> Midi.toTimeSpan bpm0
             |> (+) -headSil
             |> Audio.timeToSample
-        UttAudio(sampleOffset)
+        UttSynthResult(sampleOffset)
 
-    member x.SetNoSynth() = UttAudio(sampleOffset, Array.empty, Array.empty, NoSynth)
-    member x.SetSynthing() = UttAudio(sampleOffset, Array.empty, Array.empty, Synthing)
-    member x.SetSynthed(fileBytes, audioSamples) = UttAudio(sampleOffset, fileBytes, audioSamples, Synthed)
+    member x.Clear() =
+        UttSynthResult(sampleOffset, false, Array.empty, false, Array.empty, Array.empty)
 
-type Composition private(bpm0, utts, uttAudios) =
+    member x.SetIsSynthing isSynthing =
+        UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples)
+
+    member x.SetF0Samples f0Samples =
+        UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples)
+
+    member x.SetNoAudio() =
+        UttSynthResult(sampleOffset, isSynthing, f0Samples, false, Array.empty, Array.empty)
+
+    member x.SetAudio(audioFileBytes, audioSamples) =
+        UttSynthResult(sampleOffset, isSynthing, f0Samples, true, audioFileBytes, audioSamples)
+
+type Composition private(bpm0, utts, uttSynthResults) =
     let utts = (utts : ImmutableList<Utterance>).Sort(Utterance.CompareByPosition)
 
     member x.Bpm0 : float = bpm0
     member x.Utts : ImmutableList<Utterance> = utts
 
-    member x.GetUttAudio utt = (uttAudios : ImmutableDictionary<_, _>).[utt]
+    member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
     new(bpm0, utts) =
-        let uttAudios = (utts : ImmutableList<_>).ToImmutableDictionary(id, UttAudio.Create bpm0)
-        Composition(bpm0, utts, uttAudios)
+        let uttSynthResults = (utts : ImmutableList<_>).ToImmutableDictionary(id, UttSynthResult.Create bpm0)
+        Composition(bpm0, utts, uttSynthResults)
 
     new() = Composition(120.0, ImmutableList.Empty)
     static member Empty = Composition()
 
     member x.SetUtts utts =
-        let uttAudios = (utts : ImmutableList<_>).ToImmutableDictionary(id, fun utt ->
-            uttAudios.TryGetValue utt
+        let uttSynthResults = (utts : ImmutableList<_>).ToImmutableDictionary(id, fun utt ->
+            uttSynthResults.TryGetValue utt
             |> Option.ofByRef
-            |> Option.defaultWith(fun () -> UttAudio.Create bpm0 utt))
-        Composition(bpm0, utts, uttAudios)
+            |> Option.defaultWith(fun () -> UttSynthResult.Create bpm0 utt))
+        Composition(bpm0, utts, uttSynthResults)
 
-    member private x.SetUttAudio(utt, updateUttAudio) =
-        match uttAudios.TryGetValue utt |> Option.ofByRef with
+    member x.SetUttSynthResult updateUttSynthResult utt =
+        match uttSynthResults.TryGetValue utt |> Option.ofByRef with
         | None -> x
-        | Some uttAudio ->
-            let uttAudios = uttAudios.SetItem(utt, updateUttAudio uttAudio)
-            Composition(bpm0, utts, uttAudios)
-
-    member x.SetUttAudioNoSynth utt =
-        x.SetUttAudio(utt, fun uttAudio -> uttAudio.SetNoSynth())
-
-    member x.SetUttAudioSynthing utt =
-        x.SetUttAudio(utt, fun uttAudio -> uttAudio.SetSynthing())
-
-    member x.SetUttAudioSynthed(fileBytes, audioSamples) utt =
-        x.SetUttAudio(utt, fun uttAudio -> uttAudio.SetSynthed(fileBytes, audioSamples))
+        | Some uttSynthResult ->
+            let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
+            Composition(bpm0, utts, uttSynthResults)
 
 
