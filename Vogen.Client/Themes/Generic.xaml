@@ -27,7 +27,7 @@
                 </MultiBinding>
               </ScrollBar.ViewportSize>
               <ScrollBar.LargeChange>
-                <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.8">
+                <MultiBinding Converter="{x:Static vc:ChartConverters.hScrollSpanConverter}" ConverterParameter="0.9">
                   <Binding Path="Log2ZoomValue" RelativeSource="{RelativeSource TemplatedParent}"/>
                   <Binding Path="ScrollViewport" RelativeSource="{RelativeSource TemplatedParent}"/>
                 </MultiBinding>
@@ -71,7 +71,7 @@
                 </MultiBinding>
               </ScrollBar.ViewportSize>
               <ScrollBar.LargeChange>
-                <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollSpanConverter}" ConverterParameter="0.8">
+                <MultiBinding Converter="{x:Static vc:ChartConverters.vScrollSpanConverter}" ConverterParameter="0.9">
                   <Binding Path="Log2ZoomValue" RelativeSource="{RelativeSource TemplatedParent}"/>
                   <Binding Path="ScrollViewport" RelativeSource="{RelativeSource TemplatedParent}"/>
                 </MultiBinding>

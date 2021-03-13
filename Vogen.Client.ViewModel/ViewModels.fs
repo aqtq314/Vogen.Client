@@ -22,7 +22,7 @@ type ProgramModel() as x =
     let activeComp = rp Composition.Empty
     let audioEngine = AudioPlaybackEngine()
 
-    static let latency = 100
+    static let latency = 80
     static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
     let isPlaying = rp false
     let cursorPos = rp 0L

@@ -70,7 +70,7 @@ type NoteChartEditBase() =
         and set(v : int) = x.SetValue(NoteChartEditBase.MinKeyProperty, box v)
     static member val MinKeyProperty =
         Dp.reg<int, NoteChartEditBase> "MinKey"
-            (Dp.Meta(45, Dp.MetaFlags.AffectsRender, (fun x _ ->
+            (Dp.Meta(33, Dp.MetaFlags.AffectsRender, (fun x _ ->
                 x.CoerceValue NoteChartEditBase.VOffsetAnimatedProperty)))
 
     member x.MaxKey
@@ -309,7 +309,7 @@ type ChartEditor() as x =
     static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
-    
+
     override x.CanScrollH = true
     override x.CanScrollV = true
 
@@ -364,7 +364,7 @@ type ChartEditor() as x =
                 dc.DrawRectangle(noteRowBgBrushCursorActive, null, Rect(0.0, y, actualWidth, keyHeight))
 
         // utt states
-        dc.PushOpacity 0.5
+        //dc.PushOpacity 0.5
         for utt in comp.Utts do
             let uttAudio = comp.GetUttAudio utt
             if utt.On >= minPulse && utt.On <= maxPulse then
@@ -379,7 +379,7 @@ type ChartEditor() as x =
                 ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
                 dc.DrawText(ft, Point(x0 - 5.0, yMid - half ft.Height))
 
-        dc.Pop()
+        //dc.Pop()
 
         // notes
         for utt in comp.Utts do
@@ -430,13 +430,14 @@ type ChartEditor() as x =
 
                     // text
                     let textOpacity = if charCursorActive then 1.0 else 0.5
-                    dc.PushOpacity textOpacity
-                    let ft = x |> makeFormattedText note.Lyric
-                    ft.SetFontSize(1.25 * TextBlock.GetFontSize x)
-                    dc.DrawText(ft, Point(x0, yMid - ft.Height))
+                    //let ft = x |> makeFormattedText note.Lyric
+                    //ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
+                    //let yText = yMid - ft.Height
+                    //dc.DrawText(ft, Point(x0, yText))
                     let ft = x |> makeFormattedText note.Rom
-                    dc.DrawText(ft, Point(x0, yMid))
-                    dc.Pop())
+                    ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
+                    dc.DrawText(ft, Point(x0, yMid - ft.Height))
+                    )
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()

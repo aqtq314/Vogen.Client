@@ -142,7 +142,7 @@ type NoteChartEditPanelBase() =
 
         let onMouseWheel(x : NoteChartEditBase)(e : MouseWheelEventArgs) =
             if x.CanScrollH then
-                let zoomDelta = float(sign e.Delta) * 0.1       // TODO Use Slider.SmallChange
+                let zoomDelta = float(sign e.Delta) * 0.2       // TODO Use Slider.SmallChange
                 let log2Zoom = hScrollZoom.Log2ZoomValue
                 let mousePos = e.GetPosition x
                 let xPos = mousePos.X
@@ -157,7 +157,7 @@ type NoteChartEditPanelBase() =
                 hScrollZoom.ScrollValue <- hOffset - offsetDelta
 
             elif x.CanScrollV then
-                let zoomDelta = float(sign e.Delta) * 0.04      // TODO Use Slider.SmallChange
+                let zoomDelta = float(sign e.Delta) * 0.1       // TODO Use Slider.SmallChange
                 let log2Zoom = vScrollZoom.Log2ZoomValue
                 let mousePos = e.GetPosition x
                 let yPos = mousePos.Y
@@ -184,7 +184,7 @@ type NoteChartEditPanelBase() =
                 let actualWidth = x.ActualWidth
                 let hRightOffset = pixelToPulse quarterWidth hOffset actualWidth
                 if float prevPlayPos < hRightOffset && float playPos >= hRightOffset then
-                    hScrollZoom.ScrollValue <- hRightOffset
+                    hScrollZoom.ScrollValue <- hOffset + (hRightOffset - hOffset) * 0.9
 
         x.KeyDown.Add <| fun e ->
             match e.Key with
