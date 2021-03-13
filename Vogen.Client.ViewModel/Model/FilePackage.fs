@@ -36,7 +36,7 @@ module FilePackage =
     type FUtt = {
         [<JsonProperty("name", Required=Required.Always)>]      Name : string
         [<JsonProperty("romScheme", Required=Required.Always)>] RomScheme : string
-        [<JsonProperty("notes", Required=Required.Always)>]     Notes : ImmutableArray<FNote> }
+        [<JsonProperty("notes", Required=Required.Always)>]     Notes : FNote [] }
         with
         static member toUtt x =
             let { Name = name; RomScheme = romScheme; Notes = fNotes } = x
@@ -44,13 +44,40 @@ module FilePackage =
             Utterance(romScheme, notes), name
 
         static member ofUtt uttName (utt : Utterance) =
-            let fNotes = ImmutableArray.CreateRange(Seq.map FNote.ofNote utt.Notes)
+            let fNotes = Array.ofSeq(Seq.map FNote.ofNote utt.Notes)
             { Name = uttName; RomScheme = utt.RomScheme; Notes = fNotes }
+
+    [<NoComparison; ReferenceEquality>]
+    type FPh = {
+        [<JsonProperty("ph", Required=Required.Always)>]  Ph : string
+        [<JsonProperty("on", Required=Required.Always)>]  On : int
+        [<JsonProperty("off", Required=Required.Always)>] Off : int }
+        with
+        static member toPh x =
+            let { Ph = ph; On = on; Off = off } = x
+            PhonemeInterval(ph, on, off)
+
+        static member ofPh(ph : PhonemeInterval) =
+            { Ph = ph.Ph; On = ph.On; Off = ph.Off }
+
+    [<NoComparison; ReferenceEquality>]
+    type FChGrid = {
+        [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
+        [<JsonProperty("phs", Required=Required.Always)>]   Phs : FPh [] }
+        with
+        static member toCharGrid x =
+            let { Pitch = pitch; Phs = fPhs } = x
+            let phs = fPhs |> Array.map FPh.toPh
+            CharGrid(pitch, phs)
+
+        static member ofCharGrid(charGrid : CharGrid) =
+            let fPhs = charGrid.Phs |> Array.map FPh.ofPh
+            { Pitch = charGrid.Pitch; Phs = fPhs }
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
         [<JsonProperty("bpm0", Required=Required.Always)>]  Bpm0 : float
-        [<JsonProperty("utts", Required=Required.Always)>]  Utts : ImmutableArray<FUtt> }
+        [<JsonProperty("utts", Required=Required.Always)>]  Utts : FUtt [] }
         with
         static member toComp x =
             let { Bpm0 = bpm0; Utts = fUtts } = x
@@ -61,7 +88,7 @@ module FilePackage =
 
         static member ofComp getUttName (comp : Composition) =
             let uttNames = Seq.map getUttName comp.Utts
-            let fUtts = ImmutableArray.CreateRange(Seq.map2 FUtt.ofUtt uttNames comp.Utts)
+            let fUtts = Array.ofSeq(Seq.map2 FUtt.ofUtt uttNames comp.Utts)
             { Bpm0 = comp.Bpm0; Utts = fUtts }
 
     let read stream =
@@ -76,6 +103,16 @@ module FilePackage =
         (comp, comp.Utts)
         ||> Seq.fold(fun comp utt ->
             let uttName = getUttName utt
+            let comp =
+                match zipEntryDict.TryGetValue $"{uttName}.cg" |> Option.ofByRef with
+                | None -> comp
+                | Some cgEntry ->
+                    use fileStream = cgEntry.Open()
+                    use fileReader = new StreamReader(fileStream)
+                    let fChGridsStr = fileReader.ReadToEnd()
+                    let fChGrids = JsonConvert.DeserializeObject<FChGrid []> fChGridsStr
+                    let charGrids = Array.map FChGrid.toCharGrid fChGrids
+                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
             let comp =
                 match zipEntryDict.TryGetValue $"{uttName}.f0" |> Option.ofByRef with
                 | None -> comp
@@ -105,18 +142,19 @@ module FilePackage =
         do  use chartStream = zipFile.CreateEntry("chart.json", CompressionLevel.Optimal).Open()
             use chartWriter = new StreamWriter(chartStream)
             let fComp = FComp.ofComp getUttName comp
-            let fCompStr =
-                use stringWriter = new StringWriter()
-                use jWriter = new JsonTextWriter(stringWriter, Indentation = 2, Formatting = Formatting.Indented)
-                let jSerializer = JsonSerializer.CreateDefault()
-                jSerializer.Serialize(jWriter, fComp)
-                stringWriter.ToString()
-            let fCompStr = Regex.Replace(fCompStr, @"(?<![\}\]],)(?<!\[)\r\n *(?!.+[\[\{])", " ")
+            let fCompStr = JsonConvert.SerializeObjectFormatted fComp
             chartWriter.Write fCompStr
 
         comp.Utts |> Seq.iter(fun utt ->
             let uttSynthResult = comp.GetUttSynthResult utt
             let uttName = getUttName utt
+            if uttSynthResult.HasCharGrids then
+                use fileStream = zipFile.CreateEntry($"{uttName}.cg", CompressionLevel.Optimal).Open()
+                use fileWriter = new StreamWriter(fileStream)
+                let charGrids = uttSynthResult.CharGrids
+                let fChGrids = Array.map FChGrid.ofCharGrid charGrids
+                let fChGridsStr = JsonConvert.SerializeObjectFormatted fChGrids
+                fileWriter.Write fChGridsStr
             if uttSynthResult.HasF0Samples then
                 use fileStream = zipFile.CreateEntry($"{uttName}.f0", CompressionLevel.Optimal).Open()
                 let f0Samples = uttSynthResult.F0Samples

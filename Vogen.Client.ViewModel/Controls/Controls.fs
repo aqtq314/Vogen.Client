@@ -309,6 +309,8 @@ type ChartEditor() as x =
     static let noteBgPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let noteBgPenCursorActive = Pen(noteBgBrush, 4.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round) |>! freeze
     static let charConnectPen = Pen(noteBgBrush, 2.0, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, DashStyle = DashStyle([| 0.0; 3.0 |], 0.0)) |>! freeze
+    static let phBgBrush       = SolidColorBrush((0x20BB6699u).AsColor()) |>! freeze
+    static let phBorderPen = Pen(SolidColorBrush((0xC0BB6699u).AsColor()), 0.5) |>! freeze
     static let f0Pen = Pen(Brushes.Red, 1.0) |>! freeze
 
     override x.CanScrollH = true
@@ -378,7 +380,7 @@ type ChartEditor() as x =
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
                 ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
-                dc.DrawText(ft, Point(x0 - 5.0, yMid - half ft.Height))
+                dc.DrawText(ft, Point(x0 - 5.0, yMid - ft.Height))
 
         // notes
         for utt in comp.Utts do
@@ -429,33 +431,45 @@ type ChartEditor() as x =
 
                     // text
                     let textOpacity = if charCursorActive then 1.0 else 0.5
-                    //let ft = x |> makeFormattedText note.Lyric
-                    //ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
-                    //let yText = yMid - ft.Height
-                    //dc.DrawText(ft, Point(x0, yText))
                     let ft = x |> makeFormattedText note.Rom
                     ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
-                    dc.DrawText(ft, Point(x0, yMid - ft.Height))
-                    )
+                    dc.DrawText(ft, Point(x0, yMid - ft.Height)))
+
+        // utt ph bounds
+        let bpm0 = comp.Bpm0
+        let ipaTypeface = Typeface("Segoe UI")
+        for utt in comp.Utts do
+            let uttSynthResult = comp.GetUttSynthResult utt
+            let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
+            for charGrid in uttSynthResult.CharGrids do
+                let pitch = charGrid.Pitch
+                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
+                for ph in charGrid.Phs do
+                    let x0 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.On)))
+                    let x1 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.Off)))
+                    if x1 >= 0.0 && x0 <= actualWidth then
+                        let ft = x |> makeFormattedText ph.Ph
+                        ft.SetFontTypeface ipaTypeface
+                        dc.DrawRectangle(phBgBrush, phBorderPen, Rect(x0, y, x1 - x0, ft.Height))
+                        dc.DrawText(ft, Point(x0, y))
 
         // utt f0 samples
         let f0Geometry = drawGeometry <| fun sgc ->
-            let bpm0 = comp.Bpm0
             for utt in comp.Utts do
                 let uttSynthResult = comp.GetUttSynthResult utt
                 let f0Samples = uttSynthResult.F0Samples
                 let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
                 let startSampleIndex =
-                    (Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) / hopSize - 1.0
+                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) - 1.0
                     |> int |> max 0
                 let endSampleIndex =
-                    (Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) / hopSize + 1.0
+                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) + 1.0
                     |> ceil |> int |> min f0Samples.Length
                 let mutable prevVuv = false
                 for sampleIndex in startSampleIndex .. endSampleIndex - 1 do
                     let freq = f0Samples.[sampleIndex]
                     if freq > 0f then
-                        let x = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + hopSize * float sampleIndex))
+                        let x = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float sampleIndex)))
                         let y = pitchToPixel keyHeight actualHeight vOffset (Midi.ofFreq(float freq))
                         if not prevVuv then
                             sgc.BeginFigure(Point(x, y), false, false)

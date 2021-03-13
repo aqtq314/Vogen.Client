@@ -48,17 +48,28 @@ type Utterance(romScheme, notes) =
         | 0 -> -(compare utt1.Notes.[0].Pitch utt2.Notes.[0].Pitch)
         | onDiff -> onDiff
 
-type UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples) =
+type PhonemeInterval(ph, on, off) =      // on/off in vocoder frames
+    member x.Ph : string = ph
+    member x.On : int = on
+    member x.Off : int = off
+
+type CharGrid(pitch, phs) =
+    member x.Pitch : int = pitch
+    member x.Phs : PhonemeInterval [] = phs
+
+type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples) =
     member x.SampleOffset : int = sampleOffset
+    member x.CharGrids : CharGrid [] = charGrids
     member x.F0Samples : float32 [] = f0Samples
     member x.AudioFileBytes : byte [] = audioFileBytes
     member x.AudioSamples : float32 [] = audioSamples
     member x.HasAudio : bool = hasAudio
     member x.IsSynthing : bool = isSynthing
 
+    member x.HasCharGrids = x.CharGrids.Length > 0
     member x.HasF0Samples = x.F0Samples.Length > 0
 
-    new(sampleOffset) = UttSynthResult(sampleOffset, false, Array.empty, false, Array.empty, Array.empty)
+    new(sampleOffset) = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
 
     static member Create bpm0 (utt : Utterance) =
         let sampleOffset =
@@ -69,19 +80,22 @@ type UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileByte
         UttSynthResult(sampleOffset)
 
     member x.Clear() =
-        UttSynthResult(sampleOffset, false, Array.empty, false, Array.empty, Array.empty)
+        UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
 
     member x.SetIsSynthing isSynthing =
-        UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
+
+    member x.SetCharGrids charGrids =
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
 
     member x.SetF0Samples f0Samples =
-        UttSynthResult(sampleOffset, isSynthing, f0Samples, hasAudio, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
 
     member x.SetNoAudio() =
-        UttSynthResult(sampleOffset, isSynthing, f0Samples, false, Array.empty, Array.empty)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, false, Array.empty, Array.empty)
 
     member x.SetAudio(audioFileBytes, audioSamples) =
-        UttSynthResult(sampleOffset, isSynthing, f0Samples, true, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
 type Composition private(bpm0, utts, uttSynthResults) =
     let utts = (utts : ImmutableList<Utterance>).Sort(Utterance.CompareByPosition)

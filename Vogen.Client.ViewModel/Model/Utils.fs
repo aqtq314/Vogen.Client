@@ -11,6 +11,7 @@ open System.IO
 open System.IO.Compression
 open System.Linq
 open System.Text
+open System.Text.RegularExpressions
 
 
 [<AutoOpen>]
@@ -25,6 +26,16 @@ module Utils =
             x.CopyTo cacheStream
             cacheStream.Position <- 0L
             cacheStream
+
+    type JsonConvert with
+        static member SerializeObjectFormatted value =
+            let jStr =
+                use stringWriter = new StringWriter()
+                use jWriter = new JsonTextWriter(stringWriter, Indentation = 2, Formatting = Formatting.Indented)
+                let jSerializer = JsonSerializer.CreateDefault()
+                jSerializer.Serialize(jWriter, value)
+                stringWriter.ToString()
+            Regex.Replace(jStr, @"(?<![\}\]],)(?<!\[)\r\n *(?!.+[\[\{])", " ")
 
 module Audio =
     let [<Literal>] fs = 44100

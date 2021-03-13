@@ -136,6 +136,11 @@ type ProgramModel() as x =
         Async.Start <| async {
             try try let tUtt = TimeTable.ofUtt bpm0 utt
                     let! tChars = Synth.requestPO tUtt
+                    let charGrids = TimeTable.toCharGrids tChars
+                    dispatcher.BeginInvoke(fun () ->
+                        x.UpdateComp <| fun comp ->
+                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                                uttSynthResult.SetCharGrids charGrids)) |> ignore
                     let! f0Samples = Synth.requestF0 tUtt tChars
                     dispatcher.BeginInvoke(fun () ->
                         x.UpdateComp <| fun comp ->

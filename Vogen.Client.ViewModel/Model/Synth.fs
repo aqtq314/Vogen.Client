@@ -46,6 +46,16 @@ module TimeTable =
         [<JsonProperty("romScheme", Required=Required.Always)>]   RomScheme : string
         [<JsonProperty("chars", Required=Required.Always)>]       Chars : ImmutableList<TChar> }
 
+    let toCharGrids tChars =
+        tChars
+        |> Seq.filter(fun { TChar.Ch = ch } -> ch <> null)
+        |> Seq.map(fun { Notes = notes; Ipa = ipa } ->
+            let pitch = notes.[0].Pitch
+            let phs = ipa |> Seq.map(fun { Ph = ph; On = on; Off = off } ->
+                PhonemeInterval(ph, on, off)) |> Array.ofSeq
+            CharGrid(pitch, phs))
+        |> Array.ofSeq
+
     let ofUtt bpm0 (utt : Utterance) =
         let allNotes = utt.Notes.ToList()
         let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
