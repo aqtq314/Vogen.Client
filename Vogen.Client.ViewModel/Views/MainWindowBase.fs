@@ -32,6 +32,11 @@ type MainWindowBase() =
 
     member x.ProgramModel = x.DataContext :?> ProgramModel
 
+    override x.OnClosing e =
+        match x.CheckChanges() with
+        | Ok() -> ()
+        | Error() -> e.Cancel <- true
+
     member x.ShowError(ex : #exn) =
         MessageBox.Show(
             x, $"Error saving file: {ex.Message}\r\n\r\n{ex.StackTrace}", MainWindowBase.AppName,
