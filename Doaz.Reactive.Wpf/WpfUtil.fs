@@ -12,7 +12,6 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Data
-open System.Windows.Documents
 open System.Windows.Input
 open System.Windows.Media
 open System.Windows.Media.Imaging
@@ -79,6 +78,18 @@ module WpfUtil =
         let g = StreamGeometry()
         do  use sgc = g.Open()
             draw sgc
+        g |>! freeze
+
+    let pointsToGeometry isClosed (points : #seq<_>) =
+        let g = StreamGeometry()
+        do  use sgc = g.Open()
+            use pointsIter = points.GetEnumerator()
+            if pointsIter.MoveNext() then
+                sgc.BeginFigure(pointsIter.Current, true, isClosed)
+                let pointList = List()
+                while pointsIter.MoveNext() do
+                    pointList.Add pointsIter.Current
+                sgc.PolyLineTo(pointList, true, false)
         g |>! freeze
 
 

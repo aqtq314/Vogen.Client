@@ -48,4 +48,10 @@ module Audio =
     let timeToSample(time : TimeSpan) =
         int(time.TotalSeconds * float fs)
 
+    let inline pulseToSample bpm0 pulses =
+        pulses |> Midi.toTimeSpan bpm0 |> timeToSample
+
+    let inline sampleToPulse bpm0 sampleTime =
+        sampleTime |> sampleToTime |> Midi.ofTimeSpan bpm0
+
 
