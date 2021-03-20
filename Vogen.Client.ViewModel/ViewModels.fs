@@ -65,15 +65,15 @@ type ProgramModel() as x =
         x.UpdateCompReturn update |> ignore
 
     member x.New() =
-        x.Stop()
+        if isPlaying.Value then x.Stop()
         x.LoadFromFile None
 
     member x.Open filePath =
-        x.Stop()
+        if isPlaying.Value then x.Stop()
         x.LoadFromFile(Some filePath)
 
     member x.Import filePath =
-        x.Stop()
+        if isPlaying.Value then x.Stop()
         let comp =
             match Path.GetExtension(filePath : string).ToLower() with
             | ".vog" ->
@@ -96,6 +96,9 @@ type ProgramModel() as x =
         compFilePathOp |> Rp.set(Some outFilePath)
         compFileName |> Rp.set(Path.GetFileName outFilePath)
 
+    member x.Export outFilePath =
+        !!x.ActiveComp |> AudioSamples.renderToFile outFilePath
+
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
             float newCursorPos
@@ -104,12 +107,13 @@ type ProgramModel() as x =
         cursorPos |> Rp.set newCursorPos
 
     member x.PlaybackSyncCursorPos() =
-        cursorPos |> Rp.set(
+        let newCursorPos =
             audioEngine.PlaybackSamplePosition
             |> Audio.sampleToTime
             |> (+)(TimeSpan.FromTicks(Stopwatch.GetTimestamp() - audioEngine.PlaybackPositionRefTicks))
             |> (+)(if isPlaying.Value then -latencyTimeSpan else TimeSpan.Zero)
-            |> Midi.ofTimeSpan((!!activeComp).Bpm0) |> round |> int64)
+            |> Midi.ofTimeSpan((!!activeComp).Bpm0) |> round |> int64
+        cursorPos |> Rp.set newCursorPos
 
     member x.Play() =
         waveOut.Play()

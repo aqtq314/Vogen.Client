@@ -40,7 +40,7 @@ module Utils =
 module Audio =
     let [<Literal>] fs = 44100
     let [<Literal>] channels = 1
-    let waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
+    let playbackWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
 
     let sampleToTime(sampleTime : int) =
         TimeSpan.FromSeconds(float sampleTime / float fs)

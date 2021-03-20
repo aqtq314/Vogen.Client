@@ -19,6 +19,7 @@ let getRomSchemeChar romScheme =
     match romScheme with
     | "man" -> "普"
     | "yue" -> "粤"
+    | "yue-wz" -> "梧"
     | _ -> raise(KeyNotFoundException($"Unknown romScheme {romScheme}"))
 
 let getIsSynthingDescription isSynthing =

@@ -1,5 +1,6 @@
 ﻿namespace Vogen.Client.Model
 
+open Doaz.Reactive
 open NAudio
 open NAudio.MediaFoundation
 open NAudio.Wave
@@ -13,6 +14,18 @@ open System.Runtime.InteropServices
 open Audio
 
 
+type SampleProvider(samples : _ []) =
+    member val CurrOffset = 0 with get, set
+    interface ISampleProvider with
+        member x.WaveFormat = playbackWaveFormat
+        member x.Read(buffer, offset, count) =
+            let currOffset = x.CurrOffset
+            let count = count |> min(samples.Length - currOffset)
+            for i in 0 .. count - 1 do
+                buffer.[offset + i] <- samples.[currOffset + i]
+            x.CurrOffset <- currOffset + count
+            count
+
 module AudioSamples =
     let loadFromStream(fileStream : Stream) =
         use cacheStream = new MemoryStream()
@@ -21,7 +34,7 @@ module AudioSamples =
         cacheStream.Position <- 0L
 
         use reader = new StreamMediaFoundationReader(cacheStream)
-        use reader = new MediaFoundationResampler(reader, waveFormat)
+        use reader = new MediaFoundationResampler(reader, playbackWaveFormat)
         let sampleReader = reader.ToSampleProvider()
 
         let sampleChunks = List<_>()
@@ -42,6 +55,31 @@ module AudioSamples =
         use fileStream = File.OpenRead filePath
         loadFromStream fileStream
 
+    let renderComp(comp : Composition) =
+        let uttSynthResults =
+            comp.Utts
+            |> Seq.map comp.GetUttSynthResult
+            |> Seq.filter(fun synthResult -> synthResult.HasAudio)
+            |> Array.ofSeq
+        let outSampleDur =
+            uttSynthResults
+            |> Seq.map(fun synthResult -> synthResult.SampleOffset + synthResult.AudioSamples.Length)
+            |> Seq.appendItem 0
+            |> Seq.max
+        let outSamples = Array.zeroCreate outSampleDur
+        for synthResult in uttSynthResults do
+            let samples = synthResult.AudioSamples
+            let sampleOffset = synthResult.SampleOffset
+            for i in sampleOffset .. sampleOffset + samples.Length - 1 do
+                outSamples.[i] <- outSamples.[i] + samples.[i - sampleOffset]
+        outSamples
+
+    let renderToFile filePath comp =
+        let outSamples = renderComp comp
+        let sampleProvider = SampleProvider(outSamples)
+        let waveProvider = sampleProvider.ToWaveProvider()
+        MediaFoundationEncoder.EncodeToAac(waveProvider, filePath, 192000)
+
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
@@ -60,7 +98,7 @@ type AudioPlaybackEngine() =
 
     member val Comp = Composition.Empty with get, set
 
-    member val PlaybackPositionRefTicks = 0L with get, set
+    member val PlaybackPositionRefTicks = Stopwatch.GetTimestamp() with get, set
     member x.PlaybackSamplePosition = playbackSamplePos
 
     member x.ManualSetPlaybackSamplePosition newPos =
@@ -69,7 +107,7 @@ type AudioPlaybackEngine() =
             x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
 
     interface ISampleProvider with
-        member x.WaveFormat = Audio.waveFormat
+        member x.WaveFormat = Audio.playbackWaveFormat
         member x.Read(buffer, offset, count) =
             lock x <| fun () ->
                 AudioPlayback.fillBuffer(playbackSamplePos, x.Comp, buffer, offset, count)

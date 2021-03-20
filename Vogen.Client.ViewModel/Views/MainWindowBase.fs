@@ -7,6 +7,7 @@ open FSharp.Linq
 open Microsoft.Win32
 open System
 open System.Collections.Generic
+open System.IO
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Input
@@ -18,7 +19,7 @@ open Vogen.Client.ViewModel
 type MainWindowBase() =
     inherit Window()
 
-    static member AppName = "Vogen Client"
+    static member AppName = "未来虚拟唱歌人训练营"
 
     static member WindowTitleConverter = ValueConverter.CreateMulti(fun vs ->
         match vs with
@@ -36,6 +37,7 @@ type MainWindowBase() =
         match x.CheckChanges() with
         | Ok() -> ()
         | Error() -> e.Cancel <- true
+        base.OnClosing e
 
     member x.ShowError(ex : #exn) =
         MessageBox.Show(
@@ -114,5 +116,18 @@ type MainWindowBase() =
         with ex ->
             x.ShowError ex
             return! Error() }
+
+    member x.Export() : Result<unit, unit> = result {
+        let saveFileDialog =
+            let defaultFileName = !!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName
+            let defaultFileName = Path.ChangeExtension(defaultFileName, ".m4a")
+            SaveFileDialog(
+                FileName = defaultFileName,
+                DefaultExt = ".m4a",
+                Filter = "MP4 Audio|*.m4a")
+        let dialogResult = saveFileDialog.ShowDialog x
+        if dialogResult ?= true then
+            let filePath = saveFileDialog.FileName
+            x.ProgramModel.Export filePath }
 
 

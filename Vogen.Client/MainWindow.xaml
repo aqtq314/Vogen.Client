@@ -11,28 +11,34 @@
                    xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
                    xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
                    mc:Ignorable="d"
-                   Width="800" Height="450"
-                   DataContext="{x:Static vm:DesignerModels.programModel}">
+                   Width="1024" Height="576"
+                   d:DataContext="{x:Static vm:DesignerModels.programModel}">
   <Window.Title>
     <MultiBinding Converter="{x:Static vv:MainWindowBase.WindowTitleConverter}">
       <Binding Path="CompFileName.Value"/>
       <Binding Path="CompIsSaved.Value"/>
     </MultiBinding>
   </Window.Title>
+  <FrameworkElement.DataContext>
+    <vm:ProgramModel/>
+  </FrameworkElement.DataContext>
   <DockPanel>
+    <ToolBar DockPanel.Dock="Top" KeyboardNavigation.TabNavigation="Continue">
+      <Button x:Name="newButton" Content="新建"/>
+      <Button x:Name="openButton" Content="打开"/>
+      <Button x:Name="saveButton" Content="保存"/>
+      <Button x:Name="saveAsButton" Content="另存为 ..."/>
+      <Separator/>
+      <Button x:Name="importButton" Content="导入曲谱"/>
+      <Separator/>
+      <Button x:Name="exportButton" Content="导出音频"/>
+    </ToolBar>
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
-      <Button x:Name="newButton" Content="New"/>
-      <Button x:Name="openButton" Content="Open"/>
-      <Button x:Name="saveButton" Content="Save"/>
-      <Button x:Name="saveAsButton" Content="SaveAs"/>
+      <Button x:Name="playButton" Content="播放"/>
+      <Button x:Name="stopButton" Content="停止"/>
       <Separator/>
-      <Button x:Name="importButton" Content="Import"/>
-      <Separator/>
-      <Button x:Name="playButton" Content="Play"/>
-      <Button x:Name="stopButton" Content="Stop"/>
-      <Separator/>
-      <Button x:Name="clearAllSynthButton" Content="ClearAllSynth"/>
-      <Button x:Name="synthButton" Content="Synth"/>
+      <Button x:Name="clearAllSynthButton" Content="清除合成结果"/>
+      <Button x:Name="synthButton" Content="合成"/>
     </ToolBar>
     <v:NoteChartEditPanel x:Name="noteChartEditPanel"/>
   </DockPanel>
