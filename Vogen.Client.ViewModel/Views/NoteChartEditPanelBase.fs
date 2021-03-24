@@ -144,32 +144,38 @@ type NoteChartEditPanelBase() =
             if x.CanScrollH then
                 let zoomDelta = float(sign e.Delta) * 0.2       // TODO Use Slider.SmallChange
                 let log2Zoom = hScrollZoom.Log2ZoomValue
+                let log2ZoomMin = hScrollZoom.Log2ZoomMinimum
+                let log2ZoomMax = hScrollZoom.Log2ZoomMaximum
+                let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
                 let mousePos = e.GetPosition x
                 let xPos = mousePos.X
                 let hOffset = hScrollZoom.ScrollValue
                 let quarterWidth = 2.0 ** log2Zoom
-                let newQuarterWidth = 2.0 ** (log2Zoom + zoomDelta)
+                let newQuarterWidth = 2.0 ** newLog2Zoom
                 let currPulse = pixelToPulse quarterWidth hOffset xPos
                 let nextPulse = pixelToPulse newQuarterWidth hOffset xPos
                 let offsetDelta = nextPulse - currPulse
 
-                hScrollZoom.Log2ZoomValue <- log2Zoom + zoomDelta
+                hScrollZoom.Log2ZoomValue <- newLog2Zoom
                 hScrollZoom.ScrollValue <- hOffset - offsetDelta
 
             elif x.CanScrollV then
                 let zoomDelta = float(sign e.Delta) * 0.1       // TODO Use Slider.SmallChange
                 let log2Zoom = vScrollZoom.Log2ZoomValue
+                let log2ZoomMin = vScrollZoom.Log2ZoomMinimum
+                let log2ZoomMax = vScrollZoom.Log2ZoomMaximum
+                let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
                 let mousePos = e.GetPosition x
                 let yPos = mousePos.Y
                 let vOffset = vScrollZoom.ScrollValue
                 let keyHeight = 2.0 ** log2Zoom
-                let newKeyHeight = 2.0 ** (log2Zoom + zoomDelta)
+                let newKeyHeight = 2.0 ** newLog2Zoom
                 let actualHeight = chartEditor.ActualHeight
                 let currPulse = pixelToPitch keyHeight actualHeight vOffset yPos
                 let nextPulse = pixelToPitch newKeyHeight actualHeight vOffset yPos
                 let offsetDelta = nextPulse - currPulse
 
-                vScrollZoom.Log2ZoomValue <- log2Zoom + zoomDelta
+                vScrollZoom.Log2ZoomValue <- newLog2Zoom
                 vScrollZoom.ScrollValue <- vOffset - offsetDelta
 
         chartEditor.MouseWheel.Add(onMouseWheel chartEditor)
