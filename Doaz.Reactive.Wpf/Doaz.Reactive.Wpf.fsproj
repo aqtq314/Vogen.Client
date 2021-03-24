@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Compile Include="WpfUtil.fs" />
+    <Compile Include="ColorConv.fs" />
     <Compile Include="WpfOption.fs" />
     <Compile Include="MarkupExtensions.fs" />
     <Compile Include="State.fs" />

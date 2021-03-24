@@ -68,7 +68,7 @@ type NoteChartEditPanelBase() =
 
             | _ -> return! x |> mouseMidDownDragging(prevMousePos, idle) }
 
-        let updateCursorPos(e : MouseEventArgs)(x : NoteChartEditBase) =
+        let updatePlaybackCursorPos(e : MouseEventArgs)(x : NoteChartEditBase) =
             let hOffset = x.HOffsetAnimated
             let quarterWidth = x.QuarterWidth
 
@@ -84,20 +84,20 @@ type NoteChartEditPanelBase() =
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
-                        x |> updateCursorPos e
-                        return! mouseLeftDown updateCursorPos
+                        x |> updatePlaybackCursorPos e
+                        return! mouseLeftDown()
                     | MouseButton.Middle ->
                         return! x |> mouseMidDownDragging(e.GetPosition x, idle)
                     | _ -> return! idle()
                 | _ -> return! idle() }
 
-            and mouseLeftDown updateCursorPos = behavior {
+            and mouseLeftDown() = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    x |> updateCursorPos e
-                    return! mouseLeftDown updateCursorPos
+                    x |> updatePlaybackCursorPos e
+                    return! mouseLeftDown()
                 | ChartMouseRelease e -> return! idle()
-                | _ -> return! mouseLeftDown updateCursorPos }
+                | _ -> return! mouseLeftDown() }
 
             Behavior.agent(idle()))
 
@@ -109,20 +109,20 @@ type NoteChartEditPanelBase() =
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
-                        x |> updateCursorPos e
-                        return! mouseLeftDown updateCursorPos
+                        x |> updatePlaybackCursorPos e
+                        return! mouseLeftDown()
                     | MouseButton.Middle ->
                         return! x |> mouseMidDownDragging(e.GetPosition x, idle)
                     | _ -> return! idle()
                 | _ -> return! idle() }
 
-            and mouseLeftDown updateCursorPos = behavior {
+            and mouseLeftDown() = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    x |> updateCursorPos e
-                    return! mouseLeftDown updateCursorPos
+                    x |> updatePlaybackCursorPos e
+                    return! mouseLeftDown()
                 | ChartMouseRelease e -> return! idle()
-                | _ -> return! mouseLeftDown updateCursorPos }
+                | _ -> return! mouseLeftDown() }
 
             Behavior.agent(idle()))
 

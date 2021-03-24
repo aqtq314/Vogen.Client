@@ -13,9 +13,9 @@ open System.Windows.Controls.Primitives
 open System.Windows.Input
 open System.Windows.Media
 open Vogen.Client.Model
+open type Doaz.Reactive.ColorConv
 
 
-[<AbstractClass>]
 type NoteChartEditBase() =
     inherit FrameworkElement()
 
@@ -44,6 +44,8 @@ type NoteChartEditBase() =
 
     abstract CanScrollH : bool
     abstract CanScrollV : bool
+    default x.CanScrollH = true
+    default x.CanScrollV = true
 
     member x.TimeSignature
         with get() = x.GetValue NoteChartEditBase.TimeSignatureProperty :?> TimeSignature
@@ -98,7 +100,7 @@ type NoteChartEditBase() =
     static member CoerceVOffsetAnimated x v = v |> min(float x.MaxKey) |> max(float x.MinKey)
     static member val VOffsetAnimatedProperty =
         Dp.reg<float, NoteChartEditBase> "VOffsetAnimated"
-            (Dp.Meta(69.0, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceVOffsetAnimated))
+            (Dp.Meta(60.0, Dp.MetaFlags.AffectsRender, (fun _ _ -> ()), NoteChartEditBase.CoerceVOffsetAnimated))
 
     member x.CursorPosition
         with get() = x.GetValue NoteChartEditBase.CursorPositionProperty :?> int64
@@ -138,7 +140,8 @@ type SideKeyboard() =
     static let blackKeyFill = Brushes.Black
     static let blackKeyPen : Pen = null
 
-    static let keyOffsetLookup = [| -8; 0; -4; 0; 0; -9; 0; -6; 0; -3; 0; 0 |] |> Array.map float       // assuming key height is 12
+    static let defaultKeyHeight = 12.0
+    static let keyOffsetLookup = [| -8; 0; -4; 0; 0; -9; 0; -6; 0; -3; 0; 0 |] |> Array.map float
     static let keyHeightLookup = [| 20; 12; 20; 12; 20; 21; 12; 21; 12; 21; 12; 21 |] |> Array.map float
 
     member x.BlackKeyLengthRatio
@@ -149,7 +152,6 @@ type SideKeyboard() =
             (Dp.Meta(0.6, Dp.MetaFlags.AffectsRender))
 
     override x.CanScrollH = false
-    override x.CanScrollV = true
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -174,9 +176,9 @@ type SideKeyboard() =
         // white keys
         for pitch in botPitch .. topPitch do
             if not(Midi.isBlackKey pitch) then
-                let keyOffset = keyOffsetLookup.[pitch % 12] / 12.0
+                let keyOffset = keyOffsetLookup.[pitch % 12] / defaultKeyHeight
                 let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5 - keyOffset)
-                let height = keyHeightLookup.[pitch % 12] / 12.0 * keyHeight
+                let height = keyHeightLookup.[pitch % 12] / defaultKeyHeight * keyHeight
                 let x = if isNull whiteKeyPen then 0.0 else half whiteKeyPen.Thickness
                 let width = max 0.0 (whiteKeyWidth - x * 2.0)
                 dc.DrawRoundedRectangle(whiteKeyFill, whiteKeyPen, Rect(x, y, width, height), cornerRadius, cornerRadius)
@@ -204,7 +206,7 @@ type RulerGrid() =
     static let majorTickHeight = 6.0
     static let minorTickHeight = 4.0
 
-    static let tickPen = Pen(SolidColorBrush((0xFF000000u).AsColor()), 1.0) |>! freeze
+    static let tickPen = Pen(SolidColorBrush(rgb 0), 1.0) |>! freeze
 
     static member MinMajorTickHop = 60.0    // in screen pixels
     static member MinMinorTickHop = 25.0
@@ -223,7 +225,6 @@ type RulerGrid() =
         |> Seq.find(fun hop ->
             pulseToPixel quarterWidth 0.0 (float hop) >= minTickHop)
     
-    override x.CanScrollH = true
     override x.CanScrollV = false
 
     override x.MeasureOverride s =
@@ -279,6 +280,17 @@ type RulerGrid() =
 type ChartEditor() as x =
     inherit NoteChartEditBase()
 
+    static let makeDiamondGeometry radius (center : Point) =
+        let geometry = StreamGeometry()
+        do  use ctx = geometry.Open()
+            ctx.BeginFigure(
+                Point(center.X, center.Y), true, true)
+            ctx.PolyLineTo([|
+                Point(center.X + radius, center.Y)
+                Point(center.X, center.Y + radius)
+                Point(center.X - radius, center.Y) |], true, false)
+        geometry |>! freeze
+
     let mutable uttGetChars = ImmutableDictionary.Empty
     do x.OnCompositionChanged.Add <| fun (_, comp) ->
         uttGetChars <-
@@ -303,21 +315,20 @@ type ChartEditor() as x =
             cursorActiveNotes <- newCursorActiveNotes
             x.InvalidateVisual()
 
-    static let majorTickPen = Pen(SolidColorBrush((0x30000000u).AsColor()), 0.5) |>! freeze
-    static let minorTickPen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
-    static let octavePen = Pen(SolidColorBrush((0x20000000u).AsColor()), 0.5) |>! freeze
-    static let blackKeyFill = SolidColorBrush((0x10000000u).AsColor()) |>! freeze
-    static let noteRowBgBrushCursorActive = SolidColorBrush((0x20FFAA55u).AsColor()) |>! freeze
-    static let noteWaveformBgBrush = SolidColorBrush((0xFFFFCCAAu).AsColor()) |>! freeze
-    static let noteBgBrush = SolidColorBrush((0xFFFFAA55u).AsColor()) |>! freeze
+    static let majorTickPen = Pen(SolidColorBrush(argb 0x40000000), 0.5) |>! freeze
+    static let octavePen = Pen(SolidColorBrush(argb 0x40000000), 0.5) |>! freeze
+    static let blackKeyPen = Pen(SolidColorBrush(argb 0x40000000), 0.5) |>! freeze
+
+    static let baseColor = rgb 0xFF8000
+
+    static let noteRowBgBrushCursorActive = SolidColorBrush(lerpColor baseColor (rgb 0xFFFFFF) 0.4 |> withAlphaF 0.15) |>! freeze
+
+    static let noteWaveformBgBrush = SolidColorBrush(lerpColor baseColor (rgb 0xFFFFFF) 0.75) |>! freeze
+    static let noteBgBrush = SolidColorBrush(lerpColor baseColor (rgb 0xFFFFFF) 0.4) |>! freeze
     static let noteBgPen = Pen(noteBgBrush, 1.0) |>! freeze
     static let noteBgPenCursorActive = Pen(noteBgBrush, 3.0) |>! freeze
     static let charConnectPen = Pen(noteBgBrush, 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
-    static let phBorderPen = Pen(SolidColorBrush((0xFFFF55AAu).AsColor()), 0.75) |>! freeze
-    static let f0Pen = Pen(SolidColorBrush((0xFFFF5555u).AsColor()), 1.0) |>! freeze
-
-    override x.CanScrollH = true
-    override x.CanScrollV = true
+    static let f0Pen = Pen(SolidColorBrush(rgb 0xFF5555), 1.0) |>! freeze
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -332,37 +343,41 @@ type ChartEditor() as x =
         let playbackPos = x.CursorPosition
         let comp = x.Composition
 
-        dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
-
-        // background
-        dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
-
-        // time grids
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth |> ceil)
 
         let majorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMajorTickHop
         let minorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMinorTickHop
 
-        for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
-            let x = pulseToPixel quarterWidth hOffset (float currPulse)
-            let pen = if currPulse % majorHop = 0L then majorTickPen else minorTickPen
-            dc.DrawLine(pen, Point(x, 0.0), Point(x, actualHeight))
-
-        // pitch grids
         let botPitch = pixelToPitch keyHeight actualHeight vOffset actualHeight |> int |> max minKey
         let topPitch = pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil |> int |> min maxKey
 
+        // background
+        dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
+        dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
+
+        // time grids
+        for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
+            let x = pulseToPixel quarterWidth hOffset (float currPulse)
+            let isMajorTick = currPulse % majorHop = 0L
+            if isMajorTick then
+                dc.DrawLine(majorTickPen, Point(x, 0.0), Point(x, actualHeight))
+
+        // pitch grids
         for pitch in botPitch .. topPitch do
+            let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
             match pitch % 12 with
             | 0 | 5 ->
-                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch - 0.5) - half octavePen.Thickness
+                let y = y + half keyHeight - half octavePen.Thickness
                 dc.DrawLine(octavePen, Point(0.0, y), Point(actualWidth, y))
             | _ -> ()
 
             if pitch |> Midi.isBlackKey then
-                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch + 0.5)
-                dc.DrawRectangle(blackKeyFill, null, Rect(0.0, y, actualWidth, keyHeight))
+                for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
+                    let isMajorTick = currPulse % majorHop = 0L
+                    if not isMajorTick then
+                        let x = pulseToPixel quarterWidth hOffset (float currPulse)
+                        dc.DrawLine(blackKeyPen, Point(x, y - half keyHeight), Point(x, y + half keyHeight))
 
         for note in cursorActiveNotes do
             if note.Pitch >= botPitch && note.Pitch <= topPitch then
@@ -460,6 +475,7 @@ type ChartEditor() as x =
                     let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
                     let fillBrush = if charIndex = 0 then noteBgPen.Brush else Brushes.White :> _
                     dc.DrawEllipse(fillBrush, noteBgPen, Point(x0, yMid), 5.0, 5.0)
+                    //dc.DrawRoundedRectangle(fillBrush, noteBgPen, Rect(x0 - 2.0, yMid - 5.0, 4.0, 10.0), 2.0, 2.0)
 
                     // text
                     let textOpacity = if charCursorActive then 1.0 else 0.5
@@ -468,32 +484,27 @@ type ChartEditor() as x =
                     dc.DrawText(ft, Point(x0, yMid - ft.Height)))
 
         // utt ph bounds
-        //let ipaTypeface = Typeface("Segoe UI")
-        for utt in comp.Utts do
-            let uttSynthResult = comp.GetUttSynthResult utt
-            let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
-            for charGrid in uttSynthResult.CharGrids do
-                let pitch = charGrid.Pitch
-                let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
-                charGrid.Phs |> Array.iteri(fun i ph ->
-                    let x0 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.On)))
-                    let x1 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.Off)))
-                    if x1 >= 0.0 && x0 <= actualWidth then
-                        let ft = x |> makeFormattedText ph.Ph
-                        ft.SetForegroundBrush phBorderPen.Brush
-                        //ft.SetFontTypeface ipaTypeface
-                        ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
-                        //ft.SetFontStretch FontStretches.Condensed
-                        dc.DrawLine(phBorderPen, Point(x0, y), Point(x1, y))
-                        //dc.DrawLine(phBorderPen, Point(x0, y), Point(x0, y + ft.Height))
-                        let fillBrush = if i = 0 then phBorderPen.Brush else Brushes.White :> _
-                        dc.DrawEllipse(fillBrush, phBorderPen, Point(x0, y), 2.0, 2.0)
-                        //dc.DrawRectangle(null, phBorderPen, Rect(x0, y, x1 - x0, ft.Height))
-                        dc.DrawText(ft, Point(x0, y)))
+        //for utt in comp.Utts do
+        //    let uttSynthResult = comp.GetUttSynthResult utt
+        //    let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
+        //    for charGrid in uttSynthResult.CharGrids do
+        //        let pitch = charGrid.Pitch
+        //        let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
+        //        charGrid.Phs |> Array.iteri(fun i ph ->
+        //            let x0 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.On)))
+        //            let x1 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.Off)))
+        //            if x1 >= 0.0 && x0 <= actualWidth then
+        //                let ft = x |> makeFormattedText ph.Ph
+        //                ft.SetForegroundBrush phBorderPen.Brush
+        //                ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
+        //                dc.DrawLine(phBorderPen, Point(x0, y), Point(x1, y))
+        //                let fillBrush = if i = 0 then phBorderPen.Brush else Brushes.White :> _
+        //                dc.DrawEllipse(fillBrush, phBorderPen, Point(x0, y), 2.0, 2.0)
+        //                dc.DrawText(ft, Point(x0, y)))
 
         // utt f0 samples
-        let f0Geometry = drawGeometry <| fun sgc ->
-            for utt in comp.Utts do
+        for utt in comp.Utts do
+            let f0Geometry = drawGeometry <| fun sgc ->
                 let uttSynthResult = comp.GetUttSynthResult utt
                 let f0Samples = uttSynthResult.F0Samples
                 let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
@@ -516,7 +527,7 @@ type ChartEditor() as x =
                             sgc.LineTo(Point(x, y), true, false)
                     else
                         prevVuv <- false
-        dc.DrawGeometry(null, f0Pen, f0Geometry)
+            dc.DrawGeometry(null, f0Pen, f0Geometry)
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()
@@ -527,10 +538,7 @@ type ChartEditorAdornerLayer() =
             typeof<ChartEditorAdornerLayer>, FrameworkPropertyMetadata(
                 0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
 
-    static let playbackCursorPen = Pen(SolidColorBrush((0xFFFF0000u).AsColor()), 0.5) |>! freeze
-
-    override x.CanScrollH = true
-    override x.CanScrollV = true
+    static let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.5) |>! freeze
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth

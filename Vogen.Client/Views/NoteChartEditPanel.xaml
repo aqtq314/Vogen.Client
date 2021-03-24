@@ -64,7 +64,7 @@
       <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
         ScrollMinimum="{Binding Path=MinKey, ElementName=chartEditor}"
         ScrollMaximum="{Binding Path=MaxKey, ElementName=chartEditor}"
-        ScrollValue="69"
+        ScrollValue="60"
         ScrollViewport="{Binding Path=ActualHeight, ElementName=chartEditor}"
         Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-2, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=2, Converter={x:Static vc:ChartConverters.log2Converter}}"

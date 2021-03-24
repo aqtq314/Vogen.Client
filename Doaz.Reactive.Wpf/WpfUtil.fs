@@ -219,13 +219,5 @@ type ExtensionMethods =
         freezable.Freeze ()
         freezable
 
-    [<Extension>]
-    static member AsColor (colorCode : uint32) =
-        Color.FromArgb (
-            byte ((colorCode >>> 24) &&& 0xFFu),
-            byte ((colorCode >>> 16) &&& 0xFFu),
-            byte ((colorCode >>> 8) &&& 0xFFu),
-            byte ((colorCode >>> 0) &&& 0xFFu))
-
 
 
