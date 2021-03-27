@@ -9,24 +9,43 @@ open System.Windows.Media
 
 
 type ColorConv =
-    static member argb(colorCode : uint32) =
+    static member argb(colorCode : int) =
         Color.FromArgb(
             byte(colorCode >>> 24),
             byte(colorCode >>> 16),
             byte(colorCode >>> 8),
             byte(colorCode >>> 0))
 
-    static member inline argb(colorCode : int32) =
-        ColorConv.argb(uint32 colorCode)
-
-    static member rgb(colorCode : uint32) =
+    static member rgb(colorCode : int) =
         Color.FromRgb(
             byte(colorCode >>> 16),
             byte(colorCode >>> 8),
             byte(colorCode >>> 0))
 
-    static member inline rgb(colorCode : int32) =
-        ColorConv.rgb(uint32 colorCode)
+    static member aRgb(alpha : int)(colorCode : int) =
+        Color.FromArgb(
+            byte alpha,
+            byte(colorCode >>> 16),
+            byte(colorCode >>> 8),
+            byte(colorCode >>> 0))
+
+    static member aFRgb(alpha : float)(colorCode : int) =
+        ColorConv.aRgb(int(alpha * 255.0)) colorCode
+
+    static member withAlpha alpha (x : Color) =
+        Color.FromArgb(alpha, x.R, x.G, x.B)
+
+    static member withAlphaF alpha (x : Color) =
+        x |> ColorConv.withAlpha(byte(alpha * 255.0))
+
+    static member lerpColor(x : Color)(y : Color) amount =
+        let lerpByte a b amount =
+            if a = b then a else lerp(float a)(float b) amount |> clamp 0.0 255.0 |> byte
+        Color.FromArgb(
+            lerpByte x.A y.A amount,
+            lerpByte x.R y.R amount,
+            lerpByte x.G y.G amount,
+            lerpByte x.B y.B amount)
 
     // https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB_alternative
     static member ahsl(alpha, hue, sat, lig) =
@@ -46,20 +65,5 @@ type ColorConv =
             byte(r * 255.0),
             byte(g * 255.0),
             byte(b * 255.0))
-
-    static member withAlpha a (x : Color) =
-        Color.FromArgb(a, x.R, x.G, x.B)
-
-    static member withAlphaF a (x : Color) =
-        x |> ColorConv.withAlpha(byte(a * 255.0))
-
-    static member lerpColor(x : Color)(y : Color) amount =
-        let lerpByte a b amount =
-            if a = b then a else lerp(float a)(float b) amount |> clamp 0.0 255.0 |> byte
-        Color.FromArgb(
-            lerpByte x.A y.A amount,
-            lerpByte x.R y.R amount,
-            lerpByte x.G y.G amount,
-            lerpByte x.B y.B amount)
 
 

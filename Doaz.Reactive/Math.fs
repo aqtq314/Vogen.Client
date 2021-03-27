@@ -34,6 +34,7 @@ module Math =
     let inline clamp minValue maxValue value = value |> min maxValue |> max minValue
 
     let inline between minValue maxValue value = value >= minValue && value < maxValue
+    let inline betweenInc minValue maxValue value = value >= minValue && value <= maxValue
 
     let inline invlerp (a : ^a, b : ^a, c : ^a) amount : ^a =
         let one = LanguagePrimitives.GenericOne

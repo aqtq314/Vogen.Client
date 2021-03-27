@@ -16,5 +16,6 @@ let comp =
 
 let programModel = ProgramModel()
 do  programModel.LoadComp comp
+    programModel.ManualSetCursorPos 1920L
 
 
