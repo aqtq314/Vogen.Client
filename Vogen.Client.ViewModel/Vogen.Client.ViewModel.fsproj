@@ -16,6 +16,7 @@
     <Compile Include="Model\Utils.fs" />
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
+    <Compile Include="Model\MidiPlayback.fs" />
     <Compile Include="Model\FilePackage.fs" />
     <Compile Include="Model\External.fs" />
     <Compile Include="Model\Synth.fs" />

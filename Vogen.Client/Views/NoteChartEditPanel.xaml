@@ -23,7 +23,7 @@
         <RowDefinition/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1"
+      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="24.5"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
@@ -31,7 +31,7 @@
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
         Composition="{Binding ActiveComp.Value}"/>
-      <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36" TextBlock.FontSize="9"
+      <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"

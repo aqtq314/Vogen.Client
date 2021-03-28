@@ -31,171 +31,213 @@ type ChartMouseEvent =
             push(ChartMouseRelease e)
             e.Handled <- true)
 
+[<AbstractClass>]
 type NoteChartEditPanelBase() =
     inherit UserControl()
 
-    static member BindBehaviors(x : NoteChartEditPanelBase, chartEditor, rulerGrid, sideKeyboard, hScrollZoom, vScrollZoom) =
-        let getProgramModel() = x.DataContext :?> ProgramModel
-        let chartEditor : ChartEditor = chartEditor
-        let rulerGrid : RulerGrid = rulerGrid
-        let sideKeyboard : SideKeyboard = sideKeyboard
-        let hScrollZoom : ChartScrollZoomKitBase = hScrollZoom
-        let vScrollZoom : ChartScrollZoomKitBase = vScrollZoom
+    member x.ProgramModel = x.DataContext :?> ProgramModel
 
-        let rec mouseMidDownDragging(prevMousePos : Point, idle)(x : NoteChartEditBase) = behavior {
+    abstract ChartEditor : ChartEditor
+    abstract ChartEditorAdornerLayer : ChartEditorAdornerLayer
+    abstract RulerGrid : RulerGrid
+    abstract SideKeyboard : SideKeyboard
+    abstract HScrollZoom : ChartScrollZoomKitBase
+    abstract VScrollZoom : ChartScrollZoomKitBase
+
+    member x.BindBehaviors() =
+        let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
             match! () with
             | ChartMouseMove e ->
-                let hOffset = x.HOffsetAnimated
-                let vOffset = x.VOffsetAnimated
-                let quarterWidth = x.QuarterWidth
-                let keyHeight = x.KeyHeight
+                let hOffset = edit.HOffsetAnimated
+                let vOffset = edit.VOffsetAnimated
+                let quarterWidth = edit.QuarterWidth
+                let keyHeight = edit.KeyHeight
 
-                let mousePos = e.GetPosition x
-                if x.CanScrollH then
+                let mousePos = e.GetPosition edit
+                if edit.CanScrollH then
                     let xDelta = pixelToPulse quarterWidth 0.0 (mousePos.X - prevMousePos.X)
-                    hScrollZoom.EnableAnimation <- false
-                    hScrollZoom.ScrollValue <- hOffset - xDelta
-                    hScrollZoom.EnableAnimation <- true
-                if x.CanScrollV then
+                    x.HScrollZoom.EnableAnimation <- false
+                    x.HScrollZoom.ScrollValue <- hOffset - xDelta
+                    x.HScrollZoom.EnableAnimation <- true
+                if edit.CanScrollV then
                     let yDelta = pixelToPitch keyHeight 0.0 0.0 (mousePos.Y - prevMousePos.Y)
-                    vScrollZoom.EnableAnimation <- false
-                    vScrollZoom.ScrollValue <- vOffset - yDelta
-                    vScrollZoom.EnableAnimation <- true
+                    x.VScrollZoom.EnableAnimation <- false
+                    x.VScrollZoom.ScrollValue <- vOffset - yDelta
+                    x.VScrollZoom.EnableAnimation <- true
 
-                return! x |> mouseMidDownDragging(mousePos, idle)
+                return! edit |> mouseMidDownDragging(mousePos, idle)
 
             | ChartMouseRelease e -> return! idle()
 
-            | _ -> return! x |> mouseMidDownDragging(prevMousePos, idle) }
+            | _ -> return! edit |> mouseMidDownDragging(prevMousePos, idle) }
 
-        let updatePlaybackCursorPos(e : MouseEventArgs)(x : NoteChartEditBase) =
-            let hOffset = x.HOffsetAnimated
-            let quarterWidth = x.QuarterWidth
+        let findMouseOverNote(mousePos : Point)(edit : ChartEditor) =
+            let actualHeight = edit.ActualHeight
+            let quarterWidth = edit.QuarterWidth
+            let keyHeight = edit.KeyHeight
+            let hOffset = edit.HOffsetAnimated
+            let vOffset = edit.VOffsetAnimated
+            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+            let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
 
-            let mousePos = e.GetPosition x
-            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x
-            getProgramModel().ManualSetCursorPos newCursorPos
+            let comp = !!x.ProgramModel.ActiveComp
 
-        chartEditor |> ChartMouseEvent.BindEvents(
-            let x = chartEditor
+            Seq.tryHead <| seq {
+                for uttIndex in comp.Utts.Count - 1 .. -1 .. 0 do
+                    let utt = comp.Utts.[uttIndex]
+                    for noteIndex in utt.Notes.Count - 1 .. -1 .. 0 do
+                        let note = utt.Notes.[noteIndex]
+                        if mousePulse |> between note.On note.Off && mousePitch = note.Pitch then
+                            yield note }
+
+        let updatePlaybackCursorPos(e : MouseEventArgs)(edit : NoteChartEditBase) =
+            let hOffset = edit.HOffsetAnimated
+            let quarterWidth = edit.QuarterWidth
+
+            let mousePos = e.GetPosition edit
+            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition edit
+            x.ProgramModel.ManualSetCursorPos newCursorPos
+
+        x.ChartEditor |> ChartMouseEvent.BindEvents(
+            let edit = x.ChartEditor
+
+            let updateMouseOverNote mousePosOp =
+                let mouseOverNoteOp = mousePosOp |> Option.bind(fun mousePos -> findMouseOverNote mousePos edit)
+                x.ChartEditorAdornerLayer.MouseOverNoteOp <- mouseOverNoteOp
+
+                match mouseOverNoteOp with
+                | None ->
+                    edit.Cursor <- Cursors.Arrow
+                | Some note ->
+                    edit.Cursor <- Cursors.Hand
 
             let rec idle() = behavior {
                 match! () with
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
-                        x |> updatePlaybackCursorPos e
+                        updateMouseOverNote None
+                        edit |> updatePlaybackCursorPos e
                         return! mouseLeftDown()
                     | MouseButton.Middle ->
-                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                        updateMouseOverNote None
+                        return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
                     | _ -> return! idle()
+                | ChartMouseMove e ->
+                    updateMouseOverNote(Some(e.GetPosition edit))
+                    return! idle()
                 | _ -> return! idle() }
 
             and mouseLeftDown() = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    x |> updatePlaybackCursorPos e
+                    edit |> updatePlaybackCursorPos e
                     return! mouseLeftDown()
-                | ChartMouseRelease e -> return! idle()
+                | ChartMouseRelease e ->
+                    updateMouseOverNote(Some(e.GetPosition edit))
+                    return! idle()
                 | _ -> return! mouseLeftDown() }
 
             Behavior.agent(idle()))
 
-        rulerGrid |> ChartMouseEvent.BindEvents(
-            let x = rulerGrid
+        x.RulerGrid |> ChartMouseEvent.BindEvents(
+            let edit = x.RulerGrid
 
             let rec idle() = behavior {
                 match! () with
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
-                        x |> updatePlaybackCursorPos e
+                        edit |> updatePlaybackCursorPos e
                         return! mouseLeftDown()
                     | MouseButton.Middle ->
-                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                        return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
                     | _ -> return! idle()
                 | _ -> return! idle() }
 
             and mouseLeftDown() = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    x |> updatePlaybackCursorPos e
+                    edit |> updatePlaybackCursorPos e
                     return! mouseLeftDown()
                 | ChartMouseRelease e -> return! idle()
                 | _ -> return! mouseLeftDown() }
 
             Behavior.agent(idle()))
 
-        sideKeyboard |> ChartMouseEvent.BindEvents(
-            let x = sideKeyboard
+        x.SideKeyboard |> ChartMouseEvent.BindEvents(
+            let edit = x.SideKeyboard
 
             let rec idle() = behavior {
                 match! () with
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Middle ->
-                        return! x |> mouseMidDownDragging(e.GetPosition x, idle)
+                        return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
                     | _ -> return! idle()
                 | _ -> return! idle() }
 
             Behavior.agent(idle()))
 
-        let onMouseWheel(x : NoteChartEditBase)(e : MouseWheelEventArgs) =
-            if x.CanScrollH then
+        // mouse wheel events
+        let onMouseWheel(edit : NoteChartEditBase)(e : MouseWheelEventArgs) =
+            if edit.CanScrollH then
                 let zoomDelta = float(sign e.Delta) * 0.2       // TODO Use Slider.SmallChange
-                let log2Zoom = hScrollZoom.Log2ZoomValue
-                let log2ZoomMin = hScrollZoom.Log2ZoomMinimum
-                let log2ZoomMax = hScrollZoom.Log2ZoomMaximum
+                let log2Zoom = x.HScrollZoom.Log2ZoomValue
+                let log2ZoomMin = x.HScrollZoom.Log2ZoomMinimum
+                let log2ZoomMax = x.HScrollZoom.Log2ZoomMaximum
                 let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
-                let mousePos = e.GetPosition x
+                let mousePos = e.GetPosition edit
                 let xPos = mousePos.X
-                let hOffset = hScrollZoom.ScrollValue
+                let hOffset = x.HScrollZoom.ScrollValue
                 let quarterWidth = 2.0 ** log2Zoom
                 let newQuarterWidth = 2.0 ** newLog2Zoom
                 let currPulse = pixelToPulse quarterWidth hOffset xPos
                 let nextPulse = pixelToPulse newQuarterWidth hOffset xPos
                 let offsetDelta = nextPulse - currPulse
 
-                hScrollZoom.Log2ZoomValue <- newLog2Zoom
-                hScrollZoom.ScrollValue <- hOffset - offsetDelta
+                x.HScrollZoom.Log2ZoomValue <- newLog2Zoom
+                x.HScrollZoom.ScrollValue <- hOffset - offsetDelta
 
-            elif x.CanScrollV then
+            elif edit.CanScrollV then
                 let zoomDelta = float(sign e.Delta) * 0.1       // TODO Use Slider.SmallChange
-                let log2Zoom = vScrollZoom.Log2ZoomValue
-                let log2ZoomMin = vScrollZoom.Log2ZoomMinimum
-                let log2ZoomMax = vScrollZoom.Log2ZoomMaximum
+                let log2Zoom = x.VScrollZoom.Log2ZoomValue
+                let log2ZoomMin = x.VScrollZoom.Log2ZoomMinimum
+                let log2ZoomMax = x.VScrollZoom.Log2ZoomMaximum
                 let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
-                let mousePos = e.GetPosition x
+                let mousePos = e.GetPosition edit
                 let yPos = mousePos.Y
-                let vOffset = vScrollZoom.ScrollValue
+                let vOffset = x.VScrollZoom.ScrollValue
                 let keyHeight = 2.0 ** log2Zoom
                 let newKeyHeight = 2.0 ** newLog2Zoom
-                let actualHeight = chartEditor.ActualHeight
+                let actualHeight = x.ChartEditor.ActualHeight
                 let currPulse = pixelToPitch keyHeight actualHeight vOffset yPos
                 let nextPulse = pixelToPitch newKeyHeight actualHeight vOffset yPos
                 let offsetDelta = nextPulse - currPulse
 
-                vScrollZoom.Log2ZoomValue <- newLog2Zoom
-                vScrollZoom.ScrollValue <- vOffset - offsetDelta
+                x.VScrollZoom.Log2ZoomValue <- newLog2Zoom
+                x.VScrollZoom.ScrollValue <- vOffset - offsetDelta
 
-        chartEditor.MouseWheel.Add(onMouseWheel chartEditor)
-        rulerGrid.MouseWheel.Add(onMouseWheel rulerGrid)
-        sideKeyboard.MouseWheel.Add(onMouseWheel sideKeyboard)
+        x.ChartEditor.MouseWheel.Add(onMouseWheel x.ChartEditor)
+        x.RulerGrid.MouseWheel.Add(onMouseWheel x.RulerGrid)
+        x.SideKeyboard.MouseWheel.Add(onMouseWheel x.SideKeyboard)
 
-        chartEditor.OnCursorPositionChanged.Add <| fun (prevPlayPos, playPos) ->
-            let x = chartEditor
-            if x.IsPlaying then
-                let quarterWidth = x.QuarterWidth
-                let hOffset = hScrollZoom.ScrollValue
-                let actualWidth = x.ActualWidth
+        // playback cursor
+        x.ChartEditor.OnCursorPositionChanged.Add <| fun (prevPlayPos, playPos) ->
+            let edit = x.ChartEditor
+            if edit.IsPlaying then
+                let quarterWidth = edit.QuarterWidth
+                let hOffset = x.HScrollZoom.ScrollValue
+                let actualWidth = edit.ActualWidth
                 let hRightOffset = pixelToPulse quarterWidth hOffset actualWidth
                 if float prevPlayPos < hRightOffset && float playPos >= hRightOffset then
-                    hScrollZoom.ScrollValue <- hOffset + (hRightOffset - hOffset) * 0.9
+                    x.HScrollZoom.ScrollValue <- hOffset + (hRightOffset - hOffset) * 0.9
 
+        // key events
         x.KeyDown.Add <| fun e ->
             match e.Key with
             | Key.Space ->
-                let programModel = getProgramModel()
+                let programModel = x.ProgramModel
                 if not programModel.IsPlaying.Value then
                     programModel.Play()
                 else

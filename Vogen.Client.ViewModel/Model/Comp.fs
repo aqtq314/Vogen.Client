@@ -14,19 +14,23 @@ open System.Text
 open System.Text.Encodings
 
 
-type Note(pitch, lyric, rom, on, dur) =
+type Note(pitch, lyric, rom, on, dur, isSelected) =
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
     member x.Rom : string = rom
     member x.On : int64 = on
     member x.Dur : int64 = dur
 
+    member x.IsSelected : bool = isSelected
+
     member x.Off = on + dur
     member x.IsHyphen = x.Lyric = "-"
 
-    member x.SetOn on = Note(pitch, lyric, rom, on, dur)
-    member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
-    member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
+    new(pitch, lyric, rom, on, dur) = Note(pitch, lyric, rom, on, dur, false)
+
+    member x.SetOn on = Note(pitch, lyric, rom, on, dur, isSelected)
+    member x.SetDur dur = Note(pitch, lyric, rom, on, dur, isSelected)
+    member x.SetOff off = Note(pitch, lyric, rom, on, off - on, isSelected)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On

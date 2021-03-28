@@ -12,15 +12,23 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Vogen.Client.Controls;
 
 namespace Vogen.Client.Views
 {
     public partial class NoteChartEditPanel : NoteChartEditPanelBase
     {
+        public override ChartEditor ChartEditor => chartEditor;
+        public override ChartEditorAdornerLayer ChartEditorAdornerLayer => chartEditorAdornerLayer;
+        public override RulerGrid RulerGrid => rulerGrid;
+        public override SideKeyboard SideKeyboard => sideKeyboard;
+        public override ChartScrollZoomKitBase HScrollZoom => hScrollZoom;
+        public override ChartScrollZoomKitBase VScrollZoom => vScrollZoom;
+
         public NoteChartEditPanel()
         {
             InitializeComponent();
-            BindBehaviors(this, chartEditor, rulerGrid, sideKeyboard, hScrollZoom, vScrollZoom);
+            BindBehaviors();
 
             PreviewMouseDown += (sender, e) =>
             {

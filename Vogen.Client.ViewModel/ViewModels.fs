@@ -19,7 +19,6 @@ type ProgramModel() as x =
     let compFileName = rp "Untitled.vog"
     let compIsSaved = rp true
     let activeComp = rp Composition.Empty
-    let audioEngine = AudioPlaybackEngine()
 
     static let latency = 80
     static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
@@ -29,6 +28,8 @@ type ProgramModel() as x =
             if isPlaying.Value then
                 x.PlaybackSyncCursorPos()
 
+    let audioEngine = AudioPlaybackEngine()
+    let midiEngine = MidiPlaybackEngine()
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
 
@@ -38,6 +39,8 @@ type ProgramModel() as x =
     member val ActiveComp = activeComp |> Rpo.map id
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
+
+    member x.MidiEngine = midiEngine
 
     member x.LoadComp(comp, ?isSaved) =
         let isSaved = defaultArg isSaved false
