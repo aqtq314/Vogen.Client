@@ -17,6 +17,8 @@ type ChartMouseEvent =
     | ChartMouseDown of e : MouseButtonEventArgs
     | ChartMouseMove of e : MouseEventArgs
     | ChartMouseRelease of e : MouseEventArgs
+    | ChartMouseEnter of e : MouseEventArgs
+    | ChartMouseLeave of e : MouseEventArgs
 
     static member BindEvents push (x : NoteChartEditBase) =
         x.MouseDown.Add(fun e ->
@@ -29,6 +31,14 @@ type ChartMouseEvent =
 
         x.LostMouseCapture.Add(fun e ->
             push(ChartMouseRelease e)
+            e.Handled <- true)
+
+        x.MouseEnter.Add(fun e ->
+            push(ChartMouseEnter e)
+            e.Handled <- true)
+
+        x.MouseLeave.Add(fun e ->
+            push(ChartMouseLeave e)
             e.Handled <- true)
 
 type NoteChartEditPanelBase() =
@@ -113,17 +123,23 @@ type NoteChartEditPanelBase() =
             let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
             pulsesMeasureQuantized + (pulses - pulsesMeasureQuantized) / quantization * quantization
 
-        let updatePlaybackCursorPos(e : MouseEventArgs)(edit : NoteChartEditBase) =
+        let getPlaybackCursorPos(mousePos : Point)(edit : NoteChartEditBase) =
             let hOffset = edit.HOffsetAnimated
             let quarterWidth = edit.QuarterWidth
             let comp = !!x.ProgramModel.ActiveComp
             let quantization = x.Quantization
             let snap = x.Snap
 
-            let mousePos = e.GetPosition edit
             let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition edit
-            let newCursorPosQuantized = if snap then newCursorPos |> quantize quantization comp.TimeSig0 else newCursorPos
-            x.ProgramModel.ManualSetCursorPos newCursorPosQuantized
+            if snap then
+                newCursorPos |> quantize quantization comp.TimeSig0
+            else
+                newCursorPos
+
+        let updatePlaybackCursorPos(e : MouseEventArgs)(edit : NoteChartEditBase) =
+            let mousePos = e.GetPosition edit
+            let newCursorPos = getPlaybackCursorPos mousePos edit
+            x.ProgramModel.ManualSetCursorPos newCursorPos
 
         x.ChartEditor |> ChartMouseEvent.BindEvents(
             let edit = x.ChartEditor
@@ -167,6 +183,10 @@ type NoteChartEditPanelBase() =
 
             Behavior.agent(idle()))
 
+        let updateMouseOverCursorPos mousePosOp (edit : NoteChartEditBase) =
+            let mouseOverCursorPosOp = mousePosOp |> Option.map(fun (mousePos : Point) -> getPlaybackCursorPos mousePos edit)
+            x.ChartEditorAdornerLayer.MouseOverCursorPositionOp <- mouseOverCursorPosOp
+
         x.RulerGrid |> ChartMouseEvent.BindEvents(
             let edit = x.RulerGrid
 
@@ -175,11 +195,19 @@ type NoteChartEditPanelBase() =
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
+                        edit |> updateMouseOverCursorPos None
                         edit |> updatePlaybackCursorPos e
                         return! mouseLeftDown()
                     | MouseButton.Middle ->
+                        edit |> updateMouseOverCursorPos None
                         return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
                     | _ -> return! idle()
+                | ChartMouseMove e ->
+                    edit |> updateMouseOverCursorPos(Some(e.GetPosition edit))
+                    return! idle()
+                | ChartMouseLeave e ->
+                    edit |> updateMouseOverCursorPos None
+                    return! idle()
                 | _ -> return! idle() }
 
             and mouseLeftDown() = behavior {
@@ -187,7 +215,9 @@ type NoteChartEditPanelBase() =
                 | ChartMouseMove e ->
                     edit |> updatePlaybackCursorPos e
                     return! mouseLeftDown()
-                | ChartMouseRelease e -> return! idle()
+                | ChartMouseRelease e ->
+                    edit |> updateMouseOverCursorPos(Some(e.GetPosition edit))
+                    return! idle()
                 | _ -> return! mouseLeftDown() }
 
             Behavior.agent(idle()))

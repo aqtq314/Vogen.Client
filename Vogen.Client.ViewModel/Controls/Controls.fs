@@ -622,7 +622,24 @@ type ChartEditorAdornerLayer() =
                 0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
 
     static let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
+    static let hoverCursorPen    = Pen(SolidColorBrush(aFRgb 0.25 0), 0.5) |>! freeze
     static let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
+
+    static let getCursorHeadGeometry xPos =
+        pointsToGeometry true [|
+            Point(xPos, 0.0)
+            Point(xPos - 5.0, -5.0)
+            Point(xPos - 5.0, -10.0)
+            Point(xPos + 5.0, -10.0)
+            Point(xPos + 5.0, -5.0) |]
+
+    member x.MouseOverCursorPositionOp
+        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverCursorPositionOpProperty :?> int64 option
+        and set(v : int64 option) = x.SetValue(ChartEditorAdornerLayer.MouseOverCursorPositionOpProperty, box v)
+    static member val MouseOverCursorPositionOpProperty =
+        Dp.reg<int64 option, ChartEditorAdornerLayer> "MouseOverCursorPositionOp"
+            (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverCursorPositionOpChanged)))
+    member x.OnMouseOverCursorPositionOpChanged(prevMouseOverCursorPosOp, mouseOverCursorPosOp) = ()
 
     member x.MouseOverNoteOp
         with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> Note option
@@ -641,6 +658,7 @@ type ChartEditorAdornerLayer() =
         let vOffset = x.VOffsetAnimated
         let playbackPos = x.CursorPosition
         let comp = x.Composition
+        let mouseOverCursorPosOp = x.MouseOverCursorPositionOp
         let mouseOverNoteOp = x.MouseOverNoteOp
 
         // mouse over note
@@ -658,13 +676,15 @@ type ChartEditorAdornerLayer() =
         let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
         if xPos >= 0.0 && xPos <= actualWidth then
             dc.DrawLine(playbackCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
+            dc.DrawGeometry(Brushes.White, playbackCursorPen, getCursorHeadGeometry xPos)
 
-            let cursorHeadGeometry = pointsToGeometry true [|
-                Point(xPos, 0.0)
-                Point(xPos - 5.0, -5.0)
-                Point(xPos - 5.0, -10.0)
-                Point(xPos + 5.0, -10.0)
-                Point(xPos + 5.0, -5.0) |]
-            dc.DrawGeometry(Brushes.White, playbackCursorPen, cursorHeadGeometry)
+        // mouse over cursor
+        match mouseOverCursorPosOp with
+        | Some mouseOverCursorPos ->
+            let xPos = pulseToPixel quarterWidth hOffset (float mouseOverCursorPos)
+            if xPos >= 0.0 && xPos <= actualWidth then
+                dc.DrawLine(hoverCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
+                dc.DrawGeometry(Brushes.White, hoverCursorPen, getCursorHeadGeometry xPos)
+        | None -> ()
 
 
