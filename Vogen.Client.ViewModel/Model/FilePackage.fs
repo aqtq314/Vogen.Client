@@ -40,7 +40,7 @@ module FilePackage =
         with
         static member toUtt x =
             let { Name = name; RomScheme = romScheme; Notes = fNotes } = x
-            let notes = ImmutableList.CreateRange(Seq.map FNote.toNote fNotes)
+            let notes = ImmutableArray.CreateRange(Seq.map FNote.toNote fNotes)
             Utterance(romScheme, notes), name
 
         static member ofUtt uttName (utt : Utterance) =
@@ -82,7 +82,7 @@ module FilePackage =
         static member toComp x =
             let { Bpm0 = bpm0; Utts = fUtts } = x
             let uttsByNameDict = dict(Seq.map FUtt.toUtt fUtts)
-            let utts = ImmutableList.CreateRange uttsByNameDict.Keys
+            let utts = ImmutableArray.CreateRange uttsByNameDict.Keys
             let getUttName utt = uttsByNameDict.[utt]
             Composition(bpm0, utts), getUttName
 

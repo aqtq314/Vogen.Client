@@ -498,7 +498,7 @@ type ChartEditor() as x =
             //    if charActive then
             //        charActiveNotes.UnionWith ch.Notes
 
-            for noteIndex in 0 .. utt.Notes.Count - 1 do
+            for noteIndex in 0 .. utt.Notes.Length - 1 do
                 let note = utt.Notes.[noteIndex]
                 if note.Off >= minPulse && note.On <= maxPulse && note.Pitch |> betweenInc botPitch topPitch then
                     let x0 = pulseToPixel quarterWidth hOffset (float note.On)
@@ -506,7 +506,7 @@ type ChartEditor() as x =
                     let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
 
                     // note connection
-                    let hasNextNote = noteIndex < utt.Notes.Count - 1
+                    let hasNextNote = noteIndex < utt.Notes.Length - 1
                     if hasNextNote then
                         let nextNote = utt.Notes.[noteIndex + 1]
                         if nextNote.On <= maxPulse then
@@ -530,7 +530,7 @@ type ChartEditor() as x =
                                 sampleOffset
                                 |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset |> max 0.0
                         let n1x0 =
-                            if noteIndex < utt.Notes.Count - 1 then n1x0 |> min actualWidth else
+                            if noteIndex < utt.Notes.Length - 1 then n1x0 |> min actualWidth else
                                 sampleOffset + samples.Length
                                 |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset |> min actualWidth
                         let pixelToSampleIndex x =

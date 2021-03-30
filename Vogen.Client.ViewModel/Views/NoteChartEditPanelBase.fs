@@ -112,9 +112,9 @@ type NoteChartEditPanelBase() =
             let comp = !!x.ProgramModel.ActiveComp
 
             Seq.tryHead <| seq {
-                for uttIndex in comp.Utts.Count - 1 .. -1 .. 0 do
+                for uttIndex in comp.Utts.Length - 1 .. -1 .. 0 do
                     let utt = comp.Utts.[uttIndex]
-                    for noteIndex in utt.Notes.Count - 1 .. -1 .. 0 do
+                    for noteIndex in utt.Notes.Length - 1 .. -1 .. 0 do
                         let note = utt.Notes.[noteIndex]
                         if mousePulse |> between note.On note.Off && mousePitch = note.Pitch then
                             yield note }

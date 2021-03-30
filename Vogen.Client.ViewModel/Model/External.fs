@@ -49,8 +49,8 @@ module External =
                 let on = vprNote.["pos"].ToObject<int64>() + vprPartPos
                 let dur = vprNote.["duration"].ToObject<int64>()
                 Note(pitch, lyric, rom, on, dur))
-            Utterance(romScheme, ImmutableList.CreateRange notes))
+            Utterance(romScheme, ImmutableArray.CreateRange notes))
 
-        Composition(bpm0, ImmutableList.CreateRange utts)
+        Composition(bpm0, ImmutableArray.CreateRange utts)
 
 

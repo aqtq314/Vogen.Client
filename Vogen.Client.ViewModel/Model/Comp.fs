@@ -39,11 +39,11 @@ type Note(pitch, lyric, rom, on, dur, isSelected) =
         else compare n1.Dur n2.Dur
 
 type Utterance(romScheme, notes) =
-    let notes = (notes : ImmutableList<Note>).Sort(Note.CompareByPosition)
+    let notes = (notes : ImmutableArray<Note>).Sort(Note.CompareByPosition)
     let on = notes.[0].On
 
     member x.RomScheme : string = romScheme
-    member x.Notes : ImmutableList<Note> = notes
+    member x.Notes : ImmutableArray<Note> = notes
     member x.On = on
 
     member x.SetNotes notes = Utterance(romScheme, notes)
@@ -103,24 +103,24 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
         UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
 type Composition private(timeSig0, bpm0, utts, uttSynthResults) =
-    let utts = (utts : ImmutableList<Utterance>).Sort(Utterance.CompareByPosition)
+    let utts = (utts : ImmutableArray<Utterance>).Sort(Utterance.CompareByPosition)
 
     member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
-    member x.Utts : ImmutableList<Utterance> = utts
+    member x.Utts : ImmutableArray<Utterance> = utts
 
     member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
     new(timeSig0, bpm0, utts) =
-        let uttSynthResults = (utts : ImmutableList<_>).ToImmutableDictionary(id, UttSynthResult.Create bpm0)
+        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, UttSynthResult.Create bpm0)
         Composition(timeSig0, bpm0, utts, uttSynthResults)
 
     new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
-    new() = Composition(timeSignature 4 4, 120.0, ImmutableList.Empty)
+    new() = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
     static member Empty = Composition()
 
     member x.SetUtts utts =
-        let uttSynthResults = (utts : ImmutableList<_>).ToImmutableDictionary(id, fun utt ->
+        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt ->
             uttSynthResults.TryGetValue utt
             |> Option.ofByRef
             |> Option.defaultWith(fun () -> UttSynthResult.Create bpm0 utt))
