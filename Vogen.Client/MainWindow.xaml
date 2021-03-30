@@ -34,12 +34,31 @@
       <Button x:Name="exportButton" Content="导出音频"/>
     </ToolBar>
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
+      <TextBlock Width="80" VerticalAlignment="Center">
+        <TextBlock.Text>
+          <MultiBinding Converter="{x:Static vc:ChartConverters.pulseToStringFormatter}">
+            <Binding Path="ActiveComp.Value.TimeSig0"/>
+            <Binding Path="CursorPosition.Value"/>
+          </MultiBinding>
+        </TextBlock.Text>
+      </TextBlock>
       <Button x:Name="playButton" Content="播放"/>
       <Button x:Name="stopButton" Content="停止"/>
       <Separator/>
       <Button x:Name="clearAllSynthButton" Content="清除合成结果"/>
       <Button x:Name="synthButton" Content="合成"/>
+      <Separator/>
+      <ToggleButton x:Name="quantizeButton" Content="量化至网格" IsChecked="True"/>
+      <ComboBox x:Name="quantizationDropDown" Width="80" SelectedIndex="3" ItemsSource="{x:Static vc:RulerGrid.Quantizations}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding Converter={x:Static vc:ChartConverters.quantizationDescriptionConverter}}"/>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ComboBox>
     </ToolBar>
-    <v:NoteChartEditPanel x:Name="noteChartEditPanel"/>
+    <v:NoteChartEditPanel x:Name="noteChartEditPanel"
+      Quantization="{Binding Path=SelectedItem, ElementName=quantizationDropDown}"
+      Snap="{Binding Path=IsChecked, ElementName=quantizeButton}"/>
   </DockPanel>
 </vv:MainWindowBase>

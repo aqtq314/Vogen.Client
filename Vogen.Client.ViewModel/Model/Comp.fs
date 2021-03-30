@@ -31,6 +31,7 @@ type Note(pitch, lyric, rom, on, dur, isSelected) =
     member x.SetOn on = Note(pitch, lyric, rom, on, dur, isSelected)
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur, isSelected)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on, isSelected)
+    member x.SetIsSelected isSelected = Note(pitch, lyric, rom, on, dur, isSelected)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On
@@ -101,19 +102,21 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.SetAudio(audioFileBytes, audioSamples) =
         UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
-type Composition private(bpm0, utts, uttSynthResults) =
+type Composition private(timeSig0, bpm0, utts, uttSynthResults) =
     let utts = (utts : ImmutableList<Utterance>).Sort(Utterance.CompareByPosition)
 
+    member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
     member x.Utts : ImmutableList<Utterance> = utts
 
     member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
-    new(bpm0, utts) =
+    new(timeSig0, bpm0, utts) =
         let uttSynthResults = (utts : ImmutableList<_>).ToImmutableDictionary(id, UttSynthResult.Create bpm0)
-        Composition(bpm0, utts, uttSynthResults)
+        Composition(timeSig0, bpm0, utts, uttSynthResults)
 
-    new() = Composition(120.0, ImmutableList.Empty)
+    new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
+    new() = Composition(timeSignature 4 4, 120.0, ImmutableList.Empty)
     static member Empty = Composition()
 
     member x.SetUtts utts =
@@ -121,13 +124,13 @@ type Composition private(bpm0, utts, uttSynthResults) =
             uttSynthResults.TryGetValue utt
             |> Option.ofByRef
             |> Option.defaultWith(fun () -> UttSynthResult.Create bpm0 utt))
-        Composition(bpm0, utts, uttSynthResults)
+        Composition(timeSig0, bpm0, utts, uttSynthResults)
 
     member x.SetUttSynthResult updateUttSynthResult utt =
         match uttSynthResults.TryGetValue utt |> Option.ofByRef with
         | None -> x
         | Some uttSynthResult ->
             let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
-            Composition(bpm0, utts, uttSynthResults)
+            Composition(timeSig0, bpm0, utts, uttSynthResults)
 
 

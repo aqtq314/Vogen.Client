@@ -31,18 +31,37 @@ type ChartMouseEvent =
             push(ChartMouseRelease e)
             e.Handled <- true)
 
-[<AbstractClass>]
 type NoteChartEditPanelBase() =
     inherit UserControl()
+
+    member x.Quantization
+        with get() = x.GetValue NoteChartEditPanelBase.QuantizationProperty :?> int64
+        and set(v : int64) = x.SetValue(NoteChartEditPanelBase.QuantizationProperty, box v)
+    static member val QuantizationProperty =
+        Dp.reg<int64, NoteChartEditPanelBase> "Quantization"
+            (Dp.Meta(Midi.ppqn, Dp.MetaFlags.AffectsRender))
+
+    member x.Snap
+        with get() = x.GetValue NoteChartEditPanelBase.SnapProperty :?> bool
+        and set(v : bool) = x.SetValue(NoteChartEditPanelBase.SnapProperty, box v)
+    static member val SnapProperty =
+        Dp.reg<bool, NoteChartEditPanelBase> "Snap"
+            (Dp.Meta(true, Dp.MetaFlags.AffectsRender))
 
     member x.ProgramModel = x.DataContext :?> ProgramModel
 
     abstract ChartEditor : ChartEditor
+    default x.ChartEditor = Unchecked.defaultof<_>
     abstract ChartEditorAdornerLayer : ChartEditorAdornerLayer
+    default x.ChartEditorAdornerLayer = Unchecked.defaultof<_>
     abstract RulerGrid : RulerGrid
+    default x.RulerGrid = Unchecked.defaultof<_>
     abstract SideKeyboard : SideKeyboard
+    default x.SideKeyboard = Unchecked.defaultof<_>
     abstract HScrollZoom : ChartScrollZoomKitBase
+    default x.HScrollZoom = Unchecked.defaultof<_>
     abstract VScrollZoom : ChartScrollZoomKitBase
+    default x.VScrollZoom = Unchecked.defaultof<_>
 
     member x.BindBehaviors() =
         let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
@@ -90,13 +109,21 @@ type NoteChartEditPanelBase() =
                         if mousePulse |> between note.On note.Off && mousePitch = note.Pitch then
                             yield note }
 
+        let quantize quantization (timeSig : TimeSignature) pulses =
+            let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
+            pulsesMeasureQuantized + (pulses - pulsesMeasureQuantized) / quantization * quantization
+
         let updatePlaybackCursorPos(e : MouseEventArgs)(edit : NoteChartEditBase) =
             let hOffset = edit.HOffsetAnimated
             let quarterWidth = edit.QuarterWidth
+            let comp = !!x.ProgramModel.ActiveComp
+            let quantization = x.Quantization
+            let snap = x.Snap
 
             let mousePos = e.GetPosition edit
             let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition edit
-            x.ProgramModel.ManualSetCursorPos newCursorPos
+            let newCursorPosQuantized = if snap then newCursorPos |> quantize quantization comp.TimeSig0 else newCursorPos
+            x.ProgramModel.ManualSetCursorPos newCursorPosQuantized
 
         x.ChartEditor |> ChartMouseEvent.BindEvents(
             let edit = x.ChartEditor

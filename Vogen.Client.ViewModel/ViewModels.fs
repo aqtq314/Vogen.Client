@@ -29,7 +29,6 @@ type ProgramModel() as x =
                 x.PlaybackSyncCursorPos()
 
     let audioEngine = AudioPlaybackEngine()
-    let midiEngine = MidiPlaybackEngine()
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
 
@@ -39,8 +38,6 @@ type ProgramModel() as x =
     member val ActiveComp = activeComp |> Rpo.map id
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
-
-    member x.MidiEngine = midiEngine
 
     member x.LoadComp(comp, ?isSaved) =
         let isSaved = defaultArg isSaved false

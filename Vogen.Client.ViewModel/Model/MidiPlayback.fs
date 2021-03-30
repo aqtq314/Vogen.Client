@@ -5,7 +5,7 @@ open NAudio
 open NAudio.Midi
 
 
-type MidiPlaybackEngine() =
+module MidiPlayback =
     let device =
         if MidiOut.NumberOfDevices = 0 then null else
             new MidiOut(0)
@@ -13,11 +13,11 @@ type MidiPlaybackEngine() =
     do  if device <> null then
             device.Send(PatchChangeEvent(0L, 1, 53).GetAsShortMessage())
 
-    member x.PlayPitch pitch =
+    let playPitch pitch =
         if device <> null then
             device.Send(NoteEvent(0L, 1, MidiCommandCode.NoteOn, pitch, 64).GetAsShortMessage())
 
-    member x.StopPitch pitch =
+    let stopPitch pitch =
         if device <> null then
             device.Send(NoteEvent(0L, 1, MidiCommandCode.NoteOff, pitch, 0).GetAsShortMessage())
 

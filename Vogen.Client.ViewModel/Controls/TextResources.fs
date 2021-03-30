@@ -32,4 +32,22 @@ let getHasAudioDescription hasAudio =
     | false -> "未合成"
     | true -> "合成完毕"
 
+let getQuantizationDescription quantization =
+    match quantization with
+    | 1920L -> "1/1 音符"
+    | 960L  -> "1/2 音符"
+    | 480L  -> "1/4 音符"
+    | 240L  -> "1/8 音符"
+    | 120L  -> "1/16 音符"
+    | 60L   -> "1/32 音符"
+    | 30L   -> "1/64 音符"
+    | 15L   -> "1/128 音符"
+    | 1L    -> "自由（1/1920）"
+    | 320L  -> "1/4 三连音（1/6）"
+    | 160L  -> "1/8 三连音（1/12）"
+    | 80L   -> "1/16 三连音（1/24）"
+    | 40L   -> "1/32 三连音（1/48）"
+    | 20L   -> "1/64 三连音（1/96）"
+    | _ -> raise(KeyNotFoundException($"Unknown quantization duration {quantization}"))
+
 

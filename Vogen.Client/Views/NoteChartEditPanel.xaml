@@ -1,4 +1,4 @@
-﻿<vv:NoteChartEditPanelBase x:Class="Vogen.Client.Views.NoteChartEditPanel"
+﻿<vv:NoteChartEditPanelBase x:Name="this" x:Class="Vogen.Client.Views.NoteChartEditPanel"
                            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -24,6 +24,7 @@
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
       <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="24.5"
+        Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
@@ -40,6 +41,7 @@
         IsPlaying="{Binding IsPlaying.Value}"
         Composition="{Binding ActiveComp.Value}"/>
       <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1"
+        Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"

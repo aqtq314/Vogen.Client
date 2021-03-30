@@ -54,6 +54,13 @@ type NoteChartEditBase() =
         Dp.reg<TimeSignature, NoteChartEditBase> "TimeSignature"
             (Dp.Meta(timeSignature 4 4, Dp.MetaFlags.AffectsRender))
 
+    member x.Quantization
+        with get() = x.GetValue NoteChartEditBase.QuantizationProperty :?> int64
+        and set(v : int64) = x.SetValue(NoteChartEditBase.QuantizationProperty, box v)
+    static member val QuantizationProperty =
+        Dp.reg<int64, NoteChartEditBase> "Quantization"
+            (Dp.Meta(Midi.ppqn, Dp.MetaFlags.AffectsRender))
+
     member x.QuarterWidth
         with get() = x.GetValue NoteChartEditBase.QuarterWidthProperty :?> float
         and set(v : float) = x.SetValue(NoteChartEditBase.QuarterWidthProperty, box v)
@@ -211,6 +218,12 @@ type RulerGrid() =
 
     static let tickPen = Pen(SolidColorBrush(rgb 0), 1.0) |>! freeze
 
+    static member Quantizations = [|
+        1920L; 960L; 480L; 240L; 120L; 60L; 30L; 15L; 1L
+        320L; 160L; 80L; 40L; 20L |]
+
+    static member QuantizationsSorted = Array.sort RulerGrid.Quantizations
+
     static member MinMajorTickHop = 70.0    // in screen pixels
     static member MinMinorTickHop = 25.0
 
@@ -345,10 +358,9 @@ type ChartEditor() as x =
         updateUttToCharsDict comp
         updateActiveNotes x.CursorPosition x.IsPlaying comp
 
-    static let majorTickPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
-    static let octavePen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
-    static let subOctavePen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5, DashStyle = DashStyle([| 4.0; 8.0 |], 0.0)) |>! freeze
-    static let blackKeyPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
+    static let minGridScreenHop = 5.0
+    static let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
+    static let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
 
     static let noteBaseColor = rgb 0xFF8040
     static let hyphBaseColor = rgb 0xFF6080
@@ -373,6 +385,7 @@ type ChartEditor() as x =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
         let timeSig = x.TimeSignature
+        let quantization = x.Quantization
         let quarterWidth = x.QuarterWidth
         let keyHeight = x.KeyHeight
         let minKey = x.MinKey
@@ -385,9 +398,6 @@ type ChartEditor() as x =
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth |> ceil)
 
-        let majorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMajorTickHop
-        let minorHop = RulerGrid.FindTickHop timeSig quarterWidth RulerGrid.MinMinorTickHop
-
         let botPitch = pixelToPitch keyHeight actualHeight vOffset actualHeight |> int |> max minKey
         let topPitch = pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil |> int |> min maxKey
 
@@ -396,30 +406,54 @@ type ChartEditor() as x =
         dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
 
         // time grids
-        for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
-            let x = pulseToPixel quarterWidth hOffset (float currPulse)
-            let isMajorTick = currPulse % majorHop = 0L
-            if isMajorTick then
-                dc.DrawLine(majorTickPen, Point(x, 0.0), Point(x, actualHeight))
+        let measureHop =
+            Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i)
+            |> Seq.find(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
+        let beatHop =
+            Seq.initInfinite(fun i -> timeSig.PulsesPerBeat <<< i)
+            |> Seq.skipWhile(fun pulses -> pulses < quantization)
+            |> Seq.takeWhile(fun pulses -> pulses < timeSig.PulsesPerMeasure)
+            |> Seq.tryFind(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
+            |> Option.defaultValue measureHop
+        let gridHop =
+            if quantization = 1L then beatHop else
+            Seq.initInfinite(fun i -> quantization <<< i)
+            |> Seq.takeWhile(fun pulses -> pulses < timeSig.PulsesPerBeat)
+            |> Seq.tryFind(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
+            |> Option.defaultValue beatHop
+
+        for measurePulse in minPulse / measureHop * measureHop .. measureHop .. maxPulse do
+            if measurePulse > minPulse then
+                let x0 = pulseToPixel quarterWidth hOffset (float measurePulse)
+                dc.DrawLine(majorGridPen, Point(x0, 0.0), Point(x0, actualHeight))
+
+            for beatPulse in measurePulse .. beatHop .. min maxPulse (measurePulse + timeSig.PulsesPerMeasure - 1L) do
+                if beatPulse > max minPulse measurePulse then
+                    let x0 = pulseToPixel quarterWidth hOffset (float beatPulse)
+                    for pitch in botPitch .. topPitch do
+                        let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
+                        if pitch |> Midi.isBlackKey then
+                            dc.DrawLine(majorGridPen, Point(x0, y - (half keyHeight + 1.0)), Point(x0, y + (half keyHeight + 1.0)))
+
+                for gridPulse in beatPulse + gridHop .. gridHop .. min maxPulse (beatPulse + timeSig.PulsesPerBeat - 1L) do
+                    if gridPulse > max minPulse beatPulse then
+                        let x0 = pulseToPixel quarterWidth hOffset (float gridPulse)
+                        for pitch in botPitch .. topPitch do
+                            let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
+                            if pitch |> Midi.isBlackKey then
+                                dc.DrawLine(minorGridPen, Point(x0, y - max 0.0 (half keyHeight - 1.0)), Point(x0, y + max 0.0 (half keyHeight - 1.0)))
 
         // pitch grids
         for pitch in botPitch .. topPitch do
             let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
             match pitch % 12 with
             | 0 ->
-                let y = y + half keyHeight - half octavePen.Thickness
-                dc.DrawLine(octavePen, Point(0.0, y), Point(actualWidth, y))
+                let y = y + half keyHeight - half majorGridPen.Thickness
+                dc.DrawLine(majorGridPen, Point(0.0, y), Point(actualWidth, y))
             | 5 ->
-                let y = y + half keyHeight - half octavePen.Thickness
-                dc.DrawLine(subOctavePen, Point(0.0, y), Point(actualWidth, y))
+                let y = y + half keyHeight - half majorGridPen.Thickness
+                dc.DrawLine(minorGridPen, Point(0.0, y), Point(actualWidth, y))
             | _ -> ()
-
-            if pitch |> Midi.isBlackKey then
-                for currPulse in minPulse / minorHop * minorHop .. minorHop .. maxPulse do
-                    let isMajorTick = currPulse % majorHop = 0L
-                    if not isMajorTick then
-                        let x = pulseToPixel quarterWidth hOffset (float currPulse)
-                        dc.DrawLine(blackKeyPen, Point(x, y - half keyHeight), Point(x, y + half keyHeight))
 
         // active note pitches
         let activePitches = HashSet()
@@ -448,7 +482,8 @@ type ChartEditor() as x =
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
                 ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
-                dc.DrawText(ft, Point(x0 - 6.0, yMid - half ft.Height))
+                ft.SetForegroundBrush notePen.Brush
+                dc.DrawText(ft, Point(x0 - 8.0, yMid - half ft.Height))
 
         // notes
         let bpm0 = comp.Bpm0
