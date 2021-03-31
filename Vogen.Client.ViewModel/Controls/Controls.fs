@@ -342,7 +342,7 @@ type ChartEditor() as x =
             |> Seq.collect(fun utt -> utt.Notes)
             |> Seq.filter(
                 if isPlaying then (fun note -> note.On <= playbackPos && note.Off > playbackPos)
-                else (fun note -> comp.SelectedNotes.Contains note))
+                else (fun note -> comp.GetIsNoteSelected note))
             |> HashSet
         if not(activeNotes.SetEquals newActiveNotes) then
             activeNotes <- newActiveNotes
@@ -622,7 +622,7 @@ type ChartEditorAdornerLayer() =
                 0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
 
     static let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
-    static let hoverCursorPen    = Pen(SolidColorBrush(aFRgb 0.25 0), 0.5) |>! freeze
+    static let hoverCursorPen    = Pen(SolidColorBrush(aFRgb 0.5 0), 0.75) |>! freeze
     static let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
     static let selBoxBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
     static let selBoxPen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 0.75) |>! freeze

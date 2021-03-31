@@ -10,6 +10,7 @@ open System.Collections.ObjectModel
 open System.IO
 open System.IO.Compression
 open System.Linq
+open System.Runtime.InteropServices
 open System.Text
 open System.Text.Encodings
 
@@ -27,7 +28,7 @@ type Note(pitch, lyric, rom, on, dur) =
     member x.SetOn on = Note(pitch, lyric, rom, on, dur)
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
-    member x.SetIsSelected isSelected = Note(pitch, lyric, rom, on, dur)
+    member x.Move(on, pitch) = Note(pitch, lyric, rom, on, dur)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On
@@ -103,7 +104,7 @@ type Composition private(timeSig0, bpm0, utts, selectedNotes, uttSynthResults) =
     member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
     member x.Utts : ImmutableArray<Utterance> = utts
-    member x.SelectedNotes : ImmutableHashSet<Note> = selectedNotes
+    member x.GetIsNoteSelected note = (selectedNotes : ImmutableHashSet<Note>).Contains note
     member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
     new(timeSig0, bpm0, utts) =
@@ -113,17 +114,22 @@ type Composition private(timeSig0, bpm0, utts, selectedNotes, uttSynthResults) =
     new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
     static member val Empty = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
 
-    //member x.SetUtts utts =
-    //    let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt ->
-    //        uttSynthResults.TryGetValue utt
-    //        |> Option.ofByRef
-    //        |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
-    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
-
-    member x.SetSelectedNotes selectedNotes =
+    member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
+        let selectedNotes =
+            if not enforceStateConsistencies then selectedNotes else
+                selectedNotes.Intersect(utts |> Seq.collect(fun utt -> utt.Notes))
+        let uttSynthResults =
+            utts.ToImmutableDictionary(id, fun utt ->
+                uttSynthResults.TryGetValue utt
+                |> Option.ofByRef
+                |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
         Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
 
-    member x.SetUttSynthResult updateUttSynthResult utt =
+    member x.UpdateSelectedNotes updateSelectedNotes =
+        let selectedNotes = updateSelectedNotes selectedNotes
+        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+
+    member x.UpdateUttSynthResult updateUttSynthResult utt =
         match uttSynthResults.TryGetValue utt |> Option.ofByRef with
         | None -> x
         | Some uttSynthResult ->

@@ -130,12 +130,12 @@ type ProgramModel() as x =
         x.UpdateComp <| fun comp ->
             (comp, comp.Utts)
             ||> Seq.fold(fun comp utt ->
-                utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.Clear()))
+                utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.Clear()))
 
     member x.SynthUtt(dispatcher : Dispatcher, utt) =
         let bpm0 =
             let comp = x.UpdateCompReturn <| fun comp ->
-                utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetIsSynthing true)
+                utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetIsSynthing true)
             comp.Bpm0
         Async.Start <| async {
             try try let tUtt = TimeTable.ofUtt bpm0 utt
@@ -143,24 +143,24 @@ type ProgramModel() as x =
                     let charGrids = TimeTable.toCharGrids tChars
                     dispatcher.BeginInvoke(fun () ->
                         x.UpdateComp <| fun comp ->
-                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                                 uttSynthResult.SetCharGrids charGrids)) |> ignore
                     let! f0Samples = Synth.requestF0 tUtt tChars
                     dispatcher.BeginInvoke(fun () ->
                         x.UpdateComp <| fun comp ->
-                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                                 uttSynthResult.SetF0Samples f0Samples)) |> ignore
                     let! audioContent = Synth.requestAc tChars f0Samples "gloria"
                     dispatcher.BeginInvoke(fun () ->
                         x.UpdateComp <| fun comp ->
-                            utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                                 uttSynthResult.SetAudio audioContent)) |> ignore
                 with ex ->
                     Trace.WriteLine ex
             finally
                 dispatcher.BeginInvoke(fun () ->
                     x.UpdateComp <| fun comp ->
-                        utt |> comp.SetUttSynthResult(fun uttSynthResult ->
+                        utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                             uttSynthResult.SetIsSynthing false)) |> ignore}
 
     member x.Synth dispatcher =

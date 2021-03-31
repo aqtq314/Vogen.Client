@@ -163,22 +163,64 @@ type NoteChartEditPanelBase() =
                         updateMouseOverNote None
                         let comp = !!x.ProgramModel.ActiveComp
                         let mousePos = e.GetPosition edit
-                        let mouseOverNoteOp = findMouseOverNote mousePos edit
-                        match mouseOverNoteOp with
-                        | None -> ()
-                        | Some mouseOverNote when comp.SelectedNotes.Contains mouseOverNote -> ()
-                        | Some mouseOverNote -> ()
+                        let mouseDownNoteOp = findMouseOverNote mousePos edit
+                        match mouseDownNoteOp with
+                        | None ->
+                            let mouseDownIsNoteSelected =
+                                match Keyboard.Modifiers with
+                                | ModifierKeys.Control ->
+                                    comp.GetIsNoteSelected
+                                | _ ->
+                                    x.ProgramModel.UpdateComp(fun comp ->
+                                        comp.UpdateSelectedNotes(fun _ -> ImmutableHashSet.Empty))
+                                    (fun _ -> false)
 
-                        let mouseDownSelection =
-                            match Keyboard.Modifiers with
-                            | ModifierKeys.Control ->
-                                comp.SelectedNotes
-                            | _ ->
-                                x.ProgramModel.UpdateComp(fun comp ->
-                                    comp.SetSelectedNotes ImmutableHashSet.Empty)
-                                ImmutableHashSet.Empty
+                            return! draggingSelBox mouseDownIsNoteSelected mousePos
 
-                        return! draggingSelBox mouseDownSelection mousePos
+                        | Some mouseDownNote ->
+                            let actualHeight = edit.ActualHeight
+                            let quarterWidth = edit.QuarterWidth
+                            let keyHeight = edit.KeyHeight
+                            let hOffset = edit.HOffsetAnimated
+                            let vOffset = edit.VOffsetAnimated
+                            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                            let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
+
+                            let quantization = x.Quantization
+                            let snap = x.Snap
+                            let mousePulse = if snap then mousePulse |> quantize quantization comp.TimeSig0 else mousePulse
+
+                            //MidiPlayback.playPitch mouseDownNote.Pitch
+                            let comp, isPendingDeselect =
+                                match comp.GetIsNoteSelected mouseDownNote, Keyboard.Modifiers with
+                                | false, ModifierKeys.Control ->
+                                    let comp =
+                                        x.ProgramModel.UpdateCompReturn(fun comp ->
+                                            comp.UpdateSelectedNotes(fun selectedNotes -> selectedNotes.Add mouseDownNote))
+                                    comp, false
+
+                                | true, ModifierKeys.Control ->
+                                    comp, true
+
+                                | false, _ ->
+                                    let comp =
+                                        x.ProgramModel.UpdateCompReturn(fun comp ->
+                                            comp.UpdateSelectedNotes(fun _ -> ImmutableHashSet.Create mouseDownNote))
+                                    comp, false
+
+                                | true, _ ->
+                                    comp, false
+
+                            let mouseDownSelection =
+                                comp.Utts
+                                |> Seq.collect(fun utt -> utt.Notes)
+                                |> Seq.filter comp.GetIsNoteSelected
+                                |> ImmutableHashSet.CreateRange
+
+                            if isPendingDeselect then
+                                return! mouseDownNotePendingDeselect mouseDownNote comp mouseDownSelection mousePulse mousePitch
+                            else
+                                return! draggingNote mouseDownNote comp mouseDownSelection mousePulse mousePitch
 
                     | MouseButton.Middle ->
                         updateMouseOverNote None
@@ -192,7 +234,67 @@ type NoteChartEditPanelBase() =
 
                 | _ -> return! idle() }
 
-            and draggingSelBox mouseDownSelection mouseDownPos = behavior {
+            and mouseDownNotePendingDeselect mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch = behavior {
+                match! () with
+                | ChartMouseMove e ->
+                    return! (draggingNote mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch).Run(ChartMouseMove e)
+
+                | ChartMouseRelease e ->
+                    x.ProgramModel.UpdateComp(fun comp ->
+                        comp.UpdateSelectedNotes(fun selectedNotes -> selectedNotes.Remove mouseDownNote))
+                    updateMouseOverNote(Some(e.GetPosition edit))
+                    return! idle()
+
+                | _ -> return! mouseDownNotePendingDeselect mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch }
+
+            and draggingNote mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch = behavior {
+                match! () with
+                | ChartMouseMove e ->
+                    let actualHeight = edit.ActualHeight
+                    let quarterWidth = edit.QuarterWidth
+                    let keyHeight = edit.KeyHeight
+                    let minKey = edit.MinKey
+                    let maxKey = edit.MaxKey
+                    let hOffset = edit.HOffsetAnimated
+                    let vOffset = edit.VOffsetAnimated
+                    let comp = !!x.ProgramModel.ActiveComp
+                    let mousePos = e.GetPosition edit
+                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                    let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
+
+                    let quantization = x.Quantization
+                    let snap = x.Snap
+                    let mousePulse = if snap then mousePulse |> quantize quantization comp.TimeSig0 else mousePulse
+
+                    let mouseDownSelMinPulse = mouseDownSelection |> Seq.map(fun note -> note.On) |> Seq.min
+                    let mouseDownSelMinPitch = mouseDownSelection |> Seq.map(fun note -> note.Pitch) |> Seq.min
+                    let mouseDownSelMaxPitch = mouseDownSelection |> Seq.map(fun note -> note.Pitch) |> Seq.max
+                    let deltaPulse = mousePulse - mouseDownPulse |> max -mouseDownSelMinPulse
+                    let deltaPitch = mousePitch - mouseDownPitch |> clamp(minKey - mouseDownSelMinPitch)(maxKey - mouseDownSelMaxPitch)
+
+                    x.ProgramModel.UpdateComp(fun comp ->
+                        if deltaPulse = 0L && deltaPitch = 0 then mouseDownComp else
+                            let selectedNotesToNew = mouseDownSelection.ToImmutableDictionary(id, fun (note : Note) ->
+                                note.Move(note.On + deltaPulse, note.Pitch + deltaPitch))
+
+                            let newUtts = ImmutableArray.CreateRange(mouseDownComp.Utts |> Seq.map(fun utt ->
+                                if utt.Notes |> Seq.forall(fun note -> not(selectedNotesToNew.ContainsKey note)) then utt else
+                                    utt.SetNotes(ImmutableArray.CreateRange(utt.Notes |> Seq.map(fun note ->
+                                        selectedNotesToNew.TryGetValue note
+                                        |> Option.ofByRef
+                                        |> Option.defaultValue note)))))
+
+                            comp.SetUtts(newUtts).UpdateSelectedNotes(fun _ -> ImmutableHashSet.CreateRange selectedNotesToNew.Values))
+
+                    return! draggingNote mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch
+
+                | ChartMouseRelease e ->
+                    updateMouseOverNote(Some(e.GetPosition edit))
+                    return! idle()
+
+                | _ -> return! draggingNote mouseDownNote mouseDownComp mouseDownSelection mouseDownPulse mouseDownPitch }
+
+            and draggingSelBox mouseDownIsNoteSelected mouseDownPos = behavior {
                 match! () with
                 | ChartMouseMove e ->
                     let actualHeight = edit.ActualHeight
@@ -215,18 +317,18 @@ type NoteChartEditPanelBase() =
                         |> Seq.filter(fun note ->
                             let noteHasIntersection =
                                 note.On <= selMaxPulse && note.Off >= selMinPulse && note.Pitch |> betweenInc selMinPitch selMaxPitch
-                            noteHasIntersection <> mouseDownSelection.Contains note)
+                            noteHasIntersection <> mouseDownIsNoteSelected note)
                         |> ImmutableHashSet.CreateRange
-                    x.ProgramModel.UpdateComp(fun comp -> comp.SetSelectedNotes selection)
+                    x.ProgramModel.UpdateComp(fun comp -> comp.UpdateSelectedNotes(fun _ -> selection))
 
-                    return! draggingSelBox mouseDownSelection mouseDownPos
+                    return! draggingSelBox mouseDownIsNoteSelected mouseDownPos
 
                 | ChartMouseRelease e ->
                     x.ChartEditorAdornerLayer.SelectionBoxOp <- None
                     updateMouseOverNote(Some(e.GetPosition edit))
                     return! idle()
 
-                | _ -> return! draggingSelBox mouseDownSelection mouseDownPos }
+                | _ -> return! draggingSelBox mouseDownIsNoteSelected mouseDownPos }
 
             Behavior.agent(idle()))
 

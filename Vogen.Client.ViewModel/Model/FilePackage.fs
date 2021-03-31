@@ -112,7 +112,7 @@ module FilePackage =
                     let fChGridsStr = fileReader.ReadToEnd()
                     let fChGrids = JsonConvert.DeserializeObject<FChGrid []> fChGridsStr
                     let charGrids = Array.map FChGrid.toCharGrid fChGrids
-                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
+                    utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
             let comp =
                 match zipEntryDict.TryGetValue $"{uttName}.f0" |> Option.ofByRef with
                 | None -> comp
@@ -123,14 +123,14 @@ module FilePackage =
                     let f0Bytes = byteStream.ToArray()
                     let f0Samples = Array.zeroCreate(f0Bytes.Length / sizeof<float32>)
                     Buffer.BlockCopy(f0Bytes, 0, f0Samples, 0, f0Samples.Length * sizeof<float32>)
-                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
+                    utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
             let comp =
                 match zipEntryDict.TryGetValue $"{uttName}.m4a" |> Option.ofByRef with
                 | None -> comp
                 | Some audioEntry ->
                     use fileStream = audioEntry.Open()
                     let audioContent = AudioSamples.loadFromStream fileStream
-                    utt |> comp.SetUttSynthResult(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
+                    utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
             comp)
 
     let save stream comp =
