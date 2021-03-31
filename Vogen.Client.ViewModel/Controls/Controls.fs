@@ -342,7 +342,7 @@ type ChartEditor() as x =
             |> Seq.collect(fun utt -> utt.Notes)
             |> Seq.filter(
                 if isPlaying then (fun note -> note.On <= playbackPos && note.Off > playbackPos)
-                else (fun note -> note.IsSelected))
+                else (fun note -> comp.SelectedNotes.Contains note))
             |> HashSet
         if not(activeNotes.SetEquals newActiveNotes) then
             activeNotes <- newActiveNotes
@@ -624,6 +624,8 @@ type ChartEditorAdornerLayer() =
     static let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
     static let hoverCursorPen    = Pen(SolidColorBrush(aFRgb 0.25 0), 0.5) |>! freeze
     static let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
+    static let selBoxBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
+    static let selBoxPen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 0.75) |>! freeze
 
     static let getCursorHeadGeometry xPos =
         pointsToGeometry true [|
@@ -649,6 +651,14 @@ type ChartEditorAdornerLayer() =
             (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverNoteOpChanged)))
     member x.OnMouseOverNoteOpChanged(prevMouseOverNoteOp, mouseOverNoteOp) = ()
 
+    member x.SelectionBoxOp
+        with get() = x.GetValue ChartEditorAdornerLayer.SelectionBoxOpProperty :?> (int64 * int64 * int * int) option
+        and set(v : (int64 * int64 * int * int) option) = x.SetValue(ChartEditorAdornerLayer.SelectionBoxOpProperty, box v)
+    static member val SelectionBoxOpProperty =
+        Dp.reg<(int64 * int64 * int * int) option, ChartEditorAdornerLayer> "SelectionBoxOp"
+            (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnSelectionBoxOpChanged)))
+    member x.OnSelectionBoxOpChanged(prevSelBoxOp, selBoxOp) = ()
+
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
@@ -660,9 +670,11 @@ type ChartEditorAdornerLayer() =
         let comp = x.Composition
         let mouseOverCursorPosOp = x.MouseOverCursorPositionOp
         let mouseOverNoteOp = x.MouseOverNoteOp
+        let selBoxOp = x.SelectionBoxOp
 
         // mouse over note
         match mouseOverNoteOp with
+        | None -> ()
         | Some note ->
             let x0 = pulseToPixel quarterWidth hOffset (float note.On)
             let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
@@ -670,7 +682,6 @@ type ChartEditorAdornerLayer() =
 
             let noteRect = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
             dc.DrawRectangle(hoverNoteBrush, null, noteRect)
-        | _ -> ()
 
         // playback cursor
         let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
@@ -680,11 +691,22 @@ type ChartEditorAdornerLayer() =
 
         // mouse over cursor
         match mouseOverCursorPosOp with
+        | None -> ()
         | Some mouseOverCursorPos ->
             let xPos = pulseToPixel quarterWidth hOffset (float mouseOverCursorPos)
             if xPos >= 0.0 && xPos <= actualWidth then
                 dc.DrawLine(hoverCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
                 dc.DrawGeometry(Brushes.White, hoverCursorPen, getCursorHeadGeometry xPos)
+
+        // selection box
+        match selBoxOp with
         | None -> ()
+        | Some(selMinPulse, selMaxPulse, selMinPitch, selMaxPitch) ->
+            let selBoxPenThicknessRadius = half selBoxPen.Thickness
+            let x0 = pulseToPixel quarterWidth hOffset (float selMinPulse) |> max(0.0 - selBoxPenThicknessRadius)
+            let x1 = pulseToPixel quarterWidth hOffset (float(selMaxPulse + 1L)) |> min(actualWidth + selBoxPenThicknessRadius)
+            let y0 = pitchToPixel keyHeight actualHeight vOffset (float selMaxPitch) - half keyHeight |> max(0.0 - selBoxPenThicknessRadius)
+            let y1 = pitchToPixel keyHeight actualHeight vOffset (float selMinPitch) + half keyHeight |> min(actualHeight + selBoxPenThicknessRadius)
+            dc.DrawRectangle(selBoxBrush, selBoxPen, Rect(x0, y0, x1 - x0, y1 - y0))
 
 

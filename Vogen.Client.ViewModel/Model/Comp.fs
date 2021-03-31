@@ -14,24 +14,20 @@ open System.Text
 open System.Text.Encodings
 
 
-type Note(pitch, lyric, rom, on, dur, isSelected) =
+type Note(pitch, lyric, rom, on, dur) =
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
     member x.Rom : string = rom
     member x.On : int64 = on
     member x.Dur : int64 = dur
 
-    member x.IsSelected : bool = isSelected
-
-    member x.Off = on + dur
+    member x.Off = x.On + x.Dur
     member x.IsHyphen = x.Lyric = "-"
 
-    new(pitch, lyric, rom, on, dur) = Note(pitch, lyric, rom, on, dur, false)
-
-    member x.SetOn on = Note(pitch, lyric, rom, on, dur, isSelected)
-    member x.SetDur dur = Note(pitch, lyric, rom, on, dur, isSelected)
-    member x.SetOff off = Note(pitch, lyric, rom, on, off - on, isSelected)
-    member x.SetIsSelected isSelected = Note(pitch, lyric, rom, on, dur, isSelected)
+    member x.SetOn on = Note(pitch, lyric, rom, on, dur)
+    member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
+    member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
+    member x.SetIsSelected isSelected = Note(pitch, lyric, rom, on, dur)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On
@@ -39,12 +35,11 @@ type Note(pitch, lyric, rom, on, dur, isSelected) =
         else compare n1.Dur n2.Dur
 
 type Utterance(romScheme, notes) =
-    let notes = (notes : ImmutableArray<Note>).Sort(Note.CompareByPosition)
-    let on = notes.[0].On
+    let notes = (notes : ImmutableArray<Note>).Sort Note.CompareByPosition
 
     member x.RomScheme : string = romScheme
     member x.Notes : ImmutableArray<Note> = notes
-    member x.On = on
+    member x.On = notes.[0].On
 
     member x.SetNotes notes = Utterance(romScheme, notes)
 
@@ -53,10 +48,10 @@ type Utterance(romScheme, notes) =
         | 0 -> -(compare utt1.Notes.[0].Pitch utt2.Notes.[0].Pitch)
         | onDiff -> onDiff
 
-type PhonemeInterval(ph, on, off) =      // on/off in vocoder frames
+type PhonemeInterval(ph, on, off) =
     member x.Ph : string = ph
-    member x.On : int = on
-    member x.Off : int = off
+    member x.On : int = on      // unit in vocoder frames
+    member x.Off : int = off    // unit in vocoder frames
 
 type CharGrid(pitch, phs) =
     member x.Pitch : int = pitch
@@ -74,15 +69,15 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.HasCharGrids = x.CharGrids.Length > 0
     member x.HasF0Samples = x.F0Samples.Length > 0
 
-    new(sampleOffset) = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
+    static member Create sampleOffset = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
 
-    static member Create bpm0 (utt : Utterance) =
+    static member Create(bpm0, utt : Utterance) =
         let sampleOffset =
-            float utt.Notes.[0].On
+            float utt.On
             |> Midi.toTimeSpan bpm0
             |> (+) -headSil
             |> Audio.timeToSample
-        UttSynthResult(sampleOffset)
+        UttSynthResult.Create sampleOffset
 
     member x.Clear() =
         UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
@@ -102,35 +97,37 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.SetAudio(audioFileBytes, audioSamples) =
         UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
-type Composition private(timeSig0, bpm0, utts, uttSynthResults) =
-    let utts = (utts : ImmutableArray<Utterance>).Sort(Utterance.CompareByPosition)
+type Composition private(timeSig0, bpm0, utts, selectedNotes, uttSynthResults) =
+    let utts = (utts : ImmutableArray<_>).Sort Utterance.CompareByPosition
 
     member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
     member x.Utts : ImmutableArray<Utterance> = utts
-
+    member x.SelectedNotes : ImmutableHashSet<Note> = selectedNotes
     member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
     new(timeSig0, bpm0, utts) =
-        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, UttSynthResult.Create bpm0)
-        Composition(timeSig0, bpm0, utts, uttSynthResults)
+        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt -> UttSynthResult.Create(bpm0, utt))
+        Composition(timeSig0, bpm0, utts, ImmutableHashSet.Empty, uttSynthResults)
 
     new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
-    new() = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
-    static member Empty = Composition()
+    static member val Empty = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
 
-    member x.SetUtts utts =
-        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt ->
-            uttSynthResults.TryGetValue utt
-            |> Option.ofByRef
-            |> Option.defaultWith(fun () -> UttSynthResult.Create bpm0 utt))
-        Composition(timeSig0, bpm0, utts, uttSynthResults)
+    //member x.SetUtts utts =
+    //    let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt ->
+    //        uttSynthResults.TryGetValue utt
+    //        |> Option.ofByRef
+    //        |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
+    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+
+    member x.SetSelectedNotes selectedNotes =
+        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
 
     member x.SetUttSynthResult updateUttSynthResult utt =
         match uttSynthResults.TryGetValue utt |> Option.ofByRef with
         | None -> x
         | Some uttSynthResult ->
             let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
-            Composition(timeSig0, bpm0, utts, uttSynthResults)
+            Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
 
 

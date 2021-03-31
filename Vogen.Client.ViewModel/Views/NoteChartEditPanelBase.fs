@@ -5,6 +5,7 @@ open Doaz.Reactive.Controls
 open Doaz.Reactive.Math
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Input
@@ -160,26 +161,72 @@ type NoteChartEditPanelBase() =
                     match e.ChangedButton with
                     | MouseButton.Left ->
                         updateMouseOverNote None
-                        edit |> updatePlaybackCursorPos e
-                        return! mouseLeftDown()
+                        let comp = !!x.ProgramModel.ActiveComp
+                        let mousePos = e.GetPosition edit
+                        let mouseOverNoteOp = findMouseOverNote mousePos edit
+                        match mouseOverNoteOp with
+                        | None -> ()
+                        | Some mouseOverNote when comp.SelectedNotes.Contains mouseOverNote -> ()
+                        | Some mouseOverNote -> ()
+
+                        let mouseDownSelection =
+                            match Keyboard.Modifiers with
+                            | ModifierKeys.Control ->
+                                comp.SelectedNotes
+                            | _ ->
+                                x.ProgramModel.UpdateComp(fun comp ->
+                                    comp.SetSelectedNotes ImmutableHashSet.Empty)
+                                ImmutableHashSet.Empty
+
+                        return! draggingSelBox mouseDownSelection mousePos
+
                     | MouseButton.Middle ->
                         updateMouseOverNote None
                         return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
+
                     | _ -> return! idle()
+
                 | ChartMouseMove e ->
                     updateMouseOverNote(Some(e.GetPosition edit))
                     return! idle()
+
                 | _ -> return! idle() }
 
-            and mouseLeftDown() = behavior {
+            and draggingSelBox mouseDownSelection mouseDownPos = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    edit |> updatePlaybackCursorPos e
-                    return! mouseLeftDown()
+                    let actualHeight = edit.ActualHeight
+                    let quarterWidth = edit.QuarterWidth
+                    let keyHeight = edit.KeyHeight
+                    let hOffset = edit.HOffsetAnimated
+                    let vOffset = edit.VOffsetAnimated
+                    let comp = !!x.ProgramModel.ActiveComp
+                    let mousePos = e.GetPosition edit
+
+                    let selMinPulse = pixelToPulse quarterWidth hOffset (min mousePos.X mouseDownPos.X) |> int64
+                    let selMaxPulse = pixelToPulse quarterWidth hOffset (max mousePos.X mouseDownPos.X) |> int64
+                    let selMinPitch = pixelToPitch keyHeight actualHeight vOffset (max mousePos.Y mouseDownPos.Y) |> round |> int
+                    let selMaxPitch = pixelToPitch keyHeight actualHeight vOffset (min mousePos.Y mouseDownPos.Y) |> round |> int
+                    x.ChartEditorAdornerLayer.SelectionBoxOp <- Some(selMinPulse, selMaxPulse, selMinPitch, selMaxPitch)
+
+                    let selection =
+                        comp.Utts
+                        |> Seq.collect(fun utt -> utt.Notes)
+                        |> Seq.filter(fun note ->
+                            let noteHasIntersection =
+                                note.On <= selMaxPulse && note.Off >= selMinPulse && note.Pitch |> betweenInc selMinPitch selMaxPitch
+                            noteHasIntersection <> mouseDownSelection.Contains note)
+                        |> ImmutableHashSet.CreateRange
+                    x.ProgramModel.UpdateComp(fun comp -> comp.SetSelectedNotes selection)
+
+                    return! draggingSelBox mouseDownSelection mouseDownPos
+
                 | ChartMouseRelease e ->
+                    x.ChartEditorAdornerLayer.SelectionBoxOp <- None
                     updateMouseOverNote(Some(e.GetPosition edit))
                     return! idle()
-                | _ -> return! mouseLeftDown() }
+
+                | _ -> return! draggingSelBox mouseDownSelection mouseDownPos }
 
             Behavior.agent(idle()))
 
@@ -268,9 +315,9 @@ type NoteChartEditPanelBase() =
                 let keyHeight = 2.0 ** log2Zoom
                 let newKeyHeight = 2.0 ** newLog2Zoom
                 let actualHeight = x.ChartEditor.ActualHeight
-                let currPulse = pixelToPitch keyHeight actualHeight vOffset yPos
-                let nextPulse = pixelToPitch newKeyHeight actualHeight vOffset yPos
-                let offsetDelta = nextPulse - currPulse
+                let currPitch = pixelToPitch keyHeight actualHeight vOffset yPos
+                let nextPitch = pixelToPitch newKeyHeight actualHeight vOffset yPos
+                let offsetDelta = nextPitch - currPitch
 
                 x.VScrollZoom.Log2ZoomValue <- newLog2Zoom
                 x.VScrollZoom.ScrollValue <- vOffset - offsetDelta
