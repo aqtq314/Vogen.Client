@@ -379,7 +379,7 @@ type ChartEditor() as x =
     static let selNoteBrush = SolidColorBrush(aRgb 0x40 0x000080) |>! freeze
     static let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
 
-    static let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 2.0) |>! freeze
+    static let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 1.0) |>! freeze
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -562,8 +562,8 @@ type ChartEditor() as x =
 
                     // text
                     if not note.IsHyphen then
-                        let ft = x |> makeFormattedText note.Rom
-                        ft.SetFontSize(1.0 * TextBlock.GetFontSize x)
+                        let ft = x |> makeFormattedText($"{note.Lyric}{note.Rom}")
+                        ft.SetFontSize((4.0 / 3.0) * TextBlock.GetFontSize x)
                         dc.DrawText(ft, Point(x0, yMid - half ft.Height))
 
         // utt ph bounds

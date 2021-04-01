@@ -45,7 +45,7 @@ module External =
             let notes = vprNotes |> Seq.map(fun vprNote ->
                 let pitch = vprNote.["number"].ToObject<int>()
                 let rom = vprNote.["lyric"].ToObject<string>()
-                let lyric = if rom = "-" then "-" else "〇"
+                let lyric = if rom = "-" then "-" else ""
                 let on = vprNote.["pos"].ToObject<int64>() + vprPartPos
                 let dur = vprNote.["duration"].ToObject<int64>()
                 Note(pitch, lyric, rom, on, dur))

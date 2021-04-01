@@ -86,11 +86,14 @@ module TimeTable =
         let chars =
             charNotes
             |> Array.map(fun notes ->
-                let outNotes = notes |> Seq.map(fun note ->
+                let outNotes = ImmutableList.CreateRange(notes |> Seq.map(fun note ->
                     let on = (float note.On |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
                     let off = (float note.Off |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
-                    { Pitch = note.Pitch; On = on; Off = off })
-                { Ch = notes.[0].Lyric; Rom = notes.[0].Rom; Notes = ImmutableList.CreateRange outNotes; Ipa = null })
+                    { Pitch = note.Pitch; On = on; Off = off }))
+                let ch = notes.[0].Lyric
+                let rom = notes.[0].Rom
+                let ch = if String.IsNullOrEmpty ch then rom else ch
+                { Ch = ch; Rom = rom; Notes = outNotes; Ipa = null })
 
         // insert sil between chars when needed
         let chars =
