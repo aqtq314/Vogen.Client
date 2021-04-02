@@ -28,8 +28,13 @@ module Math =
 
     let inline log2 v = log v / natlog2
 
-    let [<NoDynamicInvocation>] inline (/%) dividend divisor =
+    let inline (/%) dividend divisor =
         dividend / divisor, dividend % divisor
+
+    let inline (/^) dividend divisor =      // ceiling division
+        let _0, _1 = LanguagePrimitives.GenericZero, LanguagePrimitives.GenericOne
+        let ratio = dividend / divisor
+        if dividend ^^^ divisor >= _0 && dividend % divisor <> _0 then ratio + _1 else ratio
 
     let inline clamp minValue maxValue value = value |> min maxValue |> max minValue
 

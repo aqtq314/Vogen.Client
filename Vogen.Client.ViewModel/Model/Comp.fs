@@ -28,7 +28,7 @@ type Note(pitch, lyric, rom, on, dur) =
     member x.SetOn on = Note(pitch, lyric, rom, on, dur)
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
-    member x.Move(on, pitch) = Note(pitch, lyric, rom, on, dur)
+    member x.Move(pitch, on, dur) = Note(pitch, lyric, rom, on, dur)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On
@@ -114,6 +114,7 @@ type Composition private(timeSig0, bpm0, utts, selectedNotes, uttSynthResults) =
     new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
     static member val Empty = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
 
+    // TODO prevent adding identical notes more than once
     member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
         let selectedNotes =
             if not enforceStateConsistencies then selectedNotes else

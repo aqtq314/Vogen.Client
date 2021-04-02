@@ -612,6 +612,11 @@ type ChartEditor() as x =
                         prevVuv <- false
             dc.DrawGeometry(null, f0Pen, f0Geometry)
 
+type NoteDragType =
+    | NoteDragMove
+    | NoteDragResizeLeft
+    | NoteDragResizeRight
+
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()
 
@@ -644,12 +649,20 @@ type ChartEditorAdornerLayer() =
     member x.OnMouseOverCursorPositionOpChanged(prevMouseOverCursorPosOp, mouseOverCursorPosOp) = ()
 
     member x.MouseOverNoteOp
-        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> Note option
-        and set(v : Note option) = x.SetValue(ChartEditorAdornerLayer.MouseOverNoteOpProperty, box v)
+        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> (Note * NoteDragType) option
+        and set(v : (Note * NoteDragType) option) = x.SetValue(ChartEditorAdornerLayer.MouseOverNoteOpProperty, box v)
     static member val MouseOverNoteOpProperty =
-        Dp.reg<Note option, ChartEditorAdornerLayer> "MouseOverNoteOp"
+        Dp.reg<(Note * NoteDragType) option, ChartEditorAdornerLayer> "MouseOverNoteOp"
             (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverNoteOpChanged)))
-    member x.OnMouseOverNoteOpChanged(prevMouseOverNoteOp, mouseOverNoteOp) = ()
+    member x.OnMouseOverNoteOpChanged(prevMouseOverNoteOp, mouseOverNoteOp) =
+        match mouseOverNoteOp with
+        | None ->
+            x.Cursor <- Cursors.Arrow
+        | Some(note, NoteDragMove) ->
+            x.Cursor <- Cursors.Hand
+        | Some(note, NoteDragResizeLeft)
+        | Some(note, NoteDragResizeRight) ->
+            x.Cursor <- Cursors.SizeWE
 
     member x.SelectionBoxOp
         with get() = x.GetValue ChartEditorAdornerLayer.SelectionBoxOpProperty :?> (int64 * int64 * int * int) option
@@ -675,7 +688,7 @@ type ChartEditorAdornerLayer() =
         // mouse over note
         match mouseOverNoteOp with
         | None -> ()
-        | Some note ->
+        | Some(note, noteDragType) ->
             let x0 = pulseToPixel quarterWidth hOffset (float note.On)
             let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
             let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)

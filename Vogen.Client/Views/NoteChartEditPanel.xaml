@@ -56,7 +56,8 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"/>
+        Composition="{Binding ActiveComp.Value}"
+        Cursor="{Binding Path=Cursor, ElementName=chartEditor, Mode=TwoWay}"/>
       <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
         ScrollMaximum="{Binding ActiveComp.Value, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
         ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
