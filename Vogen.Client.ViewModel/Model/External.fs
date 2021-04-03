@@ -39,17 +39,23 @@ module External =
                 let vprParts = vprTrack.["parts"]
                 if vprParts = null then Seq.empty else vprParts.Values<JToken>())
 
-        let utts = vprParts |> Seq.map(fun vprPart ->
+        let utts = vprParts |> Seq.choose(fun vprPart ->
             let vprPartPos = vprPart.["pos"].ToObject<int64>()
-            let vprNotes = vprPart.["notes"].Values<JToken>()
-            let notes = vprNotes |> Seq.map(fun vprNote ->
+            let vprNotes =
+                match vprPart.["notes"] with
+                | null -> Seq.empty
+                | jNotes -> jNotes.Values<JToken>()
+            let notes = ImmutableArray.CreateRange(vprNotes |> Seq.map(fun vprNote ->
                 let pitch = vprNote.["number"].ToObject<int>()
                 let rom = vprNote.["lyric"].ToObject<string>()
                 let lyric = if rom = "-" then "-" else ""
                 let on = vprNote.["pos"].ToObject<int64>() + vprPartPos
                 let dur = vprNote.["duration"].ToObject<int64>()
-                Note(pitch, lyric, rom, on, dur))
-            Utterance(romScheme, ImmutableArray.CreateRange notes))
+                Note(pitch, lyric, rom, on, dur)))
+            if notes.Length > 0 then
+                Some(Utterance(romScheme, notes))
+            else
+                None)
 
         Composition(bpm0, ImmutableArray.CreateRange utts)
 
