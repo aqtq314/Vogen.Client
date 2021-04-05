@@ -132,7 +132,7 @@ type ProgramModel() as x =
             ||> Seq.fold(fun comp utt ->
                 utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.Clear()))
 
-    member x.SynthUtt(dispatcher : Dispatcher, utt) =
+    member x.SynthUtt(dispatcher : Dispatcher, singerName, utt) =
         let bpm0 =
             let comp = x.UpdateCompReturn <| fun comp ->
                 utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetIsSynthing true)
@@ -150,7 +150,7 @@ type ProgramModel() as x =
                         x.UpdateComp <| fun comp ->
                             utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                                 uttSynthResult.SetF0Samples f0Samples)) |> ignore
-                    let! audioContent = Synth.requestAc tChars f0Samples "gloria"
+                    let! audioContent = Synth.requestAc tChars f0Samples singerName
                     dispatcher.BeginInvoke(fun () ->
                         x.UpdateComp <| fun comp ->
                             utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
@@ -163,11 +163,11 @@ type ProgramModel() as x =
                         utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
                             uttSynthResult.SetIsSynthing false)) |> ignore}
 
-    member x.Synth dispatcher =
+    member x.Synth(dispatcher, singerName) =
         let comp = !!x.ActiveComp
         for utt in comp.Utts do
             let uttSynthResult = comp.GetUttSynthResult utt
             if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
-                x.SynthUtt(dispatcher, utt)
+                x.SynthUtt(dispatcher, singerName, utt)
 
 

@@ -17,5 +17,5 @@ let comp =
 let programModel = ProgramModel()
 do  programModel.LoadComp comp
     programModel.ManualSetCursorPos 1920L
-
+//do  programModel.LoadFromFile(Some @"D:\Misc\vocaloid\隔岸C-aca.vog")
 

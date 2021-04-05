@@ -477,7 +477,7 @@ type ChartEditor() as x =
 
                 let ft =
                     let text = String.concat Environment.NewLine [|
-                        $"Gloria"
+                        //$"Gloria"
                         $"({TextResources.getRomSchemeChar utt.RomScheme})" |]
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
