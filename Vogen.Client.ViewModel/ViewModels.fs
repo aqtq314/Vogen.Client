@@ -111,16 +111,20 @@ type ProgramModel() as x =
         (!!x.ActiveComp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
 
     member x.Undo() =
-        let comp, selectedNotes = undoRedoStack.PopUndo()
-        activeComp |> Rp.set comp
-        activeSelectedNotes |> Rp.set selectedNotes
-        compIsSaved |> Rp.set false
+        match undoRedoStack.TryPopUndo() with
+        | None -> ()
+        | Some(comp, selectedNotes) ->
+            activeComp |> Rp.set comp
+            activeSelectedNotes |> Rp.set selectedNotes
+            compIsSaved |> Rp.set false
 
     member x.Redo() =
-        let comp, selectedNotes = undoRedoStack.PopRedo()
-        activeComp |> Rp.set comp
-        activeSelectedNotes |> Rp.set selectedNotes
-        compIsSaved |> Rp.set false
+        match undoRedoStack.TryPopRedo() with
+        | None -> ()
+        | Some(comp, selectedNotes) ->
+            activeComp |> Rp.set comp
+            activeSelectedNotes |> Rp.set selectedNotes
+            compIsSaved |> Rp.set false
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
@@ -191,10 +195,11 @@ type ProgramModel() as x =
                     activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                         utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                             uttSynthResult.SetIsSynthing false))
-                    compIsSaved |> Rp.set false) |> ignore}
+                    compIsSaved |> Rp.set false) |> ignore }
 
     member x.Synth(dispatcher, singerName) =
         let comp = !!x.ActiveComp
+        x.ActiveUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.SlimWith comp)
         let uttSynthCache = !!x.ActiveUttSynthCache
         for utt in comp.Utts do
             let uttSynthResult = uttSynthCache.GetOrDefault utt

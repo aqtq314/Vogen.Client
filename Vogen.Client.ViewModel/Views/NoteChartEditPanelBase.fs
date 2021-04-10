@@ -227,6 +227,8 @@ type NoteChartEditPanelBase() =
                             if isPendingDeselect then
                                 return! mouseDownNotePendingDeselect dragNoteArgs
                             else
+                                x.ProgramModel.UndoRedoStack.PushUndo(
+                                    MouseDragNote noteDragType, (comp, mouseDownSelection), (comp, mouseDownSelection))
                                 return! draggingNote dragNoteArgs
 
                     | MouseButton.Middle ->
@@ -245,6 +247,8 @@ type NoteChartEditPanelBase() =
                 let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
+                    x.ProgramModel.UndoRedoStack.PushUndo(
+                        MouseDragNote noteDragType, (mouseDownComp, mouseDownSelection), (mouseDownComp, mouseDownSelection))
                     return! (draggingNote dragNoteArgs).Run(ChartMouseMove e)
 
                 | ChartMouseRelease e ->
@@ -323,6 +327,8 @@ type NoteChartEditPanelBase() =
 
                         x.ProgramModel.ActiveComp |> Rp.modify(fun comp -> comp.SetUtts newUtts)
                         x.ProgramModel.ActiveSelectedNotes |> Rp.set(ImmutableHashSet.CreateRange selectedNotesDict.Values)
+
+                    x.ProgramModel.UndoRedoStack.UpdateLatestRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelectedNotes))
 
                     return! draggingNote dragNoteArgs
 

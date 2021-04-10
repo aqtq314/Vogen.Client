@@ -33,6 +33,9 @@ namespace Vogen.Client
             importButton.Click += (sender, e) => Import();
             exportButton.Click += (sender, e) => Export();
 
+            undoButton.Click += (sender, e) => ProgramModel.Undo();
+            redoButton.Click += (sender, e) => ProgramModel.Redo();
+
             playButton.Click += (sender, e) => ProgramModel.Play();
             stopButton.Click += (sender, e) => ProgramModel.Stop();
 

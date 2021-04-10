@@ -32,6 +32,9 @@
       <Button x:Name="importButton" Content="导入曲谱"/>
       <Separator/>
       <Button x:Name="exportButton" Content="导出音频"/>
+      <Separator/>
+      <Button x:Name="undoButton" Content="撤销" IsEnabled="{Binding UndoRedoStack.CanUndo.Value}"/>
+      <Button x:Name="redoButton" Content="重做" IsEnabled="{Binding UndoRedoStack.CanRedo.Value}"/>
     </ToolBar>
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
       <TextBlock Width="80" VerticalAlignment="Center">

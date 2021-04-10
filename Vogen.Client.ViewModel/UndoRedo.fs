@@ -4,21 +4,20 @@ open Doaz.Reactive
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open Vogen.Client.Controls
 
 
 type UndoNodeDescription =
     | WriteNote
-    | MouseMoveNote
-    | MouseResizeNoteLeft
-    | MouseResizeNoteRight
+    | MouseDragNote of noteDragType : NoteDragType
     | DeleteNote
     | CutNote
     | PasteNote
     | ModifyNoteContent
     | KeyboardNudgeNote
 
-type UndoRedoStack<'TComp>() =
-    let undoStack = rp([] : (UndoNodeDescription * 'TComp * 'TComp) list)
+type UndoRedoStack<'a>() =
+    let undoStack = rp([] : (UndoNodeDescription * 'a * 'a) list)
     let redoStack = rp []
 
     member x.UndoStack = undoStack :> ReactiveProperty<_>
@@ -26,31 +25,31 @@ type UndoRedoStack<'TComp>() =
     member val CanUndo = undoStack |> Rpo.map(fun undoStack -> not(List.isEmpty undoStack))
     member val CanRedo = redoStack |> Rpo.map(fun redoStack -> not(List.isEmpty redoStack))
 
-    member x.PopUndo() =
+    member x.TryPopUndo() =
         match !!undoStack with
-        | [] -> raise(InvalidOperationException("Undo stack is empty."))
-        | (_, undoComp, _) as node :: undoStackCont ->
+        | [] -> None
+        | (_, undoItem, _) as node :: undoStackCont ->
             undoStack |> Rp.set undoStackCont
             redoStack |> Rp.set(node :: !!redoStack)
-            undoComp
+            Some undoItem
 
-    member x.PopRedo() =
+    member x.TryPopRedo() =
         match !!redoStack with
-        | [] -> raise(InvalidOperationException("Redo stack is empty."))
-        | (_, _, redoComp) as node :: redoStackCont ->
+        | [] -> None
+        | (_, _, redoItem) as node :: redoStackCont ->
             undoStack |> Rp.set(node :: !!undoStack)
             redoStack |> Rp.set redoStackCont
-            redoComp
+            Some redoItem
 
-    member x.PushUndo(nodeDesc, undoComp, redoComp) =
-        undoStack |> Rp.set((nodeDesc, undoComp, redoComp) :: !!undoStack)
+    member x.PushUndo(nodeDesc, undoItem, redoItem) =
+        undoStack |> Rp.set((nodeDesc, undoItem, redoItem) :: !!undoStack)
         redoStack |> Rp.set []
 
-    member x.UpdateLatestRedo redoComp =
+    member x.UpdateLatestRedo redoItem =
         match !!undoStack with
         | [] -> ()
-        | (nodeDesc, undoComp, _) :: undoStackCont ->
-            undoStack |> Rp.set((nodeDesc, undoComp, redoComp) :: undoStackCont)
+        | (nodeDesc, undoItem, _) :: undoStackCont ->
+            undoStack |> Rp.set((nodeDesc, undoItem, redoItem) :: undoStackCont)
 
     member x.Clear() =
         undoStack |> Rp.set []
