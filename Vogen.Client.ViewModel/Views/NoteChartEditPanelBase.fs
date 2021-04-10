@@ -318,12 +318,12 @@ type NoteChartEditPanelBase() =
                         let selectedNotesDict = mouseDownSelection.ToImmutableDictionary(id, fun (note : Note) ->
                             note.Move(note.Pitch + deltaPitch, note.On + deltaPulse, note.Dur + deltaDur))
 
-                        let newUtts = ImmutableArray.CreateRange(mouseDownComp.Utts |> Seq.map(fun utt ->
+                        let newUtts = ImmutableArray.CreateRange(mouseDownComp.Utts, fun utt ->
                             if utt.Notes |> Seq.forall(fun note -> not(selectedNotesDict.ContainsKey note)) then utt else
-                                utt.SetNotes(ImmutableArray.CreateRange(utt.Notes |> Seq.map(fun note ->
+                                utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note ->
                                     selectedNotesDict.TryGetValue note
                                     |> Option.ofByRef
-                                    |> Option.defaultValue note)))))
+                                    |> Option.defaultValue note)))
 
                         x.ProgramModel.ActiveComp |> Rp.modify(fun comp -> comp.SetUtts newUtts)
                         x.ProgramModel.ActiveSelectedNotes |> Rp.set(ImmutableHashSet.CreateRange selectedNotesDict.Values)
@@ -487,10 +487,39 @@ type NoteChartEditPanelBase() =
             match e.Key with
             | Key.Space ->
                 let programModel = x.ProgramModel
-                if not programModel.IsPlaying.Value then
+                if not !!programModel.IsPlaying then
                     programModel.Play()
                 else
                     programModel.Stop()
+
+            | Key.Delete ->
+                let comp = !!x.ProgramModel.ActiveComp
+                let selectedNotes = !!x.ProgramModel.ActiveSelectedNotes
+                let mouseDownSelection = selectedNotes.Intersect comp.AllNotes
+                if not mouseDownSelection.IsEmpty then
+                    x.ProgramModel.ActiveComp |> Rp.set(
+                        let utts =
+                            comp.Utts
+                            |> Seq.choose(fun utt ->
+                                let newNotes = utt.Notes.RemoveAll(Predicate(selectedNotes.Contains))
+                                if newNotes.Length = 0 then None
+                                elif newNotes.Length = utt.Notes.Length then Some utt
+                                else Some(utt.SetNotes newNotes))
+                            |> ImmutableArray.CreateRange
+                        comp.SetUtts utts)
+                    x.ProgramModel.ActiveSelectedNotes |> Rp.set ImmutableHashSet.Empty
+
+                    x.ProgramModel.UndoRedoStack.PushUndo(
+                        DeleteNote, (comp, selectedNotes), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelectedNotes))
+
+            | Key.Z when Keyboard.Modifiers.IsCtrl ->
+                x.ProgramModel.Undo()
+
+            | Key.Y when Keyboard.Modifiers.IsCtrl ->
+                x.ProgramModel.Redo()
+
+            | Key.Z when Keyboard.Modifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
+                x.ProgramModel.Redo()
 
             | _ -> ()
 
