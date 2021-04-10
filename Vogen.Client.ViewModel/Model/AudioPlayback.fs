@@ -55,11 +55,11 @@ module AudioSamples =
         use fileStream = File.OpenRead filePath
         loadFromStream fileStream
 
-    let renderComp(comp : Composition) =
+    let renderComp(comp : Composition)(uttSynthCache : UttSynthCache) =
         let uttSynthResults =
             comp.Utts
-            |> Seq.map comp.GetUttSynthResult
-            |> Seq.filter(fun synthResult -> synthResult.HasAudio)
+            |> Seq.map(fun utt -> uttSynthCache.GetOrDefault utt)
+            |> Seq.filter(fun (synthResult : UttSynthResult) -> synthResult.HasAudio)
             |> Array.ofSeq
         let outSampleDur =
             uttSynthResults
@@ -74,17 +74,17 @@ module AudioSamples =
                 outSamples.[i] <- outSamples.[i] + samples.[i - sampleOffset]
         outSamples
 
-    let renderToFile filePath comp =
-        let outSamples = renderComp comp
+    let renderToFile filePath comp uttSynthCache =
+        let outSamples = renderComp comp uttSynthCache
         let sampleProvider = SampleProvider(outSamples)
         let waveProvider = sampleProvider.ToWaveProvider()
         MediaFoundationEncoder.EncodeToAac(waveProvider, filePath, 192000)
 
 module AudioPlayback =
-    let fillBuffer(playbackSamplePos, comp : Composition, buffer : float32 [], bufferOffset, bufferLength) =
+    let fillBuffer(playbackSamplePos, comp : Composition, uttSynthCache, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
         for utt in comp.Utts do
-            let uttSynthResult = comp.GetUttSynthResult utt
+            let uttSynthResult : UttSynthResult = (uttSynthCache : UttSynthCache).GetOrDefault utt
             if uttSynthResult.HasAudio then
                 let samples = uttSynthResult.AudioSamples
                 let sampleOffset = uttSynthResult.SampleOffset
@@ -97,6 +97,7 @@ type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0
 
     member val Comp = Composition.Empty with get, set
+    member val UttSynthCache = UttSynthCache.Empty with get, set
 
     member val PlaybackPositionRefTicks = Stopwatch.GetTimestamp() with get, set
     member x.PlaybackSamplePosition = playbackSamplePos
@@ -110,7 +111,7 @@ type AudioPlaybackEngine() =
         member x.WaveFormat = Audio.playbackWaveFormat
         member x.Read(buffer, offset, count) =
             lock x <| fun () ->
-                AudioPlayback.fillBuffer(playbackSamplePos, x.Comp, buffer, offset, count)
+                AudioPlayback.fillBuffer(playbackSamplePos, x.Comp, x.UttSynthCache, buffer, offset, count)
                 playbackSamplePos <- playbackSamplePos + count
                 x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
             count

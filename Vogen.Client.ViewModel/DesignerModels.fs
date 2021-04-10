@@ -1,5 +1,6 @@
 ﻿module Vogen.Client.ViewModel.DesignerModels
 
+open Doaz.Reactive
 open Newtonsoft.Json
 open System
 open System.Collections.Generic
@@ -10,12 +11,14 @@ open Vogen.Client.Controls
 open Vogen.Client.Model
 
 
-let comp =
+let comp, uttSynthCache =
     use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream @"Vogen.Client.ViewModel.testComp.vog"
     FilePackage.read stream
 
 let programModel = ProgramModel()
-do  programModel.LoadComp comp
+do  programModel.ActiveComp |> Rp.set comp
+    programModel.ActiveUttSynthCache |> Rp.set uttSynthCache
+    programModel.CompIsSaved |> Rp.set false
     programModel.ManualSetCursorPos 1920L
 //do  programModel.LoadFromFile(Some @"D:\Misc\vocaloid\隔岸C-aca.vog")
 

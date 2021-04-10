@@ -20,6 +20,12 @@ module Utils =
     let headSil = TimeSpan.FromSeconds 0.5
     let tailSil = TimeSpan.FromSeconds 0.5
 
+    type ImmutableDictionary<'k, 'v> with
+        member x.GetOrDefault defaultValue key =
+            match x.TryGetValue key with
+            | true, value -> value
+            | false, _ -> defaultValue
+
     type Stream with
         member x.CacheAsMemoryStream() =
             let cacheStream = new MemoryStream()

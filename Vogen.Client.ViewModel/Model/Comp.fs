@@ -98,43 +98,76 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.SetAudio(audioFileBytes, audioSamples) =
         UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
-type Composition private(timeSig0, bpm0, utts, selectedNotes, uttSynthResults) =
+type Composition(timeSig0, bpm0, utts) =
     let utts = (utts : ImmutableArray<_>).Sort Utterance.CompareByPosition
 
     member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
     member x.Utts : ImmutableArray<Utterance> = utts
-    member x.GetIsNoteSelected note = (selectedNotes : ImmutableHashSet<Note>).Contains note
-    member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
+    //member x.GetIsNoteSelected note = (selectedNotes : ImmutableHashSet<Note>).Contains note
+    //member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
 
-    new(timeSig0, bpm0, utts) =
-        let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt -> UttSynthResult.Create(bpm0, utt))
-        Composition(timeSig0, bpm0, utts, ImmutableHashSet.Empty, uttSynthResults)
+    //new(timeSig0, bpm0, utts) =
+    //    let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt -> UttSynthResult.Create(bpm0, utt))
+    //    Composition(timeSig0, bpm0, utts, ImmutableHashSet.Empty, uttSynthResults)
+
+    member x.AllNotes = utts |> Seq.collect(fun utt -> utt.Notes)
 
     new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
     static member val Empty = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
 
-    // TODO prevent adding identical notes more than once
-    member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
-        let selectedNotes =
-            if not enforceStateConsistencies then selectedNotes else
-                selectedNotes.Intersect(utts |> Seq.collect(fun utt -> utt.Notes))
-        let uttSynthResults =
-            utts.ToImmutableDictionary(id, fun utt ->
-                uttSynthResults.TryGetValue utt
-                |> Option.ofByRef
-                |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
-        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+    member x.SetTimeSig timeSig0 = Composition(timeSig0, bpm0, utts)
+    member x.SetBpm bpm0 = Composition(timeSig0, bpm0, utts)
+    member x.SetUtts utts = Composition(timeSig0, bpm0, utts)
 
-    member x.UpdateSelectedNotes updateSelectedNotes =
-        let selectedNotes = updateSelectedNotes selectedNotes
-        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+    // TODO prevent adding identical notes more than once
+    //member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
+    //    let selectedNotes =
+    //        if not enforceStateConsistencies then selectedNotes else
+    //            selectedNotes.Intersect(utts |> Seq.collect(fun utt -> utt.Notes))
+    //    let uttSynthResults =
+    //        utts.ToImmutableDictionary(id, fun utt ->
+    //            uttSynthResults.TryGetValue utt
+    //            |> Option.ofByRef
+    //            |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
+    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+
+    //member x.UpdateSelectedNotes updateSelectedNotes =
+    //    let selectedNotes = updateSelectedNotes selectedNotes
+    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+
+    //member x.UpdateUttSynthResult updateUttSynthResult utt =
+    //    match uttSynthResults.TryGetValue utt |> Option.ofByRef with
+    //    | None -> x
+    //    | Some uttSynthResult ->
+    //        let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
+    //        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+
+type UttSynthCache(bpm0, uttSynthResultDict) =
+    member x.Bpm0 : float = bpm0
+    member x.UttSynthResultDict : ImmutableDictionary<Utterance, UttSynthResult> = uttSynthResultDict
+
+    member x.GetOrDefault utt =
+        match uttSynthResultDict.TryGetValue utt with
+        | true, uttSynthResult -> uttSynthResult
+        | false, _ -> UttSynthResult.Create(bpm0, utt)
+
+    static member val Empty = UttSynthCache(Composition.Empty.Bpm0, ImmutableDictionary.Empty)
+    static member Create(bpm0 : float) = UttSynthCache(bpm0, ImmutableDictionary.Empty)
 
     member x.UpdateUttSynthResult updateUttSynthResult utt =
-        match uttSynthResults.TryGetValue utt |> Option.ofByRef with
-        | None -> x
-        | Some uttSynthResult ->
-            let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
-            Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+        let uttSynthResultDict = uttSynthResultDict.SetItem(utt, updateUttSynthResult(x.GetOrDefault utt))
+        UttSynthCache(bpm0, uttSynthResultDict)
+
+    member x.Clear() =
+        UttSynthCache(bpm0, ImmutableDictionary.Empty)
+
+    member x.SlimWith(comp : Composition) =
+        let uttSynthResultDict =
+            ImmutableDictionary.CreateRange(comp.Utts |> Seq.choose(fun utt ->
+                match uttSynthResultDict.TryGetValue utt with
+                | false, _ -> None
+                | true, uttSynthResult -> Some(KeyValuePair(utt, uttSynthResult))))
+        UttSynthCache(bpm0, uttSynthResultDict)
 
 

@@ -15,10 +15,14 @@ open Vogen.Client.Model
 
 
 type ProgramModel() as x =
+    let activeComp = rp Composition.Empty
+    let activeUttSynthCache = rp UttSynthCache.Empty
+    let activeSelectedNotes = rp ImmutableHashSet.Empty
+    let undoRedoStack = UndoRedoStack()
+
     let compFilePathOp = rp None
     let compFileName = rp "Untitled.vog"
     let compIsSaved = rp true
-    let activeComp = rp Composition.Empty
 
     static let latency = 80
     static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
@@ -31,73 +35,92 @@ type ProgramModel() as x =
     let audioEngine = AudioPlaybackEngine()
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
+    do  activeComp |> Rpo.leaf(fun comp ->
+            audioEngine.Comp <- comp)
+    do  activeUttSynthCache |> Rpo.leaf(fun uttSynthCache ->
+            audioEngine.UttSynthCache <- uttSynthCache)
 
     member val CompFilePathOp = compFilePathOp |> Rpo.map id
     member val CompFileName = compFileName |> Rpo.map id
-    member val CompIsSaved = compIsSaved |> Rpo.map id
-    member val ActiveComp = activeComp |> Rpo.map id
+    member x.CompIsSaved = compIsSaved
+    member x.ActiveComp = activeComp
+    member x.ActiveUttSynthCache = activeUttSynthCache
+    member x.ActiveSelectedNotes = activeSelectedNotes
+    member x.UndoRedoStack = undoRedoStack
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
 
-    member x.LoadComp(comp, ?isSaved) =
-        let isSaved = defaultArg isSaved false
-        activeComp |> Rp.set comp
-        audioEngine.Comp <- comp
-        compIsSaved |> Rp.set isSaved
-
-    member x.LoadFromFile filePathOp =
-        let fileName, comp =
+    member x.OpenOrNew filePathOp =
+        if isPlaying.Value then x.Stop()
+        let fileName, comp, uttSynthCache =
             match filePathOp with
-            | None -> "Untitled.vog", Composition.Empty
+            | None -> "Untitled.vog", Composition.Empty, UttSynthCache.Empty
             | Some filePath ->
                 use fileStream = File.OpenRead filePath
-                Path.GetFileName filePath, FilePackage.read fileStream
-        x.LoadComp(comp, isSaved = true)
+                let comp, uttSynthCache = FilePackage.read fileStream
+                Path.GetFileName filePath, comp, uttSynthCache
+        activeComp |> Rp.set comp
+        activeUttSynthCache |> Rp.set uttSynthCache
+        activeSelectedNotes |> Rp.set ImmutableHashSet.Empty
+        undoRedoStack.Clear()
         compFilePathOp |> Rp.set filePathOp
         compFileName |> Rp.set fileName
-
-    member x.UpdateCompReturn update =
-        lock x <| fun () ->
-            update !!activeComp
-            |>! x.LoadComp
-
-    member x.UpdateComp update =
-        x.UpdateCompReturn update |> ignore
+        compIsSaved |> Rp.set true
 
     member x.New() =
-        if isPlaying.Value then x.Stop()
-        x.LoadFromFile None
+        x.OpenOrNew None
 
     member x.Open filePath =
-        if isPlaying.Value then x.Stop()
-        x.LoadFromFile(Some filePath)
+        x.OpenOrNew(Some filePath)
 
     member x.Import filePath =
+        let prevComp = !!activeComp
+        let prevSelectedNotes = !!activeSelectedNotes
         if isPlaying.Value then x.Stop()
-        let comp =
+
+        let comp, uttSynthCache =
             match Path.GetExtension(filePath : string).ToLower() with
             | ".vog" ->
                 use stream = File.OpenRead filePath
                 FilePackage.read stream
             | ".vpr" ->
                 use stream = File.OpenRead filePath
-                External.loadVpr "man" stream
+                let comp = External.loadVpr "man" stream
+                comp, UttSynthCache.Create comp.Bpm0
             | ext ->
                 raise(KeyNotFoundException($"Unknwon file extension {ext}"))
+        let selectedNotes =
+            ImmutableHashSet.CreateRange comp.AllNotes
 
-        x.LoadComp comp
+        activeComp |> Rp.set comp
+        activeUttSynthCache |> Rp.set uttSynthCache
+        activeSelectedNotes |> Rp.set selectedNotes
+        undoRedoStack.Clear()
         compFilePathOp |> Rp.set None
         compFileName |> Rp.set(Path.GetFileNameWithoutExtension filePath + ".vog")
+        compIsSaved |> Rp.set false
 
     member x.Save outFilePath =
         use outFileStream = File.Open(outFilePath, FileMode.Create)
-        !!x.ActiveComp |> FilePackage.save outFileStream
-        compIsSaved |> Rp.set true
+        (!!x.ActiveComp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream
         compFilePathOp |> Rp.set(Some outFilePath)
         compFileName |> Rp.set(Path.GetFileName outFilePath)
+        compIsSaved |> Rp.set true
 
     member x.Export outFilePath =
-        !!x.ActiveComp |> AudioSamples.renderToFile outFilePath
+        (!!x.ActiveComp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
+
+    member x.Undo() =
+        let comp, selectedNotes = undoRedoStack.PopUndo()
+        activeComp |> Rp.set comp
+        activeSelectedNotes |> Rp.set selectedNotes
+        compIsSaved |> Rp.set false
+
+    member x.Redo() =
+        let comp, selectedNotes = undoRedoStack.PopRedo()
+        activeComp |> Rp.set comp
+        activeSelectedNotes |> Rp.set selectedNotes
+        compIsSaved |> Rp.set false
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
@@ -127,46 +150,54 @@ type ProgramModel() as x =
         x.PlaybackSyncCursorPos()
 
     member x.ClearAllSynth() =
-        x.UpdateComp <| fun comp ->
-            (comp, comp.Utts)
-            ||> Seq.fold(fun comp utt ->
-                utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.Clear()))
+        activeUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.Clear())
+        compIsSaved |> Rp.set false
 
     member x.SynthUtt(dispatcher : Dispatcher, singerName, utt) =
-        let bpm0 =
-            let comp = x.UpdateCompReturn <| fun comp ->
-                utt |> comp.UpdateUttSynthResult(fun uttSynthResult -> uttSynthResult.SetIsSynthing true)
-            comp.Bpm0
+        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                uttSynthResult.SetIsSynthing true))
+        compIsSaved |> Rp.set false
+
+        let bpm0 = (!!activeComp).Bpm0
         Async.Start <| async {
             try try let tUtt = TimeTable.ofUtt bpm0 utt
                     let! tChars = Synth.requestPO tUtt
                     let charGrids = TimeTable.toCharGrids tChars
                     dispatcher.BeginInvoke(fun () ->
-                        x.UpdateComp <| fun comp ->
-                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
-                                uttSynthResult.SetCharGrids charGrids)) |> ignore
+                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                                if not uttSynthResult.IsSynthing then uttSynthResult else
+                                    uttSynthResult.SetCharGrids charGrids))
+                        compIsSaved |> Rp.set false) |> ignore
                     let! f0Samples = Synth.requestF0 tUtt tChars
                     dispatcher.BeginInvoke(fun () ->
-                        x.UpdateComp <| fun comp ->
-                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
-                                uttSynthResult.SetF0Samples f0Samples)) |> ignore
+                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                                if not uttSynthResult.IsSynthing then uttSynthResult else
+                                    uttSynthResult.SetF0Samples f0Samples))
+                        compIsSaved |> Rp.set false) |> ignore
                     let! audioContent = Synth.requestAc tChars f0Samples singerName
                     dispatcher.BeginInvoke(fun () ->
-                        x.UpdateComp <| fun comp ->
-                            utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
-                                uttSynthResult.SetAudio audioContent)) |> ignore
+                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                                if not uttSynthResult.IsSynthing then uttSynthResult else
+                                    uttSynthResult.SetAudio audioContent))
+                        compIsSaved |> Rp.set false) |> ignore
                 with ex ->
                     Trace.WriteLine ex
             finally
                 dispatcher.BeginInvoke(fun () ->
-                    x.UpdateComp <| fun comp ->
-                        utt |> comp.UpdateUttSynthResult(fun uttSynthResult ->
-                            uttSynthResult.SetIsSynthing false)) |> ignore}
+                    activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+                        utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                            uttSynthResult.SetIsSynthing false))
+                    compIsSaved |> Rp.set false) |> ignore}
 
     member x.Synth(dispatcher, singerName) =
         let comp = !!x.ActiveComp
+        let uttSynthCache = !!x.ActiveUttSynthCache
         for utt in comp.Utts do
-            let uttSynthResult = comp.GetUttSynthResult utt
+            let uttSynthResult = uttSynthCache.GetOrDefault utt
             if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
                 x.SynthUtt(dispatcher, singerName, utt)
 

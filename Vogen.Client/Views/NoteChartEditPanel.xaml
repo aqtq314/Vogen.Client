@@ -30,16 +30,14 @@
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
-        IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"/>
+        IsPlaying="{Binding IsPlaying.Value}"/>
       <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
-        IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"/>
+        IsPlaying="{Binding IsPlaying.Value}"/>
       <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
@@ -48,7 +46,9 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"/>
+        Composition="{Binding ActiveComp.Value}"
+        UttSynthCache="{Binding ActiveUttSynthCache.Value}"
+        SelectedNotes="{Binding ActiveSelectedNotes.Value}"/>
       <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
@@ -56,7 +56,6 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"
         Cursor="{Binding Path=Cursor, ElementName=chartEditor, Mode=TwoWay}"/>
       <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
         ScrollMaximum="{Binding ActiveComp.Value, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
