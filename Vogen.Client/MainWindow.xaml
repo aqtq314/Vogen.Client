@@ -27,10 +27,9 @@
       <Button x:Name="newButton" Content="新建"/>
       <Button x:Name="openButton" Content="打开"/>
       <Button x:Name="saveButton" Content="保存"/>
-      <Button x:Name="saveAsButton" Content="另存为 ..."/>
+      <Button x:Name="saveAsButton" Content="另存为"/>
       <Separator/>
       <Button x:Name="importButton" Content="导入曲谱"/>
-      <Separator/>
       <Button x:Name="exportButton" Content="导出音频"/>
       <Separator/>
       <Button x:Name="undoButton" Content="撤销" IsEnabled="{Binding UndoRedoStack.CanUndo.Value}"/>

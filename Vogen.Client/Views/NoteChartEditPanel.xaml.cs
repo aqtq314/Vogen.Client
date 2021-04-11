@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -24,6 +25,8 @@ namespace Vogen.Client.Views
         public override SideKeyboard SideKeyboard => sideKeyboard;
         public override ChartScrollZoomKitBase HScrollZoom => hScrollZoom;
         public override ChartScrollZoomKitBase VScrollZoom => vScrollZoom;
+        public override Popup LyricPopup => lyricPopup;
+        public override TextBox LyricTextBox => lyricTextBox;
 
         public NoteChartEditPanel()
         {
@@ -41,6 +44,11 @@ namespace Vogen.Client.Views
                     border.BorderBrush = Brushes.LightSalmon;
                 else
                     border.BorderBrush = null;
+            };
+
+            lyricTextBox.LostFocus += (sender, e) =>
+            {
+                lyricPopup.IsOpen = false;
             };
         }
     }

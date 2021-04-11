@@ -8,6 +8,7 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Windows
 open System.Windows.Controls
+open System.Windows.Controls.Primitives
 open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
@@ -73,6 +74,10 @@ type NoteChartEditPanelBase() =
     default x.HScrollZoom = Unchecked.defaultof<_>
     abstract VScrollZoom : ChartScrollZoomKitBase
     default x.VScrollZoom = Unchecked.defaultof<_>
+    abstract LyricPopup : Popup
+    default x.LyricPopup = Unchecked.defaultof<_>
+    abstract LyricTextBox : TextBox
+    default x.LyricTextBox = Unchecked.defaultof<_>
 
     member x.BindBehaviors() =
         let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
@@ -183,6 +188,22 @@ type NoteChartEditPanelBase() =
                             let selectedNotes = !!x.ProgramModel.ActiveSelectedNotes
                             let mouseDownIsNoteSelected = selectedNotes.Contains
                             return! draggingSelBox mouseDownIsNoteSelected mousePos
+
+                        | Some(note, noteDragType) when e.ClickCount >= 2 ->
+                            let actualHeight = edit.ActualHeight
+                            let quarterWidth = edit.QuarterWidth
+                            let keyHeight = edit.KeyHeight
+                            let hOffset = edit.HOffsetAnimated
+                            let vOffset = edit.VOffsetAnimated
+                            let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                            let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                            let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+                            x.LyricPopup.PlacementRectangle <- Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
+                            x.LyricPopup.IsOpen <- true
+                            x.LyricTextBox.Text <- note.Rom + $" - {e.ClickCount}"
+                            x.LyricTextBox.SelectAll()
+                            x.LyricTextBox.Focus() |> ignore
+                            return! idle()
 
                         | Some(note, noteDragType) ->
                             let quarterWidth = edit.QuarterWidth
