@@ -315,6 +315,9 @@ type ChartEditor() =
         waveformLowerContourPoints.Reverse()
         pointsToGeometry true (Seq.append waveformUpperContourPoints waveformLowerContourPoints)
 
+    static let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
+    static let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
+
     static let minGridScreenHop = 5.0
     static let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
     static let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
@@ -345,12 +348,11 @@ type ChartEditor() =
         TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze
         TextWeight = FontWeights.ExtraLight |}
 
-    static let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
-    static let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
-
-    static let selPitchBrush = SolidColorBrush(aFRgb 0.1 0x000080) |>! freeze
-    static let selNoteBrush = SolidColorBrush(aRgb 0x40 0x000080) |>! freeze
+    static let selNoteBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
     static let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
+
+    static let cursorActivePitchBrush = SolidColorBrush(aRgb 0x10 0xFF0000) |>! freeze
+    static let cursorActiveNotePen = Pen(SolidColorBrush(aRgb 0x80 0xFF0000), 2.0) |>! freeze
 
     static let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 1.0) |>! freeze
 
@@ -367,24 +369,23 @@ type ChartEditor() =
                 KeyValuePair(utt, chars))
             |> ImmutableDictionary.CreateRange
 
-    member val private ActiveNotes = ImmutableHashSet.Empty with get, set
-    member private x.UpdateActiveNotes playbackPos isPlaying comp selection =
+    member val private CursorActiveNotes = ImmutableHashSet.Empty with get, set
+    member private x.UpdateCursorActiveNotes playbackPos isPlaying comp =
         let newActiveNotes =
-            (comp : Composition).AllNotes
-            |> Seq.filter(
-                if isPlaying then (fun note -> note.On <= playbackPos && note.Off > playbackPos)
-                else (selection : CompSelection).GetIsNoteSelected)
-            |> ImmutableHashSet.CreateRange
-        if not(x.ActiveNotes.SetEquals newActiveNotes) then
-            x.ActiveNotes <- newActiveNotes
+            if not isPlaying then ImmutableHashSet.Empty else
+                (comp : Composition).AllNotes
+                |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
+                |> ImmutableHashSet.CreateRange
+        if not(x.CursorActiveNotes.SetEquals newActiveNotes) then
+            x.CursorActiveNotes <- newActiveNotes
             x.InvalidateVisual()
 
     override x.OnCursorPositionChanged(oldValue, (newValue as playbackPos)) =
-        x.UpdateActiveNotes playbackPos x.IsPlaying x.Composition x.Selection
+        x.UpdateCursorActiveNotes playbackPos x.IsPlaying x.Composition
         base.OnCursorPositionChanged(oldValue, newValue)
 
     override x.OnIsPlayingChanged(oldValue, (newValue as isPlaying)) =
-        x.UpdateActiveNotes x.CursorPosition isPlaying x.Composition x.Selection
+        x.UpdateCursorActiveNotes x.CursorPosition isPlaying x.Composition
         base.OnIsPlayingChanged(oldValue, newValue)
 
     member x.Composition
@@ -394,9 +395,9 @@ type ChartEditor() =
         Dp.reg<Composition, ChartEditor> "Composition"
             (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender,
                 (fun (x : ChartEditor)(oldValue, newValue) -> x.OnCompositionChanged(oldValue, newValue))))
-    member x.OnCompositionChanged(oldValue, (newValue as comp)) =
+    member private x.OnCompositionChanged(oldValue, (newValue as comp)) =
         x.UpdateUttToCharsDict comp
-        x.UpdateActiveNotes x.CursorPosition x.IsPlaying comp x.Selection
+        x.UpdateCursorActiveNotes x.CursorPosition x.IsPlaying comp
 
     member x.UttSynthCache
         with get() = x.GetValue ChartEditor.UttSynthCacheProperty :?> UttSynthCache
@@ -410,10 +411,7 @@ type ChartEditor() =
         and set(v : CompSelection) = x.SetValue(ChartEditor.SelectionProperty, box v)
     static member val SelectionProperty =
         Dp.reg<CompSelection, ChartEditor> "Selection"
-            (Dp.Meta(CompSelection.Empty, Dp.MetaFlags.AffectsRender,
-                (fun (x : ChartEditor)(oldValue, newValue) -> x.OnSelectionChanged(oldValue, newValue))))
-    member x.OnSelectionChanged(oldValue, (newValue as selection)) =
-        x.UpdateActiveNotes x.CursorPosition x.IsPlaying x.Composition selection
+            (Dp.Meta(CompSelection.Empty, Dp.MetaFlags.AffectsRender))
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -427,6 +425,7 @@ type ChartEditor() =
         let hOffset = x.HOffsetAnimated
         let vOffset = x.VOffsetAnimated
         let playbackPos = x.CursorPosition
+        let isPlaying = x.IsPlaying
         let comp = x.Composition
         let uttSynthCache = x.UttSynthCache
         let selection = x.Selection
@@ -437,22 +436,27 @@ type ChartEditor() =
         let botPitch = pixelToPitch keyHeight actualHeight vOffset actualHeight |> int |> max minKey
         let topPitch = pixelToPitch keyHeight actualHeight vOffset 0.0 |> ceil |> int |> min maxKey
 
-        // background
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
-        dc.DrawRectangle(inactiveBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
 
-        // active utt background
-        match selection.ActiveUtt with
-        | None -> ()
-        | Some utt ->
-            let xMin = pulseToPixel quarterWidth hOffset (float utt.Notes.[0].On) |> clamp 0.0 actualWidth
-            let xMax = pulseToPixel quarterWidth hOffset (float utt.Notes.[^0].Off) |> clamp 0.0 actualWidth
+        // background
+        if isPlaying then
+            dc.DrawRectangle(activeBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
 
-            let uttMaxPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.max
-            let uttMinPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.min
-            let yTop = pitchToPixel keyHeight actualHeight vOffset (float uttMaxPitch)
-            let yBot = pitchToPixel keyHeight actualHeight vOffset (float uttMinPitch)
-            dc.DrawRectangle(activeBackgroundBrush, null, Rect(xMin, yTop - half keyHeight, xMax - xMin, yBot - yTop + keyHeight))
+        else
+            dc.DrawRectangle(inactiveBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
+
+            // active utt background
+            match selection.ActiveUtt with
+            | None -> ()
+            | Some utt ->
+                let xMin = pulseToPixel quarterWidth hOffset (float utt.Notes.[0].On) |> clamp 0.0 actualWidth
+                let xMax = pulseToPixel quarterWidth hOffset (float utt.Notes.[^0].Off) |> clamp 0.0 actualWidth
+
+                let uttMaxPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.max
+                let uttMinPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.min
+                let yTop = pitchToPixel keyHeight actualHeight vOffset (float uttMaxPitch)
+                let yBot = pitchToPixel keyHeight actualHeight vOffset (float uttMinPitch)
+                dc.DrawRectangle(activeBackgroundBrush, null, Rect(xMin, yTop - half keyHeight, xMax - xMin, yBot - yTop + keyHeight))
 
         // time grids
         let measureHop =
@@ -504,19 +508,29 @@ type ChartEditor() =
                 dc.DrawLine(minorGridPen, Point(0.0, y), Point(actualWidth, y))
             | _ -> ()
 
-        // active note pitches
-        let activePitches = HashSet()
-        for note in x.ActiveNotes do
+        // playback active note pitch background
+        let cursorActivePitches = HashSet()
+        for note in x.CursorActiveNotes do
             if note.Pitch >= botPitch && note.Pitch <= topPitch then
-                activePitches.Add note.Pitch |> ignore
+                cursorActivePitches.Add note.Pitch |> ignore
 
-        for pitch in activePitches do
+        for pitch in cursorActivePitches do
             let yMid = pitchToPixel keyHeight actualHeight vOffset (float pitch)
-            dc.DrawRectangle(selPitchBrush, null, Rect(0.0, yMid - half keyHeight, actualWidth, keyHeight))
+            dc.DrawRectangle(cursorActivePitchBrush, null, Rect(0.0, yMid - half keyHeight, actualWidth, keyHeight))
 
         // utt start decor
-        for utt in comp.Utts do
-            let uttStyle = if selection.ActiveUtt = Some utt then activeUttStyle else inactiveUttStyle
+        let uttsReordered =
+            match selection.ActiveUtt with
+            | None -> comp.Utts :> seq<_>
+            | Some utt -> seq {
+                yield! comp.Utts |> Seq.filter((<>) utt)
+                yield utt }
+
+        for utt in uttsReordered do
+            let uttStyle =
+                if isPlaying then activeUttStyle
+                elif selection.ActiveUtt = Some utt then activeUttStyle
+                else inactiveUttStyle
 
             if utt.On >= minPulse && utt.On <= maxPulse then
                 let x0 = pulseToPixel quarterWidth hOffset (float utt.On)
@@ -537,8 +551,11 @@ type ChartEditor() =
 
         // notes
         let bpm0 = comp.Bpm0
-        for utt in comp.Utts do
-            let uttStyle = if selection.ActiveUtt = Some utt then activeUttStyle else inactiveUttStyle
+        for utt in uttsReordered do
+            let uttStyle =
+                if isPlaying then activeUttStyle
+                elif selection.ActiveUtt = Some utt then activeUttStyle
+                else inactiveUttStyle
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             let chars = x.UttToCharsDict.[utt]
 
@@ -603,13 +620,18 @@ type ChartEditor() =
                             else
                                 dc.DrawLine(uttStyle.RestPen, Point(x1, yMid), Point(n1x0, yMid))
 
-                    let noteRect      = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
-                    let noteValidRect = Rect(x0, yMid - half keyHeight, min x1 n1x0 - x0, keyHeight)
+                    let noteRectHeight = keyHeight 
+                    let noteRect      = Rect(x0, yMid - half noteRectHeight, x1 - x0, noteRectHeight)
+                    let noteValidRect = Rect(x0, yMid - half noteRectHeight, min x1 n1x0 - x0, noteRectHeight)
                     dc.DrawRectangle(currNoteBrush, currNotePen, noteValidRect)
 
                     // selection
-                    if x.ActiveNotes.Contains note then
-                        dc.DrawRectangle(selNoteBrush, selNotePen, Rect.Inflate(noteRect, 1.5, 1.5))
+                    if selection.GetIsNoteSelected note then
+                        dc.DrawRectangle(selNoteBrush, selNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
+
+                    // playback active notes
+                    if x.CursorActiveNotes.Contains note then
+                        dc.DrawRectangle(null, cursorActiveNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
 
                     // text
                     if not note.IsHyphen then
@@ -620,7 +642,7 @@ type ChartEditor() =
                         dc.DrawText(ft, Point(x0, yMid - half ft.Height))
 
         // utt ph bounds
-        //for utt in comp.Utts do
+        //for utt in uttsReordered do
         //    let uttSynthResult = uttSynthCache.GetOrDefault utt
         //    let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
         //    for charGrid in uttSynthResult.CharGrids do
@@ -639,7 +661,7 @@ type ChartEditor() =
         //                dc.DrawText(ft, Point(x0, y)))
 
         // utt f0 samples
-        for utt in comp.Utts do
+        for utt in uttsReordered do
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             let f0Samples = uttSynthResult.F0Samples
             let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
