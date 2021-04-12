@@ -12,6 +12,7 @@ open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Input
 open System.Windows.Media
+open System.Windows.Media.Animation
 open Vogen.Client.Model
 open type Doaz.Reactive.ColorConv
 
@@ -335,18 +336,30 @@ type ChartEditor() =
         TextBrush = Brushes.Black
         TextWeight = FontWeights.Regular |}
 
-    static let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xC0C0C0) 0.9
+    static let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xA0A0A0) 0.9
     static let inactiveHyphBaseColor = lerpColor hyphBaseColor (rgb 0x808080) 0.9
     static let inactiveUttStyle = {|
-        NoteBrush = SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.6) |>! freeze
+        NoteBrush = SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.8) |>! freeze
         HyphBrush = SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6) |>! freeze
         NoteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
-        NotePen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.4), 1.0) |>! freeze
+        NotePen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.2), 1.0) |>! freeze
         HyphPen = Pen(SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6), 1.0) |>! freeze
-        RestPen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.4), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
+        RestPen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
         WaveBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
         TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze
         TextWeight = FontWeights.ExtraLight |}
+
+    let noteSynthingOverlayGeometryBrush = SolidColorBrush(aRgb 0x40 0) |>! freeze
+    let noteSynthingOverlayBrushTransform = TranslateTransform()
+    let noteSynthingOverlayBrush =
+        DrawingBrush(
+            GeometryDrawing(noteSynthingOverlayGeometryBrush, null, StreamGeometry.Parse "M0,1 V2 L2,0 H1 z M1,2 H2 V1 z"),
+            TileMode = TileMode.Tile,
+            ViewportUnits = BrushMappingMode.Absolute,
+            Viewport = Rect(Size(12.0, 12.0)),
+            Transform = noteSynthingOverlayBrushTransform)
+    do  noteSynthingOverlayBrushTransform.BeginAnimation(TranslateTransform.XProperty,
+            DoubleAnimation(0.0, -12.0, Duration(TimeSpan.FromSeconds 1.0), RepeatBehavior = RepeatBehavior.Forever))
 
     static let selNoteBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
     static let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
@@ -624,6 +637,10 @@ type ChartEditor() =
                     let noteRect      = Rect(x0, yMid - half noteRectHeight, x1 - x0, noteRectHeight)
                     let noteValidRect = Rect(x0, yMid - half noteRectHeight, min x1 n1x0 - x0, noteRectHeight)
                     dc.DrawRectangle(currNoteBrush, currNotePen, noteValidRect)
+
+                    // synth in progress overlay
+                    if uttSynthResult.IsSynthing then
+                        dc.DrawRectangle(noteSynthingOverlayBrush, null, noteValidRect)
 
                     // selection
                     if selection.GetIsNoteSelected note then
