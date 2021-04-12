@@ -321,16 +321,32 @@ type ChartEditor() =
 
     static let noteBaseColor = rgb 0xFF8040
     static let hyphBaseColor = rgb 0xFF6080
+    static let activeUttStyle = {|
+        NoteBrush = SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.6) |>! freeze
+        HyphBrush = SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.6) |>! freeze
+        NoteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
+        NotePen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0) |>! freeze
+        HyphPen = Pen(SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.2), 1.0) |>! freeze
+        RestPen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
+        WaveBrush = SolidColorBrush(aRgb 0x20 0) |>! freeze
+        TextBrush = Brushes.Black
+        TextWeight = FontWeights.Regular |}
 
-    static let noteBrush = SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.6) |>! freeze
-    static let hyphBrush = SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.6) |>! freeze
-    static let noteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
-    static let notePen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0) |>! freeze
-    static let hyphPen = Pen(SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.2), 1.0) |>! freeze
-    static let restPen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
+    static let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xC0C0C0) 0.9
+    static let inactiveHyphBaseColor = lerpColor hyphBaseColor (rgb 0x808080) 0.9
+    static let inactiveUttStyle = {|
+        NoteBrush = SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.6) |>! freeze
+        HyphBrush = SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6) |>! freeze
+        NoteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
+        NotePen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.4), 1.0) |>! freeze
+        HyphPen = Pen(SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6), 1.0) |>! freeze
+        RestPen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.4), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
+        WaveBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
+        TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze
+        TextWeight = FontWeights.ExtraLight |}
 
-    static let waveBrush = SolidColorBrush(aRgb 0x20 0) |>! freeze
-    static let wavePen = Pen(SolidColorBrush(aFRgb 0.25 -1), 1.0) |>! freeze
+    static let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
+    static let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
 
     static let selPitchBrush = SolidColorBrush(aFRgb 0.1 0x000080) |>! freeze
     static let selNoteBrush = SolidColorBrush(aRgb 0x40 0x000080) |>! freeze
@@ -352,23 +368,23 @@ type ChartEditor() =
             |> ImmutableDictionary.CreateRange
 
     member val private ActiveNotes = ImmutableHashSet.Empty with get, set
-    member private x.UpdateActiveNotes playbackPos isPlaying comp selectedNotes =
+    member private x.UpdateActiveNotes playbackPos isPlaying comp selection =
         let newActiveNotes =
             (comp : Composition).AllNotes
             |> Seq.filter(
                 if isPlaying then (fun note -> note.On <= playbackPos && note.Off > playbackPos)
-                else (selectedNotes : ImmutableHashSet<_>).Contains)
+                else (selection : CompSelection).GetIsNoteSelected)
             |> ImmutableHashSet.CreateRange
         if not(x.ActiveNotes.SetEquals newActiveNotes) then
             x.ActiveNotes <- newActiveNotes
             x.InvalidateVisual()
 
     override x.OnCursorPositionChanged(oldValue, (newValue as playbackPos)) =
-        x.UpdateActiveNotes playbackPos x.IsPlaying x.Composition x.SelectedNotes
+        x.UpdateActiveNotes playbackPos x.IsPlaying x.Composition x.Selection
         base.OnCursorPositionChanged(oldValue, newValue)
 
     override x.OnIsPlayingChanged(oldValue, (newValue as isPlaying)) =
-        x.UpdateActiveNotes x.CursorPosition isPlaying x.Composition x.SelectedNotes
+        x.UpdateActiveNotes x.CursorPosition isPlaying x.Composition x.Selection
         base.OnIsPlayingChanged(oldValue, newValue)
 
     member x.Composition
@@ -380,7 +396,7 @@ type ChartEditor() =
                 (fun (x : ChartEditor)(oldValue, newValue) -> x.OnCompositionChanged(oldValue, newValue))))
     member x.OnCompositionChanged(oldValue, (newValue as comp)) =
         x.UpdateUttToCharsDict comp
-        x.UpdateActiveNotes x.CursorPosition x.IsPlaying comp x.SelectedNotes
+        x.UpdateActiveNotes x.CursorPosition x.IsPlaying comp x.Selection
 
     member x.UttSynthCache
         with get() = x.GetValue ChartEditor.UttSynthCacheProperty :?> UttSynthCache
@@ -389,15 +405,15 @@ type ChartEditor() =
         Dp.reg<UttSynthCache, ChartEditor> "UttSynthCache"
             (Dp.Meta(UttSynthCache.Empty, Dp.MetaFlags.AffectsRender))
 
-    member x.SelectedNotes
-        with get() = x.GetValue ChartEditor.SelectedNotesProperty :?> ImmutableHashSet<Note>
-        and set(v : ImmutableHashSet<Note>) = x.SetValue(ChartEditor.SelectedNotesProperty, box v)
-    static member val SelectedNotesProperty =
-        Dp.reg<ImmutableHashSet<Note>, ChartEditor> "SelectedNotes"
-            (Dp.Meta(ImmutableHashSet.Empty, Dp.MetaFlags.AffectsRender,
-                (fun (x : ChartEditor)(oldValue, newValue) -> x.OnSelectedNotesChanged(oldValue, newValue))))
-    member x.OnSelectedNotesChanged(oldValue, (newValue as selectedNotes)) =
-        x.UpdateActiveNotes x.CursorPosition x.IsPlaying x.Composition selectedNotes
+    member x.Selection
+        with get() = x.GetValue ChartEditor.SelectionProperty :?> CompSelection
+        and set(v : CompSelection) = x.SetValue(ChartEditor.SelectionProperty, box v)
+    static member val SelectionProperty =
+        Dp.reg<CompSelection, ChartEditor> "Selection"
+            (Dp.Meta(CompSelection.Empty, Dp.MetaFlags.AffectsRender,
+                (fun (x : ChartEditor)(oldValue, newValue) -> x.OnSelectionChanged(oldValue, newValue))))
+    member x.OnSelectionChanged(oldValue, (newValue as selection)) =
+        x.UpdateActiveNotes x.CursorPosition x.IsPlaying x.Composition selection
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -413,6 +429,7 @@ type ChartEditor() =
         let playbackPos = x.CursorPosition
         let comp = x.Composition
         let uttSynthCache = x.UttSynthCache
+        let selection = x.Selection
 
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth |> ceil)
@@ -422,7 +439,20 @@ type ChartEditor() =
 
         // background
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
-        dc.DrawRectangle(Brushes.Transparent, null, Rect(Size(actualWidth, actualHeight)))
+        dc.DrawRectangle(inactiveBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
+
+        // active utt background
+        match selection.ActiveUtt with
+        | None -> ()
+        | Some utt ->
+            let xMin = pulseToPixel quarterWidth hOffset (float utt.Notes.[0].On) |> clamp 0.0 actualWidth
+            let xMax = pulseToPixel quarterWidth hOffset (float utt.Notes.[^0].Off) |> clamp 0.0 actualWidth
+
+            let uttMaxPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.max
+            let uttMinPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.min
+            let yTop = pitchToPixel keyHeight actualHeight vOffset (float uttMaxPitch)
+            let yBot = pitchToPixel keyHeight actualHeight vOffset (float uttMinPitch)
+            dc.DrawRectangle(activeBackgroundBrush, null, Rect(xMin, yTop - half keyHeight, xMax - xMin, yBot - yTop + keyHeight))
 
         // time grids
         let measureHop =
@@ -486,13 +516,14 @@ type ChartEditor() =
 
         // utt start decor
         for utt in comp.Utts do
-            let uttSynthResult = uttSynthCache.GetOrDefault utt
+            let uttStyle = if selection.ActiveUtt = Some utt then activeUttStyle else inactiveUttStyle
+
             if utt.On >= minPulse && utt.On <= maxPulse then
                 let x0 = pulseToPixel quarterWidth hOffset (float utt.On)
                 let yMid = pitchToPixel keyHeight actualHeight vOffset (float utt.Notes.[0].Pitch)
-                dc.DrawLine(notePen, Point(x0 - 0.0, yMid - half keyHeight - 8.0), Point(x0 - 0.0, yMid + half keyHeight + 8.0))
-                dc.DrawLine(notePen, Point(x0 - 3.0, yMid - half keyHeight - 8.0), Point(x0 - 3.0, yMid + half keyHeight + 8.0))
-                dc.DrawLine(notePen, Point(x0 - 6.0, yMid - half keyHeight - 8.0), Point(x0 - 6.0, yMid + half keyHeight + 8.0))
+                dc.DrawLine(uttStyle.NotePen, Point(x0 - 0.0, yMid - half keyHeight - 8.0), Point(x0 - 0.0, yMid + half keyHeight + 8.0))
+                dc.DrawLine(uttStyle.NotePen, Point(x0 - 3.0, yMid - half keyHeight - 8.0), Point(x0 - 3.0, yMid + half keyHeight + 8.0))
+                dc.DrawLine(uttStyle.NotePen, Point(x0 - 6.0, yMid - half keyHeight - 8.0), Point(x0 - 6.0, yMid + half keyHeight + 8.0))
 
                 let ft =
                     let text = String.concat Environment.NewLine [|
@@ -501,12 +532,13 @@ type ChartEditor() =
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
                 ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
-                ft.SetForegroundBrush notePen.Brush
+                ft.SetForegroundBrush uttStyle.NotePen.Brush
                 dc.DrawText(ft, Point(x0 - 8.0, yMid - half ft.Height))
 
         // notes
         let bpm0 = comp.Bpm0
         for utt in comp.Utts do
+            let uttStyle = if selection.ActiveUtt = Some utt then activeUttStyle else inactiveUttStyle
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             let chars = x.UttToCharsDict.[utt]
 
@@ -531,7 +563,7 @@ type ChartEditor() =
                         if nextNote.On <= maxPulse then
                             let n1x0 = pulseToPixel quarterWidth hOffset (float nextNote.On)
                             let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float nextNote.Pitch)
-                            let currNotePen = if nextNote.IsHyphen then hyphPen else notePen
+                            let currNotePen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
                             let yMidMin = min yMid n1yMid
                             let yMidMax = max yMid n1yMid
                             dc.DrawLine(currNotePen, Point(n1x0, yMidMin - half keyHeight - 8.0), Point(n1x0, yMidMax + half keyHeight + 8.0))
@@ -544,6 +576,8 @@ type ChartEditor() =
                     if uttSynthResult.HasAudio then
                         let samples = uttSynthResult.AudioSamples
                         let sampleOffset = uttSynthResult.SampleOffset
+                        let pixelToSampleIndex x =
+                            (x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0) - sampleOffset
                         let x0 =
                             if noteIndex > 0 then x0 |> max 0.0 else
                                 sampleOffset
@@ -552,24 +586,22 @@ type ChartEditor() =
                             if noteIndex < utt.Notes.Length - 1 then n1x0 |> min actualWidth else
                                 sampleOffset + samples.Length
                                 |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset |> min actualWidth
-                        let pixelToSampleIndex x =
-                            (x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0) - sampleOffset
                         let xRes = 1.0
                         let waveformGeometry = makeWaveformGeometry samples pixelToSampleIndex x0 n1x0 yMid xRes 0.5 50.0
-                        dc.DrawGeometry(waveBrush, null, waveformGeometry)
+                        dc.DrawGeometry(uttStyle.WaveBrush, null, waveformGeometry)
 
                     // note
-                    let currNoteBrush = if note.IsHyphen then hyphBrush else noteBrush
-                    let currNotePen = if note.IsHyphen then hyphPen else notePen
+                    let currNoteBrush = if note.IsHyphen then uttStyle.HyphBrush else uttStyle.NoteBrush
+                    let currNotePen = if note.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
                     if hasNextNote then
                         let nextNote = utt.Notes.[noteIndex + 1]
                         if x1 > n1x0 then
-                            dc.DrawRectangle(noteBrushInvalid, currNotePen, Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight))
+                            dc.DrawRectangle(uttStyle.NoteBrushInvalid, currNotePen, Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight))
                         elif x1 < n1x0 then
                             if nextNote.IsHyphen then
-                                dc.DrawLine(hyphPen, Point(x1, yMid), Point(n1x0, yMid))
+                                dc.DrawLine(uttStyle.HyphPen, Point(x1, yMid), Point(n1x0, yMid))
                             else
-                                dc.DrawLine(restPen, Point(x1, yMid), Point(n1x0, yMid))
+                                dc.DrawLine(uttStyle.RestPen, Point(x1, yMid), Point(n1x0, yMid))
 
                     let noteRect      = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
                     let noteValidRect = Rect(x0, yMid - half keyHeight, min x1 n1x0 - x0, keyHeight)
@@ -583,6 +615,8 @@ type ChartEditor() =
                     if not note.IsHyphen then
                         let ft = x |> makeFormattedText($"{note.Lyric}{note.Rom}")
                         ft.SetFontSize((4.0 / 3.0) * TextBlock.GetFontSize x)
+                        ft.SetForegroundBrush uttStyle.TextBrush
+                        ft.SetFontWeight uttStyle.TextWeight
                         dc.DrawText(ft, Point(x0, yMid - half ft.Height))
 
         // utt ph bounds
@@ -668,19 +702,19 @@ type ChartEditorAdornerLayer() =
     member x.OnMouseOverCursorPositionOpChanged(prevMouseOverCursorPosOp, mouseOverCursorPosOp) = ()
 
     member x.MouseOverNoteOp
-        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> (Note * NoteDragType) option
-        and set(v : (Note * NoteDragType) option) = x.SetValue(ChartEditorAdornerLayer.MouseOverNoteOpProperty, box v)
+        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> (Utterance * Note * NoteDragType) option
+        and set(v : (Utterance * Note * NoteDragType) option) = x.SetValue(ChartEditorAdornerLayer.MouseOverNoteOpProperty, box v)
     static member val MouseOverNoteOpProperty =
-        Dp.reg<(Note * NoteDragType) option, ChartEditorAdornerLayer> "MouseOverNoteOp"
+        Dp.reg<(Utterance * Note * NoteDragType) option, ChartEditorAdornerLayer> "MouseOverNoteOp"
             (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverNoteOpChanged)))
     member x.OnMouseOverNoteOpChanged(prevMouseOverNoteOp, mouseOverNoteOp) =
         match mouseOverNoteOp with
         | None ->
             x.Cursor <- Cursors.Arrow
-        | Some(note, NoteDragMove) ->
+        | Some(utt, note, NoteDragMove) ->
             x.Cursor <- Cursors.Hand
-        | Some(note, NoteDragResizeLeft)
-        | Some(note, NoteDragResizeRight) ->
+        | Some(utt, note, NoteDragResizeLeft)
+        | Some(utt, note, NoteDragResizeRight) ->
             x.Cursor <- Cursors.SizeWE
 
     member x.SelectionBoxOp
@@ -706,7 +740,7 @@ type ChartEditorAdornerLayer() =
         // mouse over note
         match mouseOverNoteOp with
         | None -> ()
-        | Some(note, noteDragType) ->
+        | Some(utt, note, noteDragType) ->
             let x0 = pulseToPixel quarterWidth hOffset (float note.On)
             let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
             let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)

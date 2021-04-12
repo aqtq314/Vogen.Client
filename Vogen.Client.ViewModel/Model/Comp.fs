@@ -170,4 +170,23 @@ type UttSynthCache(bpm0, uttSynthResultDict) =
                 | true, uttSynthResult -> Some(KeyValuePair(utt, uttSynthResult))))
         UttSynthCache(bpm0, uttSynthResultDict)
 
+type CompSelection(activeUtt, selectedNotes) =
+    member x.ActiveUtt : Utterance option = activeUtt
+    member x.SelectedNotes : ImmutableHashSet<Note> = selectedNotes
+
+    member x.GetIsNoteSelected note = selectedNotes.Contains note
+
+    static member val Empty = CompSelection(None, ImmutableHashSet.Empty)
+
+    member x.SetActiveUtt activeUtt = CompSelection(activeUtt, selectedNotes)
+    member x.SetSelectedNotes selectedNotes = CompSelection(activeUtt, selectedNotes)
+
+    member x.UpdateActiveUtt updateActiveUtt = CompSelection(updateActiveUtt activeUtt, selectedNotes)
+    member x.UpdateSelectedNotes updateSelectedNotes = CompSelection(activeUtt, updateSelectedNotes selectedNotes)
+
+    member x.EnsureIntersectionWith(comp : Composition) =
+        let activeUtt = activeUtt |> Option.filter comp.Utts.Contains
+        let selectedNotes = selectedNotes.Intersect comp.AllNotes
+        CompSelection(activeUtt, selectedNotes)
+
 

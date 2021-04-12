@@ -17,7 +17,7 @@ open Vogen.Client.Model
 type ProgramModel() as x =
     let activeComp = rp Composition.Empty
     let activeUttSynthCache = rp UttSynthCache.Empty
-    let activeSelectedNotes = rp ImmutableHashSet.Empty
+    let activeSelection = rp CompSelection.Empty
     let undoRedoStack = UndoRedoStack()
 
     let compFilePathOp = rp None
@@ -45,7 +45,7 @@ type ProgramModel() as x =
     member x.CompIsSaved = compIsSaved
     member x.ActiveComp = activeComp
     member x.ActiveUttSynthCache = activeUttSynthCache
-    member x.ActiveSelectedNotes = activeSelectedNotes
+    member x.ActiveSelection = activeSelection
     member x.UndoRedoStack = undoRedoStack
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
@@ -61,7 +61,7 @@ type ProgramModel() as x =
                 Path.GetFileName filePath, comp, uttSynthCache
         activeComp |> Rp.set comp
         activeUttSynthCache |> Rp.set uttSynthCache
-        activeSelectedNotes |> Rp.set ImmutableHashSet.Empty
+        activeSelection |> Rp.set CompSelection.Empty
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set filePathOp
         compFileName |> Rp.set fileName
@@ -75,7 +75,7 @@ type ProgramModel() as x =
 
     member x.Import filePath =
         let prevComp = !!activeComp
-        let prevSelectedNotes = !!activeSelectedNotes
+        let prevSelection = !!activeSelection
         if isPlaying.Value then x.Stop()
 
         let comp, uttSynthCache =
@@ -89,12 +89,12 @@ type ProgramModel() as x =
                 comp, UttSynthCache.Create comp.Bpm0
             | ext ->
                 raise(KeyNotFoundException($"Unknwon file extension {ext}"))
-        let selectedNotes =
-            ImmutableHashSet.CreateRange comp.AllNotes
+        let selection =
+            CompSelection(None, ImmutableHashSet.CreateRange comp.AllNotes)
 
         activeComp |> Rp.set comp
         activeUttSynthCache |> Rp.set uttSynthCache
-        activeSelectedNotes |> Rp.set selectedNotes
+        activeSelection |> Rp.set selection
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set None
         compFileName |> Rp.set(Path.GetFileNameWithoutExtension filePath + ".vog")
@@ -113,17 +113,17 @@ type ProgramModel() as x =
     member x.Undo() =
         match undoRedoStack.TryPopUndo() with
         | None -> ()
-        | Some(comp, selectedNotes) ->
+        | Some(comp, selection) ->
             activeComp |> Rp.set comp
-            activeSelectedNotes |> Rp.set selectedNotes
+            activeSelection |> Rp.set selection
             compIsSaved |> Rp.set false
 
     member x.Redo() =
         match undoRedoStack.TryPopRedo() with
         | None -> ()
-        | Some(comp, selectedNotes) ->
+        | Some(comp, selection) ->
             activeComp |> Rp.set comp
-            activeSelectedNotes |> Rp.set selectedNotes
+            activeSelection |> Rp.set selection
             compIsSaved |> Rp.set false
 
     member x.ManualSetCursorPos newCursorPos =

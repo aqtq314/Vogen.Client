@@ -4,6 +4,7 @@ open Doaz.Reactive
 open Newtonsoft.Json
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.IO
 open System.Reflection
 open System.Windows
@@ -20,5 +21,8 @@ do  programModel.ActiveComp |> Rp.set comp
     programModel.ActiveUttSynthCache |> Rp.set uttSynthCache
     programModel.CompIsSaved |> Rp.set false
     programModel.ManualSetCursorPos 1920L
+    programModel.ActiveSelection |> Rp.set(CompSelection(Some comp.Utts.[0], ImmutableHashSet.CreateRange [|
+        yield! Seq.take 3 comp.Utts.[0].Notes
+        yield! Seq.take 1 comp.Utts.[1].Notes |]))
 //do  programModel.LoadFromFile(Some @"D:\Misc\vocaloid\隔岸C-aca.vog")
 

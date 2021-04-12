@@ -9,7 +9,7 @@
                            xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
                            Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}"
                            mc:Ignorable="d" 
-                           d:DesignHeight="450" d:DesignWidth="1600"
+                           d:DesignHeight="450" d:DesignWidth="800"
                            d:DataContext="{x:Static vm:DesignerModels.programModel}">
   <Border x:Name="border" Background="White" BorderThickness="0,2,0,0">
     <Grid>
@@ -48,7 +48,7 @@
         IsPlaying="{Binding IsPlaying.Value}"
         Composition="{Binding ActiveComp.Value}"
         UttSynthCache="{Binding ActiveUttSynthCache.Value}"
-        SelectedNotes="{Binding ActiveSelectedNotes.Value}"/>
+        Selection="{Binding ActiveSelection.Value}"/>
       <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
