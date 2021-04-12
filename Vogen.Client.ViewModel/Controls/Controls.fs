@@ -138,14 +138,14 @@ type NoteChartEditBase() =
 type SideKeyboard() =
     inherit NoteChartEditBase()
 
-    static let whiteKeyFill = Brushes.White
-    static let whiteKeyPen : Pen = Pen(Brushes.Black, 0.6) |>! freeze
-    static let blackKeyFill = Brushes.Black
-    static let blackKeyPen : Pen = null
+    let whiteKeyFill = Brushes.White
+    let whiteKeyPen : Pen = Pen(Brushes.Black, 0.6) |>! freeze
+    let blackKeyFill = Brushes.Black
+    let blackKeyPen : Pen = null
 
-    static let defaultKeyHeight = 12.0
-    static let keyOffsetLookup = [| -8; 0; -4; 0; 0; -9; 0; -6; 0; -3; 0; 0 |] |> Array.map float
-    static let keyHeightLookup = [| 20; 12; 20; 12; 20; 21; 12; 21; 12; 21; 12; 21 |] |> Array.map float
+    let defaultKeyHeight = 12.0
+    let keyOffsetLookup = [| -8; 0; -4; 0; 0; -9; 0; -6; 0; -3; 0; 0 |] |> Array.map float
+    let keyHeightLookup = [| 20; 12; 20; 12; 20; 21; 12; 21; 12; 21; 12; 21 |] |> Array.map float
 
     member x.BlackKeyLengthRatio
         with get() = x.GetValue SideKeyboard.BlackKeyLengthRatioProperty :?> float
@@ -206,10 +206,10 @@ type SideKeyboard() =
 type RulerGrid() =
     inherit NoteChartEditBase()
 
-    static let majorTickHeight = 6.0
-    static let minorTickHeight = 4.0
+    let majorTickHeight = 6.0
+    let minorTickHeight = 4.0
 
-    static let tickPen = Pen(SolidColorBrush(rgb 0), 1.0) |>! freeze
+    let tickPen = Pen(SolidColorBrush(rgb 0), 1.0) |>! freeze
 
     static member Quantizations = [|
         1920L; 960L; 480L; 240L; 120L; 60L; 30L; 15L; 1L
@@ -316,16 +316,16 @@ type ChartEditor() =
         waveformLowerContourPoints.Reverse()
         pointsToGeometry true (Seq.append waveformUpperContourPoints waveformLowerContourPoints)
 
-    static let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
-    static let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
+    let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
+    let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
 
-    static let minGridScreenHop = 5.0
-    static let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
-    static let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
+    let minGridScreenHop = 5.0
+    let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
+    let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
 
-    static let noteBaseColor = rgb 0xFF8040
-    static let hyphBaseColor = rgb 0xFF6080
-    static let activeUttStyle = {|
+    let noteBaseColor = rgb 0xFF8040
+    let hyphBaseColor = rgb 0xFF6080
+    let activeUttStyle = {|
         NoteBrush = SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.6) |>! freeze
         HyphBrush = SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.6) |>! freeze
         NoteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
@@ -336,9 +336,9 @@ type ChartEditor() =
         TextBrush = Brushes.Black
         TextWeight = FontWeights.Regular |}
 
-    static let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xA0A0A0) 0.9
-    static let inactiveHyphBaseColor = lerpColor hyphBaseColor (rgb 0x808080) 0.9
-    static let inactiveUttStyle = {|
+    let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xA0A0A0) 0.9
+    let inactiveHyphBaseColor = lerpColor hyphBaseColor (rgb 0x808080) 0.9
+    let inactiveUttStyle = {|
         NoteBrush = SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.8) |>! freeze
         HyphBrush = SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6) |>! freeze
         NoteBrushInvalid = SolidColorBrush(rgb -1) |>! freeze
@@ -361,13 +361,13 @@ type ChartEditor() =
     do  noteSynthingOverlayBrushTransform.BeginAnimation(TranslateTransform.XProperty,
             DoubleAnimation(0.0, -12.0, Duration(TimeSpan.FromSeconds 1.0), RepeatBehavior = RepeatBehavior.Forever))
 
-    static let selNoteBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
-    static let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
+    let selNoteBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
+    let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
 
-    static let cursorActivePitchBrush = SolidColorBrush(aRgb 0x10 0xFF0000) |>! freeze
-    static let cursorActiveNotePen = Pen(SolidColorBrush(aRgb 0x80 0xFF0000), 2.0) |>! freeze
+    let cursorActivePitchBrush = SolidColorBrush(aRgb 0x10 0xFF0000) |>! freeze
+    let cursorActiveNotePen = Pen(SolidColorBrush(aRgb 0x80 0xFF0000), 2.0) |>! freeze
 
-    static let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 1.0) |>! freeze
+    let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 1.0) |>! freeze
 
     member val private UttToCharsDict = ImmutableDictionary.Empty with get, set
     member private x.UpdateUttToCharsDict comp =
@@ -718,11 +718,11 @@ type ChartEditorAdornerLayer() =
             typeof<ChartEditorAdornerLayer>, FrameworkPropertyMetadata(
                 0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
 
-    static let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
-    static let hoverCursorPen    = Pen(SolidColorBrush(aFRgb 0.5 0), 0.75) |>! freeze
-    static let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
-    static let selBoxBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
-    static let selBoxPen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 0.75) |>! freeze
+    let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
+    let hoverCursorPen = Pen(SolidColorBrush(aFRgb 0.5 0), 0.75) |>! freeze
+    let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
+    let selBoxBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
+    let selBoxPen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 0.75) |>! freeze
 
     static let getCursorHeadGeometry xPos =
         pointsToGeometry true [|
