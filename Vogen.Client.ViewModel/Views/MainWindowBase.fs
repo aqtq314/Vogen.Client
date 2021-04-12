@@ -34,7 +34,7 @@ type MainWindowBase() =
     member x.ProgramModel = x.DataContext :?> ProgramModel
 
     override x.OnClosing e =
-        match x.CheckChanges() with
+        match x.AskSaveChanges() with
         | Ok() -> ()
         | Error() -> e.Cancel <- true
         base.OnClosing e
@@ -71,7 +71,7 @@ type MainWindowBase() =
                 x.ShowError ex
                 return! x.SaveAs() }
 
-    member x.CheckChanges() = result {
+    member x.AskSaveChanges() = result {
         if not !!x.ProgramModel.CompIsSaved then
             let messageBoxResult =
                 MessageBox.Show(
@@ -83,11 +83,11 @@ type MainWindowBase() =
             | _ -> return! Error() }
 
     member x.New() = result {
-        do! x.CheckChanges()
+        do! x.AskSaveChanges()
         x.ProgramModel.New() }
 
     member x.Open() = result {
-        do! x.CheckChanges()
+        do! x.AskSaveChanges()
         try let openFileDialog =
                 OpenFileDialog(
                     DefaultExt = ".vog",
@@ -103,7 +103,7 @@ type MainWindowBase() =
             return! Error() }
 
     member x.Import() = result {
-        do! x.CheckChanges()
+        do! x.AskSaveChanges()
         try let openFileDialog =
                 OpenFileDialog(
                     Filter = "Supported file formats|*.vog;*.vpr")

@@ -369,6 +369,7 @@ type NoteChartEditPanelBase() =
                             CompSelection(activeUtt, selectedNotes))
 
                         undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                        x.ProgramModel.CompIsSaved |> Rp.set false
 
                     return! draggingNote dragNoteArgs
 
@@ -551,6 +552,7 @@ type NoteChartEditPanelBase() =
 
                     x.ProgramModel.UndoRedoStack.PushUndo(
                         DeleteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.CompIsSaved |> Rp.set false
 
             | Key.Z when Keyboard.Modifiers.IsCtrl ->
                 x.ProgramModel.Undo()
