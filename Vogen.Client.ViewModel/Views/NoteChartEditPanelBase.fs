@@ -258,14 +258,15 @@ type NoteChartEditPanelBase() =
 
                             let mouseDownSelection = !!x.ProgramModel.ActiveSelection
                             let mouseDownSelection = mouseDownSelection.EnsureIntersectionWith comp
-                            let dragNoteArgs = note, comp, mouseDownSelection, mouseDownPulse, noteDragType
+                            let undoWriter =
+                                x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                                    MouseDragNote noteDragType, (comp, mouseDownSelection))
 
+                            let dragNoteArgs = note, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter
                             let isPendingDeselect = selection.GetIsNoteSelected note && Keyboard.Modifiers = ModifierKeys.Control
                             if isPendingDeselect then
                                 return! mouseDownNotePendingDeselect dragNoteArgs
                             else
-                                x.ProgramModel.UndoRedoStack.PushUndo(
-                                    MouseDragNote noteDragType, (comp, mouseDownSelection), (comp, mouseDownSelection))
                                 return! draggingNote dragNoteArgs
 
                     | MouseButton.Middle ->
@@ -281,11 +282,9 @@ type NoteChartEditPanelBase() =
                 | _ -> return! idle() }
 
             and mouseDownNotePendingDeselect dragNoteArgs = behavior {
-                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType = dragNoteArgs
+                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
-                    x.ProgramModel.UndoRedoStack.PushUndo(
-                        MouseDragNote noteDragType, (mouseDownComp, mouseDownSelection), (mouseDownComp, mouseDownSelection))
                     return! (draggingNote dragNoteArgs).Run(ChartMouseMove e)
 
                 | ChartMouseRelease e ->
@@ -298,7 +297,7 @@ type NoteChartEditPanelBase() =
                 | _ -> return! mouseDownNotePendingDeselect dragNoteArgs }
 
             and draggingNote dragNoteArgs = behavior {
-                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType = dragNoteArgs
+                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
                     let actualHeight = edit.ActualHeight
@@ -351,6 +350,7 @@ type NoteChartEditPanelBase() =
                     if deltaPulse = 0L && deltaDur = 0L && deltaPitch = 0 then
                         x.ProgramModel.ActiveComp |> Rp.set mouseDownComp
                         x.ProgramModel.ActiveSelection |> Rp.set mouseDownSelection
+                        undoWriter.PutIdenticalRedo()
 
                     else
                         // DiffDict: no existance -> no modification
@@ -368,7 +368,7 @@ type NoteChartEditPanelBase() =
                             let selectedNotes = ImmutableHashSet.CreateRange noteDiffDict.Values
                             CompSelection(activeUtt, selectedNotes))
 
-                    x.ProgramModel.UndoRedoStack.UpdateLatestRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                        undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
 
                     return! draggingNote dragNoteArgs
 
