@@ -17,7 +17,7 @@ type UndoNodeDescription =
     | KeyboardNudgeNote
 
 type IUndoNodeWriter<'a> =
-    abstract PutIdenticalRedo : unit -> unit
+    abstract UnpushUndo : unit -> unit
     abstract PutRedo : redoItem : 'a -> unit
 
 type UndoRedoStack<'a>() =
@@ -56,16 +56,18 @@ type UndoRedoStack<'a>() =
             member y.PutRedo redoItem =
                 match initUndoStackRef with
                 | None ->
-                    initUndoStackRef <- Some !!undoStack
+                    initUndoStackRef <- Some(!!undoStack, !!redoStack)
                     x.PushUndo(nodeDesc, undoItem, redoItem)
-                | Some initUndoStack ->
+                | Some(initUndoStack, initRedoStack) ->
                     undoStack |> Rp.set((nodeDesc, undoItem, redoItem) :: initUndoStack)
+                    redoStack |> Rp.set []
 
-            member y.PutIdenticalRedo() =
+            member y.UnpushUndo() =
                 match initUndoStackRef with
                 | None -> ()
-                | Some initUndoStack ->
-                    undoStack |> Rp.set((nodeDesc, undoItem, undoItem) :: initUndoStack) }
+                | Some(initUndoStack, initRedoStack) ->
+                    undoStack |> Rp.set initUndoStack
+                    redoStack |> Rp.set initRedoStack }
 
     member x.Clear() =
         undoStack |> Rp.set []

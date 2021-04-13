@@ -350,7 +350,7 @@ type NoteChartEditPanelBase() =
                     if deltaPulse = 0L && deltaDur = 0L && deltaPitch = 0 then
                         x.ProgramModel.ActiveComp |> Rp.set mouseDownComp
                         x.ProgramModel.ActiveSelection |> Rp.set mouseDownSelection
-                        undoWriter.PutIdenticalRedo()
+                        undoWriter.UnpushUndo()
 
                     else
                         // DiffDict: no existance -> no modification
