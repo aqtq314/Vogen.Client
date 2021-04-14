@@ -9,6 +9,7 @@ open Vogen.Client.Controls
 
 type UndoNodeDescription =
     | WriteNote
+    | WriteHyphenNote
     | MouseDragNote of noteDragType : NoteDragType
     | DeleteNote
     | CutNote

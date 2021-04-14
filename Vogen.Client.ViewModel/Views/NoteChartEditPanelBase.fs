@@ -106,7 +106,18 @@ type NoteChartEditPanelBase() =
 
             | _ -> return! edit |> mouseMidDownDragging(prevMousePos, idle) }
 
-        let findMouseOverNote(mousePos : Point)(edit : ChartEditor) =
+        let enumerateUttsByDepth(activeUtt, utts : ImmutableArray<Utterance>) =
+            match activeUtt with
+            | Some activeUtt -> seq {
+                yield activeUtt
+                for uttIndex in utts.Length - 1 .. -1 .. 0 do
+                    if utts.[uttIndex] <> activeUtt then
+                        yield utts.[uttIndex] }
+            | None -> seq {
+                for uttIndex in utts.Length - 1 .. -1 .. 0 do
+                    yield utts.[uttIndex] }
+
+        let findMouseOverNote(mousePos : Point) activeUtt utts (edit : ChartEditor) =
             let actualHeight = edit.ActualHeight
             let quarterWidth = edit.QuarterWidth
             let keyHeight = edit.KeyHeight
@@ -118,18 +129,7 @@ type NoteChartEditPanelBase() =
             let comp = !!x.ProgramModel.ActiveComp
             let selection = !!x.ProgramModel.ActiveSelection
 
-            let uttsReordered = seq {
-                match selection.ActiveUtt with
-                | Some activeUtt ->
-                    yield activeUtt
-                    for uttIndex in comp.Utts.Length - 1 .. -1 .. 0 do
-                        let utt = comp.Utts.[uttIndex]
-                        if utt <> activeUtt then
-                            yield utt
-                | None ->
-                    for uttIndex in comp.Utts.Length - 1 .. -1 .. 0 do
-                        yield comp.Utts.[uttIndex] }
-
+            let uttsReordered = enumerateUttsByDepth(activeUtt, utts)
             Seq.tryHead <| seq {
                 for utt in uttsReordered do
                     for noteIndex in utt.Notes.Length - 1 .. -1 .. 0 do
@@ -144,9 +144,6 @@ type NoteChartEditPanelBase() =
                     elif mousePos.X >= max(x1 - 6.0)(lerp x0 x1 0.8) then NoteDragResizeRight
                     else NoteDragMove
                 utt, note, noteDragType)
-
-        let findMouseOverNoteOp mousePosOp edit =
-            mousePosOp |> Option.bind(fun mousePos -> findMouseOverNote mousePos edit)
 
         let quantize snap quantization (timeSig : TimeSignature) pulses =
             if not snap then pulses else
@@ -181,26 +178,96 @@ type NoteChartEditPanelBase() =
             let edit = x.ChartEditor
 
             let updateMouseOverNote mousePosOp =
-                let mouseOverNoteOp = findMouseOverNoteOp mousePosOp edit
+                let mouseOverNoteOp = mousePosOp |> Option.bind(fun mousePos ->
+                    let comp = !!x.ProgramModel.ActiveComp
+                    let selection = !!x.ProgramModel.ActiveSelection
+                    findMouseOverNote mousePos selection.ActiveUtt comp.Utts edit)
+
                 x.ChartEditorAdornerLayer.MouseOverNoteOp <- mouseOverNoteOp
 
             let rec idle() = behavior {
                 match! () with
                 | ChartMouseDown e ->
+                    let keyboardModifiers = Keyboard.Modifiers
+
                     match e.ChangedButton with
+                    | MouseButton.Left when keyboardModifiers.IsShift ->
+                        updateMouseOverNote None
+                        let actualHeight = edit.ActualHeight
+                        let quarterWidth = edit.QuarterWidth
+                        let keyHeight = edit.KeyHeight
+                        let hOffset = edit.HOffsetAnimated
+                        let vOffset = edit.VOffsetAnimated
+                        let comp = !!x.ProgramModel.ActiveComp
+                        let selection = !!x.ProgramModel.ActiveSelection
+                        let quantization = x.Quantization
+                        let snap = x.Snap
+
+                        let mousePos = e.GetPosition edit
+                        let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt ImmutableArray.Empty edit
+                        match mouseDownNoteOp with
+                        | None ->
+                            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                            let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
+                            let noteOn = mousePulse |> quantize snap quantization comp.TimeSig0
+                            let noteOff = noteOn + 1L |> quantizeCeil snap quantization comp.TimeSig0
+                            let initNote = Note(mousePitch, "", "du", noteOn, noteOff - noteOn)
+
+                            let undoWriter =
+                                x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                                    WriteNote, (comp, selection.SetSelectedNotes ImmutableHashSet.Empty))
+
+                            let newActiveUtt, newComp =
+                                match selection.ActiveUtt with
+                                | Some activeUtt ->
+                                    let newActiveUtt = activeUtt.UpdateNotes(fun notes -> notes.Add initNote)
+                                    newActiveUtt, comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, newActiveUtt))
+                                | None ->
+                                    let newActiveUtt = Utterance("man", ImmutableArray.Create initNote)
+                                    newActiveUtt, comp.UpdateUtts(fun utts -> utts.Add newActiveUtt)
+
+                            x.ProgramModel.ActiveComp |> Rp.set newComp
+                            x.ProgramModel.ActiveSelection |> Rp.set(
+                                CompSelection(Some newActiveUtt, ImmutableHashSet.Create initNote))
+
+                            undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                            x.ProgramModel.CompIsSaved |> Rp.set false
+
+                            //let dragNoteArgs = note, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter
+                            //return! draggingNote dragNoteArgs
+                            return! idle()
+
+                        | Some(utt, note, noteDragType) ->
+                            let undoWriter =
+                                x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                                    WriteHyphenNote, (comp, selection.SetSelectedNotes(ImmutableHashSet.Create note)))
+
+                            let newNote = note.SetText("-", "-")
+                            let newUtt = utt.SetNotes(utt.Notes.Replace(note, newNote))
+                            let newComp = comp.UpdateUtts(fun utts -> utts.Replace(utt, newUtt))
+
+                            x.ProgramModel.ActiveComp |> Rp.set newComp
+                            x.ProgramModel.ActiveSelection |> Rp.set(
+                                CompSelection(Some newUtt, ImmutableHashSet.Create newNote))
+
+                            undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                            x.ProgramModel.CompIsSaved |> Rp.set false
+
+                            return! idle()
+
                     | MouseButton.Left ->
                         updateMouseOverNote None
                         let comp = !!x.ProgramModel.ActiveComp
                         let selection = !!x.ProgramModel.ActiveSelection
                         let mousePos = e.GetPosition edit
-                        let mouseDownNoteOp = findMouseOverNote mousePos edit
+                        let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt comp.Utts edit
                         match mouseDownNoteOp with
                         | None ->
                             if e.ClickCount = 2 then
                                 x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
                                     selection.SetActiveUtt None)
 
-                            match Keyboard.Modifiers with
+                            match keyboardModifiers with
                             | ModifierKeys.Control -> ()
                             | _ ->
                                 x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
@@ -236,18 +303,18 @@ type NoteChartEditPanelBase() =
                                 match noteDragType with
                                 | NoteDragResizeLeft
                                 | NoteDragMove ->
-                                    let noteGridOffset = note.On - (note.On |> quantize snap quantization comp.TimeSig0)
-                                    (mousePulse - noteGridOffset |> quantize snap quantization comp.TimeSig0) + noteGridOffset
+                                    let noteGridDeviation = note.On - (note.On |> quantize snap quantization comp.TimeSig0)
+                                    (mousePulse - noteGridDeviation |> quantize snap quantization comp.TimeSig0) + noteGridDeviation
                                 | NoteDragResizeRight ->
-                                    let noteGridOffset = note.Off - (note.Off |> quantizeCeil snap quantization comp.TimeSig0)
-                                    (mousePulse - noteGridOffset |> quantizeCeil snap quantization comp.TimeSig0) + noteGridOffset
+                                    let noteGridDeviation = note.Off - (note.Off |> quantizeCeil snap quantization comp.TimeSig0)
+                                    (mousePulse - noteGridDeviation |> quantizeCeil snap quantization comp.TimeSig0) + noteGridDeviation
 
                             //MidiPlayback.playPitch note.Pitch
                             x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
                                 selection.SetActiveUtt(Some utt))
 
                             if not(selection.GetIsNoteSelected note) then
-                                if Keyboard.Modifiers = ModifierKeys.Control then
+                                if keyboardModifiers = ModifierKeys.Control then
                                     x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
                                         selection.UpdateSelectedNotes(fun selectedNotes ->
                                             selectedNotes.Add note))
@@ -263,7 +330,7 @@ type NoteChartEditPanelBase() =
                                     MouseDragNote noteDragType, (comp, mouseDownSelection))
 
                             let dragNoteArgs = note, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter
-                            let isPendingDeselect = selection.GetIsNoteSelected note && Keyboard.Modifiers = ModifierKeys.Control
+                            let isPendingDeselect = selection.GetIsNoteSelected note && keyboardModifiers = ModifierKeys.Control
                             if isPendingDeselect then
                                 return! mouseDownNotePendingDeselect dragNoteArgs
                             else
@@ -522,6 +589,8 @@ type NoteChartEditPanelBase() =
 
         // key events
         x.KeyDown.Add <| fun e ->
+            let keyboardModifiers = Keyboard.Modifiers
+
             match e.Key with
             | Key.Space ->
                 let programModel = x.ProgramModel
@@ -554,14 +623,17 @@ type NoteChartEditPanelBase() =
                         DeleteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                     x.ProgramModel.CompIsSaved |> Rp.set false
 
-            | Key.Z when Keyboard.Modifiers.IsCtrl ->
+            | Key.Z when keyboardModifiers.IsCtrl ->
                 x.ProgramModel.Undo()
 
-            | Key.Y when Keyboard.Modifiers.IsCtrl ->
+            | Key.Y when keyboardModifiers.IsCtrl ->
                 x.ProgramModel.Redo()
 
-            | Key.Z when Keyboard.Modifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
+            | Key.Z when keyboardModifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
                 x.ProgramModel.Redo()
 
             | _ -> ()
+
+            x.ChartEditorAdornerLayer.InvalidateVisual()
+
 

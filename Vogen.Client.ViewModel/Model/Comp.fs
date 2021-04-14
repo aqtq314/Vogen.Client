@@ -25,6 +25,7 @@ type Note(pitch, lyric, rom, on, dur) =
     member x.Off = x.On + x.Dur
     member x.IsHyphen = x.Lyric = "-"
 
+    member x.SetText(lyric, rom) = Note(pitch, lyric, rom, on, dur)
     member x.SetOn on = Note(pitch, lyric, rom, on, dur)
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
@@ -37,12 +38,16 @@ type Note(pitch, lyric, rom, on, dur) =
 
 type Utterance(romScheme, notes) =
     let notes = (notes : ImmutableArray<Note>).Sort Note.CompareByPosition
+    do  if notes.Length = 0 then
+            raise(ArgumentException("An utterance must have notes.Length > 0"))
 
     member x.RomScheme : string = romScheme
     member x.Notes : ImmutableArray<Note> = notes
     member x.On = notes.[0].On
 
+    member x.SetRomScheme romScheme = Utterance(romScheme, notes)
     member x.SetNotes notes = Utterance(romScheme, notes)
+    member x.UpdateNotes updateNotes = Utterance(romScheme, updateNotes notes)
 
     static member CompareByPosition(utt1 : Utterance)(utt2 : Utterance) =
         match compare utt1.On utt2.On with
@@ -119,6 +124,8 @@ type Composition(timeSig0, bpm0, utts) =
     member x.SetTimeSig timeSig0 = Composition(timeSig0, bpm0, utts)
     member x.SetBpm bpm0 = Composition(timeSig0, bpm0, utts)
     member x.SetUtts utts = Composition(timeSig0, bpm0, utts)
+
+    member x.UpdateUtts updateUtts = Composition(timeSig0, bpm0, updateUtts utts)
 
     // TODO prevent adding identical notes more than once
     //member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
