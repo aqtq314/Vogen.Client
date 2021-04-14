@@ -713,7 +713,7 @@ type NoteDragType =
 type ChartEditorHint =
     | HoverNote of utt : Utterance * note : Note * noteDragType : NoteDragType
     | GhostCursor of cursorPos : int64
-    //| GhostNote of note : Note
+    | GhostNote of note : Note
 
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()
@@ -724,11 +724,16 @@ type ChartEditorAdornerLayer() =
             typeof<ChartEditorAdornerLayer>, FrameworkPropertyMetadata(
                 0L, Dp.MetaFlags.AffectsRender, baseMeta.PropertyChangedCallback, baseMeta.CoerceValueCallback))
 
-    let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
-    let hoverCursorPen = Pen(SolidColorBrush(aFRgb 0.5 0), 0.75) |>! freeze
     let playbackCursorPen = Pen(SolidColorBrush(rgb 0xFF0000), 0.75) |>! freeze
     let selBoxBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
     let selBoxPen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 0.75) |>! freeze
+    let hoverNoteBrush = SolidColorBrush(aRgb 0x80 -1) |>! freeze
+    let hoverCursorPen = Pen(SolidColorBrush(aFRgb 0.5 0), 0.75) |>! freeze
+
+    let ghostNoteBrush = SolidColorBrush(aRgb 0x20 0xFF8040) |>! freeze
+    let ghostNotePen = Pen(SolidColorBrush(aRgb 0xC0 0xFF8040), 2.0) |>! freeze
+    let ghostHyphBrush = SolidColorBrush(aRgb 0x20 0xFF6080) |>! freeze
+    let ghostHyphPen = Pen(SolidColorBrush(aRgb 0xC0 0xFF6080), 2.0) |>! freeze
 
     static let getCursorHeadGeometry xPos =
         pointsToGeometry true [|
@@ -753,6 +758,8 @@ type ChartEditorAdornerLayer() =
             | HoverNote(utt, note, NoteDragResizeLeft)
             | HoverNote(utt, note, NoteDragResizeRight) ->
                 x.Cursor <- Cursors.SizeWE
+            | GhostNote note ->
+                x.Cursor <- Cursors.Pen
             | _ ->
                 x.Cursor <- Cursors.Arrow
         | None ->
@@ -814,5 +821,17 @@ type ChartEditorAdornerLayer() =
                 if xPos >= 0.0 && xPos <= actualWidth then
                     dc.DrawLine(hoverCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
                     dc.DrawGeometry(Brushes.White, hoverCursorPen, getCursorHeadGeometry xPos)
+
+            | GhostNote note ->
+                let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+                let noteRect = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
+                if not note.IsHyphen then
+                    dc.DrawRectangle(ghostNoteBrush, null, Rect(0.0, noteRect.Y, actualWidth, noteRect.Height))
+                    dc.DrawRectangle(null, ghostNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
+                else
+                    dc.DrawRectangle(ghostHyphBrush, null, Rect(0.0, noteRect.Y, actualWidth, noteRect.Height))
+                    dc.DrawRectangle(null, ghostHyphPen, Rect.Inflate(noteRect, 0.0, 1.5))
 
 

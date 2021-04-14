@@ -195,6 +195,41 @@ type NoteChartEditPanelBase() =
 
             x.ChartEditorAdornerLayer.EditorHint <- Option.map HoverNote mouseOverNoteOp
 
+        let hintSetGhostNote mousePos =
+            let edit = x.ChartEditor
+            let actualHeight = edit.ActualHeight
+            let quarterWidth = edit.QuarterWidth
+            let keyHeight = edit.KeyHeight
+            let minKey = edit.MinKey
+            let maxKey = edit.MaxKey
+            let hOffset = edit.HOffsetAnimated
+            let vOffset = edit.VOffsetAnimated
+            let comp = !!x.ProgramModel.ActiveComp
+            let selection = !!x.ProgramModel.ActiveSelection
+            let quantization = x.Quantization
+            let snap = x.Snap
+            let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt ImmutableArray.Empty edit
+            let note =
+                match mouseDownNoteOp with
+                | None ->
+                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                    let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
+                    let noteOn = mousePulse |> quantize snap quantization comp.TimeSig0 |> max 0L
+                    let noteOff = noteOn + 1L |> quantizeCeil snap quantization comp.TimeSig0
+                    let notePitch = mousePitch |> clamp minKey maxKey
+                    Note(notePitch, "", "du", noteOn, noteOff - noteOn)
+
+                | Some(mouseDownUtt, mouseDownNote, noteDragType) ->
+                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                    let noteOn =
+                        mousePulse
+                        |> min(mouseDownNote.Off - 1L)
+                        |> quantize snap quantization comp.TimeSig0
+                        |> max mouseDownNote.On
+                    Note(mouseDownNote.Pitch, "-", "-", noteOn, mouseDownNote.Off - noteOn)
+
+            x.ChartEditorAdornerLayer.EditorHint <- Some(GhostNote note)
+
         x.ChartEditor |> ChartMouseEvent.BindEvents(
             let edit = x.ChartEditor
 
@@ -400,7 +435,13 @@ type NoteChartEditPanelBase() =
                     | _ -> return! idle()
 
                 | ChartMouseMove e ->
-                    hintSetMouseOverNote(e.GetPosition edit)
+                    let keyboardModifiers = Keyboard.Modifiers
+
+                    if keyboardModifiers.IsAlt then
+                        hintSetGhostNote(e.GetPosition edit)
+                    else
+                        hintSetMouseOverNote(e.GetPosition edit)
+
                     return! idle()
 
                 | _ -> return! idle() }
