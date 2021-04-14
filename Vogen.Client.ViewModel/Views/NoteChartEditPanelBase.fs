@@ -166,35 +166,37 @@ type NoteChartEditPanelBase() =
                 let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
                 pulsesMeasureQuantized + ((pulses - pulsesMeasureQuantized) /^ quantization * quantization |> min timeSig.PulsesPerMeasure)
 
-        let getPlaybackCursorPos(mousePos : Point)(edit : NoteChartEditBase) =
-            let hOffset = edit.HOffsetAnimated
-            let quarterWidth = edit.QuarterWidth
+        let getPlaybackCursorPos(mousePos : Point) =
+            let hOffset = x.RulerGrid.HOffsetAnimated
+            let quarterWidth = x.RulerGrid.QuarterWidth
             let comp = !!x.ProgramModel.ActiveComp
             let quantization = x.Quantization
             let snap = x.Snap
 
-            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition edit
+            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
             newCursorPos |> quantize snap quantization comp.TimeSig0
 
-        let updatePlaybackCursorPos(e : MouseEventArgs)(edit : NoteChartEditBase) =
-            let mousePos = e.GetPosition edit
-            let newCursorPos = getPlaybackCursorPos mousePos edit
+        let updatePlaybackCursorPos mousePos =
+            let newCursorPos = getPlaybackCursorPos mousePos
             x.ProgramModel.ManualSetCursorPos newCursorPos
 
-        let updateMouseOverCursorPos mousePosOp (edit : NoteChartEditBase) =
-            let mouseOverCursorPosOp = mousePosOp |> Option.map(fun (mousePos : Point) -> getPlaybackCursorPos mousePos edit)
-            x.ChartEditorAdornerLayer.MouseOverCursorPositionOp <- mouseOverCursorPosOp
+        let hintSetNone() =
+            x.ChartEditorAdornerLayer.EditorHint <- None
+
+        let hintSetGhostCursor mousePos =
+            let cursorPos = getPlaybackCursorPos mousePos
+            x.ChartEditorAdornerLayer.EditorHint <- Some(GhostCursor cursorPos)
+
+        let hintSetMouseOverNote mousePos =
+            let mouseOverNoteOp =
+                let comp = !!x.ProgramModel.ActiveComp
+                let selection = !!x.ProgramModel.ActiveSelection
+                findMouseOverNote mousePos selection.ActiveUtt comp.Utts x.ChartEditor
+
+            x.ChartEditorAdornerLayer.EditorHint <- Option.map HoverNote mouseOverNoteOp
 
         x.ChartEditor |> ChartMouseEvent.BindEvents(
             let edit = x.ChartEditor
-
-            let updateMouseOverNote mousePosOp =
-                let mouseOverNoteOp = mousePosOp |> Option.bind(fun mousePos ->
-                    let comp = !!x.ProgramModel.ActiveComp
-                    let selection = !!x.ProgramModel.ActiveSelection
-                    findMouseOverNote mousePos selection.ActiveUtt comp.Utts edit)
-
-                x.ChartEditorAdornerLayer.MouseOverNoteOp <- mouseOverNoteOp
 
             let rec idle() = behavior {
                 match! () with
@@ -202,8 +204,8 @@ type NoteChartEditPanelBase() =
                     let keyboardModifiers = Keyboard.Modifiers
 
                     match e.ChangedButton with
-                    | MouseButton.Left when keyboardModifiers.IsShift ->
-                        updateMouseOverNote None
+                    | MouseButton.Left when keyboardModifiers.IsAlt ->
+                        hintSetNone()
                         let actualHeight = edit.ActualHeight
                         let quarterWidth = edit.QuarterWidth
                         let keyHeight = edit.KeyHeight
@@ -296,7 +298,7 @@ type NoteChartEditPanelBase() =
                             return! writingNote writeNoteArgs
 
                     | MouseButton.Left ->
-                        updateMouseOverNote None
+                        hintSetNone()
                         let comp = !!x.ProgramModel.ActiveComp
                         let selection = !!x.ProgramModel.ActiveSelection
                         let mousePos = e.GetPosition edit
@@ -377,7 +379,7 @@ type NoteChartEditPanelBase() =
                                 return! draggingNote dragNoteArgs
 
                     | MouseButton.Middle ->
-                        updateMouseOverNote None
+                        hintSetNone()
                         let comp = !!x.ProgramModel.ActiveComp
                         let selection = !!x.ProgramModel.ActiveSelection
                         let mousePos = e.GetPosition edit
@@ -398,7 +400,7 @@ type NoteChartEditPanelBase() =
                     | _ -> return! idle()
 
                 | ChartMouseMove e ->
-                    updateMouseOverNote(Some(e.GetPosition edit))
+                    hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! idle() }
@@ -413,7 +415,7 @@ type NoteChartEditPanelBase() =
                     x.ProgramModel.ActiveSelection |> Rp.set(
                         mouseDownSelection.UpdateSelectedNotes(fun selectedNotes ->
                             selectedNotes.Remove mouseDownNote))
-                    updateMouseOverNote(Some(e.GetPosition edit))
+                    hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! mouseDownNotePendingDeselect dragNoteArgs }
@@ -448,7 +450,7 @@ type NoteChartEditPanelBase() =
                         return! writingNote writeNoteArgs
 
                 | ChartMouseRelease e ->
-                    updateMouseOverNote(Some(e.GetPosition edit))
+                    hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! writingNote writeNoteArgs }
@@ -530,7 +532,7 @@ type NoteChartEditPanelBase() =
                     return! draggingNote dragNoteArgs
 
                 | ChartMouseRelease e ->
-                    updateMouseOverNote(Some(e.GetPosition edit))
+                    hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! draggingNote dragNoteArgs }
@@ -566,7 +568,7 @@ type NoteChartEditPanelBase() =
 
                 | ChartMouseRelease e ->
                     x.ChartEditorAdornerLayer.SelectionBoxOp <- None
-                    updateMouseOverNote(Some(e.GetPosition edit))
+                    hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! draggingSelBox mouseDownSelection mouseDownPos }
@@ -581,28 +583,28 @@ type NoteChartEditPanelBase() =
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
-                        edit |> updateMouseOverCursorPos None
-                        edit |> updatePlaybackCursorPos e
+                        hintSetNone()
+                        updatePlaybackCursorPos(e.GetPosition edit)
                         return! mouseLeftDown()
                     | MouseButton.Middle ->
-                        edit |> updateMouseOverCursorPos None
+                        hintSetNone()
                         return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
                     | _ -> return! idle()
                 | ChartMouseMove e ->
-                    edit |> updateMouseOverCursorPos(Some(e.GetPosition edit))
+                    hintSetGhostCursor(e.GetPosition edit)
                     return! idle()
                 | ChartMouseLeave e ->
-                    edit |> updateMouseOverCursorPos None
+                    hintSetNone()
                     return! idle()
                 | _ -> return! idle() }
 
             and mouseLeftDown() = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    edit |> updatePlaybackCursorPos e
+                    updatePlaybackCursorPos(e.GetPosition edit)
                     return! mouseLeftDown()
                 | ChartMouseRelease e ->
-                    edit |> updateMouseOverCursorPos(Some(e.GetPosition edit))
+                    hintSetGhostCursor(e.GetPosition edit)
                     return! idle()
                 | _ -> return! mouseLeftDown() }
 

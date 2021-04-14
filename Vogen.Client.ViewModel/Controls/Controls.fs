@@ -709,6 +709,12 @@ type NoteDragType =
     | NoteDragResizeLeft
     | NoteDragResizeRight
 
+[<NoComparison; ReferenceEquality>]
+type ChartEditorHint =
+    | HoverNote of utt : Utterance * note : Note * noteDragType : NoteDragType
+    | GhostCursor of cursorPos : int64
+    //| GhostNote of note : Note
+
 type ChartEditorAdornerLayer() =
     inherit NoteChartEditBase()
 
@@ -732,29 +738,25 @@ type ChartEditorAdornerLayer() =
             Point(xPos + 5.0, -10.0)
             Point(xPos + 5.0, -5.0) |]
 
-    member x.MouseOverCursorPositionOp
-        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverCursorPositionOpProperty :?> int64 option
-        and set(v : int64 option) = x.SetValue(ChartEditorAdornerLayer.MouseOverCursorPositionOpProperty, box v)
-    static member val MouseOverCursorPositionOpProperty =
-        Dp.reg<int64 option, ChartEditorAdornerLayer> "MouseOverCursorPositionOp"
-            (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverCursorPositionOpChanged)))
-    member x.OnMouseOverCursorPositionOpChanged(prevMouseOverCursorPosOp, mouseOverCursorPosOp) = ()
-
-    member x.MouseOverNoteOp
-        with get() = x.GetValue ChartEditorAdornerLayer.MouseOverNoteOpProperty :?> (Utterance * Note * NoteDragType) option
-        and set(v : (Utterance * Note * NoteDragType) option) = x.SetValue(ChartEditorAdornerLayer.MouseOverNoteOpProperty, box v)
-    static member val MouseOverNoteOpProperty =
-        Dp.reg<(Utterance * Note * NoteDragType) option, ChartEditorAdornerLayer> "MouseOverNoteOp"
-            (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnMouseOverNoteOpChanged)))
-    member x.OnMouseOverNoteOpChanged(prevMouseOverNoteOp, mouseOverNoteOp) =
-        match mouseOverNoteOp with
+    member x.EditorHint
+        with get() = x.GetValue ChartEditorAdornerLayer.EditorHintProperty :?> ChartEditorHint option
+        and set(v : ChartEditorHint option) = x.SetValue(ChartEditorAdornerLayer.EditorHintProperty, box v)
+    static member val EditorHintProperty =
+        Dp.reg<ChartEditorHint option, ChartEditorAdornerLayer> "EditorHint"
+            (Dp.Meta(None, Dp.MetaFlags.AffectsRender, (fun (x : ChartEditorAdornerLayer) -> x.OnEditorHintChanged)))
+    member x.OnEditorHintChanged(prevEditorHint, editorHint) =
+        match editorHint with
+        | Some hint ->
+            match hint with
+            | HoverNote(utt, note, NoteDragMove) ->
+                x.Cursor <- Cursors.Hand
+            | HoverNote(utt, note, NoteDragResizeLeft)
+            | HoverNote(utt, note, NoteDragResizeRight) ->
+                x.Cursor <- Cursors.SizeWE
+            | _ ->
+                x.Cursor <- Cursors.Arrow
         | None ->
             x.Cursor <- Cursors.Arrow
-        | Some(utt, note, NoteDragMove) ->
-            x.Cursor <- Cursors.Hand
-        | Some(utt, note, NoteDragResizeLeft)
-        | Some(utt, note, NoteDragResizeRight) ->
-            x.Cursor <- Cursors.SizeWE
 
     member x.SelectionBoxOp
         with get() = x.GetValue ChartEditorAdornerLayer.SelectionBoxOpProperty :?> (int64 * int64 * int * int) option
@@ -772,35 +774,14 @@ type ChartEditorAdornerLayer() =
         let hOffset = x.HOffsetAnimated
         let vOffset = x.VOffsetAnimated
         let playbackPos = x.CursorPosition
-        let mouseOverCursorPosOp = x.MouseOverCursorPositionOp
-        let mouseOverNoteOp = x.MouseOverNoteOp
+        let editorHint = x.EditorHint
         let selBoxOp = x.SelectionBoxOp
-
-        // mouse over note
-        match mouseOverNoteOp with
-        | None -> ()
-        | Some(utt, note, noteDragType) ->
-            let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-            let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
-            let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
-
-            let noteRect = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
-            dc.DrawRectangle(hoverNoteBrush, null, noteRect)
 
         // playback cursor
         let xPos = pulseToPixel quarterWidth hOffset (float playbackPos)
         if xPos >= 0.0 && xPos <= actualWidth then
             dc.DrawLine(playbackCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
             dc.DrawGeometry(Brushes.White, playbackCursorPen, getCursorHeadGeometry xPos)
-
-        // mouse over cursor
-        match mouseOverCursorPosOp with
-        | None -> ()
-        | Some mouseOverCursorPos ->
-            let xPos = pulseToPixel quarterWidth hOffset (float mouseOverCursorPos)
-            if xPos >= 0.0 && xPos <= actualWidth then
-                dc.DrawLine(hoverCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
-                dc.DrawGeometry(Brushes.White, hoverCursorPen, getCursorHeadGeometry xPos)
 
         // selection box
         match selBoxOp with
@@ -812,5 +793,26 @@ type ChartEditorAdornerLayer() =
             let y0 = pitchToPixel keyHeight actualHeight vOffset (float selMaxPitch) - half keyHeight |> max(0.0 - selBoxPenThicknessRadius)
             let y1 = pitchToPixel keyHeight actualHeight vOffset (float selMinPitch) + half keyHeight |> min(actualHeight + selBoxPenThicknessRadius)
             dc.DrawRectangle(selBoxBrush, selBoxPen, Rect(x0, y0, x1 - x0, y1 - y0))
+
+        // editor hint
+        match editorHint with
+        | None -> ()
+        | Some hint ->
+            match hint with
+            // mouse over note
+            | HoverNote(utt, note, noteDragType) ->
+                let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+
+                let noteRect = Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
+                dc.DrawRectangle(hoverNoteBrush, null, noteRect)
+
+            // mouse over cursor
+            | GhostCursor cursorPos ->
+                let xPos = pulseToPixel quarterWidth hOffset (float cursorPos)
+                if xPos >= 0.0 && xPos <= actualWidth then
+                    dc.DrawLine(hoverCursorPen, Point(xPos, 0.0), Point(xPos, actualHeight))
+                    dc.DrawGeometry(Brushes.White, hoverCursorPen, getCursorHeadGeometry xPos)
 
 
