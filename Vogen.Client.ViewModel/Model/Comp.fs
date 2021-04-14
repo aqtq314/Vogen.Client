@@ -16,6 +16,9 @@ open System.Text.Encodings
 
 
 type Note(pitch, lyric, rom, on, dur) =
+    do  if dur <= 0L then
+            raise(ArgumentException("Note dur <= 0"))
+
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
     member x.Rom : string = rom
