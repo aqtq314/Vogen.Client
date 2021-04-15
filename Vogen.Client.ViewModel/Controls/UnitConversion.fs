@@ -24,6 +24,16 @@ module ChartUnitConversion =
     let pixelToPitch keyHeight actualHeight vOffset yPos : float =
         vOffset + (half actualHeight - yPos) / keyHeight
 
+    let quantize snap quantization (timeSig : TimeSignature) pulses =
+        if not snap then pulses else
+            let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
+            pulsesMeasureQuantized + (pulses - pulsesMeasureQuantized) / quantization * quantization
+
+    let quantizeCeil snap quantization (timeSig : TimeSignature) pulses =
+        if not snap then pulses else
+            let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
+            pulsesMeasureQuantized + ((pulses - pulsesMeasureQuantized) /^ quantization * quantization |> min timeSig.PulsesPerMeasure)
+
 module ChartConverters =
     let hScrollMaxConverter = ValueConverter.Create(fun comp trailingSil ->
         let comp : Composition = comp

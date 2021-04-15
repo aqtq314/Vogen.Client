@@ -90,6 +90,27 @@ type NoteChartEditPanelBase() =
         let vOffset = x.ChartEditor.VOffsetAnimated
         pixelToPitch keyHeight actualHeight vOffset yPos
 
+    member x.PulseToPixel pulses =
+        let quarterWidth = x.ChartEditor.QuarterWidth
+        let hOffset = x.ChartEditor.HOffsetAnimated
+        pulseToPixel quarterWidth hOffset pulses
+
+    member x.PitchToPixel pitch =
+        let actualHeight = x.ChartEditor.ActualHeight
+        let keyHeight = x.ChartEditor.KeyHeight
+        let vOffset = x.ChartEditor.VOffsetAnimated
+        pitchToPixel keyHeight actualHeight vOffset pitch
+
+    member x.Quantize timeSig pulses =
+        let quantization = x.Quantization
+        let snap = x.Snap
+        quantize snap quantization timeSig pulses
+
+    member x.QuantizeCeil timeSig pulses =
+        let quantization = x.Quantization
+        let snap = x.Snap
+        quantizeCeil snap quantization timeSig pulses
+
     member x.BindBehaviors() =
         let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
             match! () with
@@ -129,16 +150,8 @@ type NoteChartEditPanelBase() =
                     yield utts.[uttIndex] }
 
         let findMouseOverNote(mousePos : Point) activeUtt utts (edit : ChartEditor) =
-            let actualHeight = edit.ActualHeight
-            let quarterWidth = edit.QuarterWidth
-            let keyHeight = edit.KeyHeight
-            let hOffset = edit.HOffsetAnimated
-            let vOffset = edit.VOffsetAnimated
-            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
-            let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
-
-            let comp = !!x.ProgramModel.ActiveComp
-            let selection = !!x.ProgramModel.ActiveSelection
+            let mousePulse = x.PixelToPulse mousePos.X |> int64
+            let mousePitch = x.PixelToPitch mousePos.Y |> round |> int
 
             let uttsReordered = enumerateUttsByDepth(activeUtt, utts)
             Seq.tryHead <| seq {
@@ -148,33 +161,18 @@ type NoteChartEditPanelBase() =
                         if mousePulse |> between note.On note.Off && mousePitch = note.Pitch then
                             yield utt, note }
             |> Option.map(fun (utt, note) ->
-                let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-                let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                let x0 = x.PulseToPixel (float note.On)
+                let x1 = x.PulseToPixel (float note.Off)
                 let noteDragType =
                     if   mousePos.X <= min(x0 + 6.0)(lerp x0 x1 0.2) then NoteDragResizeLeft
                     elif mousePos.X >= max(x1 - 6.0)(lerp x0 x1 0.8) then NoteDragResizeRight
                     else NoteDragMove
                 utt, note, noteDragType)
 
-        let quantize snap quantization (timeSig : TimeSignature) pulses =
-            if not snap then pulses else
-                let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
-                pulsesMeasureQuantized + (pulses - pulsesMeasureQuantized) / quantization * quantization
-
-        let quantizeCeil snap quantization (timeSig : TimeSignature) pulses =
-            if not snap then pulses else
-                let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
-                pulsesMeasureQuantized + ((pulses - pulsesMeasureQuantized) /^ quantization * quantization |> min timeSig.PulsesPerMeasure)
-
         let getPlaybackCursorPos(mousePos : Point) =
-            let hOffset = x.RulerGrid.HOffsetAnimated
-            let quarterWidth = x.RulerGrid.QuarterWidth
             let comp = !!x.ProgramModel.ActiveComp
-            let quantization = x.Quantization
-            let snap = x.Snap
-
-            let newCursorPos = int64(pixelToPulse quarterWidth hOffset mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
-            newCursorPos |> quantize snap quantization comp.TimeSig0
+            let newCursorPos = int64(x.PixelToPulse mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
+            newCursorPos |> x.Quantize comp.TimeSig0
 
         let updatePlaybackCursorPos mousePos =
             let newCursorPos = getPlaybackCursorPos mousePos
@@ -197,34 +195,27 @@ type NoteChartEditPanelBase() =
 
         let hintSetGhostNote mousePos =
             let edit = x.ChartEditor
-            let actualHeight = edit.ActualHeight
-            let quarterWidth = edit.QuarterWidth
-            let keyHeight = edit.KeyHeight
             let minKey = edit.MinKey
             let maxKey = edit.MaxKey
-            let hOffset = edit.HOffsetAnimated
-            let vOffset = edit.VOffsetAnimated
             let comp = !!x.ProgramModel.ActiveComp
             let selection = !!x.ProgramModel.ActiveSelection
-            let quantization = x.Quantization
-            let snap = x.Snap
             let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt ImmutableArray.Empty edit
             let note =
                 match mouseDownNoteOp with
                 | None ->
-                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
-                    let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
-                    let noteOn = mousePulse |> quantize snap quantization comp.TimeSig0 |> max 0L
-                    let noteOff = noteOn + 1L |> quantizeCeil snap quantization comp.TimeSig0
+                    let mousePulse = x.PixelToPulse mousePos.X |> int64
+                    let mousePitch = x.PixelToPitch mousePos.Y |> round |> int
+                    let noteOn = mousePulse |> x.Quantize comp.TimeSig0 |> max 0L
+                    let noteOff = noteOn + 1L |> x.QuantizeCeil comp.TimeSig0
                     let notePitch = mousePitch |> clamp minKey maxKey
                     Note(notePitch, "", "du", noteOn, noteOff - noteOn)
 
                 | Some(mouseDownUtt, mouseDownNote, noteDragType) ->
-                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                    let mousePulse = x.PixelToPulse mousePos.X |> int64
                     let noteOn =
                         mousePulse
                         |> min(mouseDownNote.Off - 1L)
-                        |> quantize snap quantization comp.TimeSig0
+                        |> x.Quantize comp.TimeSig0
                         |> max mouseDownNote.On
                     Note(mouseDownNote.Pitch, "-", "-", noteOn, mouseDownNote.Off - noteOn)
 
@@ -241,15 +232,8 @@ type NoteChartEditPanelBase() =
                     match e.ChangedButton with
                     | MouseButton.Left when keyboardModifiers.IsAlt ->
                         hintSetNone()
-                        let actualHeight = edit.ActualHeight
-                        let quarterWidth = edit.QuarterWidth
-                        let keyHeight = edit.KeyHeight
-                        let hOffset = edit.HOffsetAnimated
-                        let vOffset = edit.VOffsetAnimated
                         let comp = !!x.ProgramModel.ActiveComp
                         let selection = !!x.ProgramModel.ActiveSelection
-                        let quantization = x.Quantization
-                        let snap = x.Snap
 
                         let mousePos = e.GetPosition edit
                         let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt ImmutableArray.Empty edit
@@ -261,14 +245,14 @@ type NoteChartEditPanelBase() =
 
                             let minKey = edit.MinKey
                             let maxKey = edit.MaxKey
-                            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
-                            let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
-                            let maxNoteOn = mousePulse |> quantize snap quantization comp.TimeSig0 |> max 0L
-                            let minNoteOff = maxNoteOn + 1L |> quantizeCeil snap quantization comp.TimeSig0
+                            let mousePulse = x.PixelToPulse mousePos.X |> int64
+                            let mousePitch = x.PixelToPitch mousePos.Y |> round |> int
+                            let maxNoteOn = mousePulse |> x.Quantize comp.TimeSig0 |> max 0L
+                            let minNoteOff = maxNoteOn + 1L |> x.QuantizeCeil comp.TimeSig0
 
                             let buildNewNote mousePulse mousePitch =
-                                let noteOn = min maxNoteOn (mousePulse |> quantize snap quantization comp.TimeSig0) |> max 0L
-                                let noteOff = max minNoteOff (mousePulse |> quantizeCeil snap quantization comp.TimeSig0)
+                                let noteOn = min maxNoteOn (mousePulse |> x.Quantize comp.TimeSig0) |> max 0L
+                                let noteOff = max minNoteOff (mousePulse |> x.QuantizeCeil comp.TimeSig0)
                                 let notePitch = mousePitch |> clamp minKey maxKey
                                 Note(notePitch, "", "du", noteOn, noteOff - noteOn)
 
@@ -300,13 +284,13 @@ type NoteChartEditPanelBase() =
 
                             let minKey = edit.MinKey
                             let maxKey = edit.MaxKey
-                            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
+                            let mousePulse = x.PixelToPulse mousePos.X |> int64
 
                             let buildNewNote mousePulse mousePitch =
                                 let noteOn =
                                     mousePulse
                                     |> min(mouseDownNote.Off - 1L)
-                                    |> quantize snap quantization comp.TimeSig0
+                                    |> x.Quantize comp.TimeSig0
                                     |> max mouseDownNote.On
                                 let notePitch = mousePitch |> clamp minKey maxKey
                                 Note(notePitch, "-", "-", noteOn, mouseDownNote.Off - noteOn)
@@ -354,14 +338,10 @@ type NoteChartEditPanelBase() =
                             return! draggingSelBox mouseDownSelection mousePos
 
                         | Some(utt, note, noteDragType) when e.ClickCount >= 2 ->
-                            let actualHeight = edit.ActualHeight
-                            let quarterWidth = edit.QuarterWidth
                             let keyHeight = edit.KeyHeight
-                            let hOffset = edit.HOffsetAnimated
-                            let vOffset = edit.VOffsetAnimated
-                            let x0 = pulseToPixel quarterWidth hOffset (float note.On)
-                            let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
-                            let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+                            let x0 = x.PulseToPixel (float note.On)
+                            let x1 = x.PulseToPixel (float note.Off)
+                            let yMid = x.PitchToPixel (float note.Pitch)
                             x.LyricPopup.PlacementRectangle <- Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
                             x.LyricPopup.IsOpen <- true
                             x.LyricTextBox.Text <- note.Rom + $" - {e.ClickCount}"
@@ -370,21 +350,16 @@ type NoteChartEditPanelBase() =
                             return! idle()
 
                         | Some(utt, note, noteDragType) ->
-                            let quarterWidth = edit.QuarterWidth
-                            let hOffset = edit.HOffsetAnimated
-                            let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
-
-                            let quantization = x.Quantization
-                            let snap = x.Snap
+                            let mousePulse = x.PixelToPulse mousePos.X |> int64
                             let mouseDownPulse =
                                 match noteDragType with
                                 | NoteDragResizeLeft
                                 | NoteDragMove ->
-                                    let noteGridDeviation = note.On - (note.On |> quantize snap quantization comp.TimeSig0)
-                                    (mousePulse - noteGridDeviation |> quantize snap quantization comp.TimeSig0) + noteGridDeviation
+                                    let noteGridDeviation = note.On - (note.On |> x.Quantize comp.TimeSig0)
+                                    (mousePulse - noteGridDeviation |> x.Quantize comp.TimeSig0) + noteGridDeviation
                                 | NoteDragResizeRight ->
-                                    let noteGridDeviation = note.Off - (note.Off |> quantizeCeil snap quantization comp.TimeSig0)
-                                    (mousePulse - noteGridDeviation |> quantizeCeil snap quantization comp.TimeSig0) + noteGridDeviation
+                                    let noteGridDeviation = note.Off - (note.Off |> x.QuantizeCeil comp.TimeSig0)
+                                    (mousePulse - noteGridDeviation |> x.QuantizeCeil comp.TimeSig0) + noteGridDeviation
 
                             //MidiPlayback.playPitch note.Pitch
                             x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
@@ -464,15 +439,10 @@ type NoteChartEditPanelBase() =
             and writingNote(buildNewNote, buildNewComp, prevNote, undoWriter as writeNoteArgs) = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    let minKey = edit.MinKey
-                    let maxKey = edit.MaxKey
-                    let comp = !!x.ProgramModel.ActiveComp
                     let mousePos = e.GetPosition edit
                     let mousePulse = x.PixelToPulse mousePos.X |> int64
                     let mousePitch = x.PixelToPitch mousePos.Y |> round |> int
 
-                    let quantization = x.Quantization
-                    let snap = x.Snap
                     let note = buildNewNote mousePulse mousePitch
 
                     if (prevNote.On, prevNote.Off, prevNote.Pitch) <> (note.On, note.Off, note.Pitch) then
@@ -500,26 +470,19 @@ type NoteChartEditPanelBase() =
                 let mouseDownNote, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
-                    let actualHeight = edit.ActualHeight
-                    let quarterWidth = edit.QuarterWidth
-                    let keyHeight = edit.KeyHeight
                     let minKey = edit.MinKey
                     let maxKey = edit.MaxKey
-                    let hOffset = edit.HOffsetAnimated
-                    let vOffset = edit.VOffsetAnimated
                     let mousePos = e.GetPosition edit
-                    let mousePulse = pixelToPulse quarterWidth hOffset mousePos.X |> int64
-                    let mousePitch = pixelToPitch keyHeight actualHeight vOffset mousePos.Y |> round |> int
+                    let mousePulse = x.PixelToPulse mousePos.X |> int64
+                    let mousePitch = x.PixelToPitch mousePos.Y |> round |> int
 
-                    let quantization = x.Quantization
-                    let snap = x.Snap
                     let newNoteOn =
                         match noteDragType with
                         | NoteDragResizeLeft
                         | NoteDragMove ->
-                            mouseDownNote.On + mousePulse - mouseDownPulse |> quantize snap quantization comp.TimeSig0
+                            mouseDownNote.On + mousePulse - mouseDownPulse |> x.Quantize comp.TimeSig0
                         | NoteDragResizeRight ->
-                            mouseDownNote.Off + mousePulse - mouseDownPulse |> quantizeCeil snap quantization comp.TimeSig0
+                            mouseDownNote.Off + mousePulse - mouseDownPulse |> x.QuantizeCeil comp.TimeSig0
 
                     let deltaPulse, deltaDur =
                         let selMinPulse = mouseDownSelection.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
@@ -527,14 +490,14 @@ type NoteChartEditPanelBase() =
                         match noteDragType with
                         | NoteDragResizeLeft ->
                             let minOn = mouseDownNote.On - selMinPulse
-                            let maxOn = mouseDownNote.On + selMinDur - 1L |> quantize snap quantization comp.TimeSig0
+                            let maxOn = mouseDownNote.On + selMinDur - 1L |> x.Quantize comp.TimeSig0
                             let deltaPulse = (newNoteOn |> clamp minOn maxOn) - mouseDownNote.On
                             deltaPulse, -deltaPulse
                         | NoteDragMove ->
                             let minOn = mouseDownNote.On - selMinPulse
                             (newNoteOn |> max minOn) - mouseDownNote.On, 0L
                         | NoteDragResizeRight ->
-                            let minOff = mouseDownNote.Off - selMinDur + 1L |> quantizeCeil snap quantization comp.TimeSig0
+                            let minOff = mouseDownNote.Off - selMinDur + 1L |> x.QuantizeCeil comp.TimeSig0
                             0L, (newNoteOn |> max minOff) - mouseDownNote.Off
 
                     let deltaPitch =
@@ -581,18 +544,13 @@ type NoteChartEditPanelBase() =
             and draggingSelBox mouseDownSelection mouseDownPos = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    let actualHeight = edit.ActualHeight
-                    let quarterWidth = edit.QuarterWidth
-                    let keyHeight = edit.KeyHeight
-                    let hOffset = edit.HOffsetAnimated
-                    let vOffset = edit.VOffsetAnimated
                     let comp = !!x.ProgramModel.ActiveComp
                     let mousePos = e.GetPosition edit
 
-                    let selMinPulse = pixelToPulse quarterWidth hOffset (min mousePos.X mouseDownPos.X) |> int64
-                    let selMaxPulse = pixelToPulse quarterWidth hOffset (max mousePos.X mouseDownPos.X) |> int64
-                    let selMinPitch = pixelToPitch keyHeight actualHeight vOffset (max mousePos.Y mouseDownPos.Y) |> round |> int
-                    let selMaxPitch = pixelToPitch keyHeight actualHeight vOffset (min mousePos.Y mouseDownPos.Y) |> round |> int
+                    let selMinPulse = x.PixelToPulse (min mousePos.X mouseDownPos.X) |> int64
+                    let selMaxPulse = x.PixelToPulse (max mousePos.X mouseDownPos.X) |> int64
+                    let selMinPitch = x.PixelToPitch (max mousePos.Y mouseDownPos.Y) |> round |> int
+                    let selMaxPitch = x.PixelToPitch (min mousePos.Y mouseDownPos.Y) |> round |> int
                     x.ChartEditorAdornerLayer.SelectionBoxOp <- Some(selMinPulse, selMaxPulse, selMinPitch, selMaxPitch)
 
                     let selection =
@@ -675,15 +633,15 @@ type NoteChartEditPanelBase() =
                 let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
                 let mousePos = e.GetPosition edit
                 let xPos = mousePos.X
-                let hOffset = x.HScrollZoom.ScrollValue
+                let hScrollValue = x.HScrollZoom.ScrollValue
                 let quarterWidth = 2.0 ** log2Zoom
                 let newQuarterWidth = 2.0 ** newLog2Zoom
-                let currPulse = pixelToPulse quarterWidth hOffset xPos
-                let nextPulse = pixelToPulse newQuarterWidth hOffset xPos
+                let currPulse = pixelToPulse quarterWidth hScrollValue xPos
+                let nextPulse = pixelToPulse newQuarterWidth hScrollValue xPos
                 let offsetDelta = nextPulse - currPulse
 
                 x.HScrollZoom.Log2ZoomValue <- newLog2Zoom
-                x.HScrollZoom.ScrollValue <- hOffset - offsetDelta
+                x.HScrollZoom.ScrollValue <- hScrollValue - offsetDelta
 
             elif edit.CanScrollV then
                 let zoomDelta = float(sign e.Delta) * 0.1       // TODO Use Slider.SmallChange
@@ -693,16 +651,16 @@ type NoteChartEditPanelBase() =
                 let newLog2Zoom = log2Zoom + zoomDelta |> clamp log2ZoomMin log2ZoomMax
                 let mousePos = e.GetPosition edit
                 let yPos = mousePos.Y
-                let vOffset = x.VScrollZoom.ScrollValue
+                let vScrollValue = x.VScrollZoom.ScrollValue
                 let keyHeight = 2.0 ** log2Zoom
                 let newKeyHeight = 2.0 ** newLog2Zoom
                 let actualHeight = x.ChartEditor.ActualHeight
-                let currPitch = pixelToPitch keyHeight actualHeight vOffset yPos
-                let nextPitch = pixelToPitch newKeyHeight actualHeight vOffset yPos
+                let currPitch = pixelToPitch keyHeight actualHeight vScrollValue yPos
+                let nextPitch = pixelToPitch newKeyHeight actualHeight vScrollValue yPos
                 let offsetDelta = nextPitch - currPitch
 
                 x.VScrollZoom.Log2ZoomValue <- newLog2Zoom
-                x.VScrollZoom.ScrollValue <- vOffset - offsetDelta
+                x.VScrollZoom.ScrollValue <- vScrollValue - offsetDelta
 
         x.ChartEditor.MouseWheel.Add(onMouseWheel x.ChartEditor)
         x.RulerGrid.MouseWheel.Add(onMouseWheel x.RulerGrid)
