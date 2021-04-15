@@ -337,18 +337,6 @@ type NoteChartEditPanelBase() =
                             let mouseDownSelection = !!x.ProgramModel.ActiveSelection
                             return! draggingSelBox mouseDownSelection mousePos
 
-                        | Some(utt, note, noteDragType) when e.ClickCount >= 2 ->
-                            let keyHeight = edit.KeyHeight
-                            let x0 = x.PulseToPixel (float note.On)
-                            let x1 = x.PulseToPixel (float note.Off)
-                            let yMid = x.PitchToPixel (float note.Pitch)
-                            x.LyricPopup.PlacementRectangle <- Rect(x0, yMid - half keyHeight, x1 - x0, keyHeight)
-                            x.LyricPopup.IsOpen <- true
-                            x.LyricTextBox.Text <- note.Rom + $" - {e.ClickCount}"
-                            x.LyricTextBox.SelectAll()
-                            x.LyricTextBox.Focus() |> ignore
-                            return! idle()
-
                         | Some(utt, note, noteDragType) ->
                             let mousePulse = x.PixelToPulse mousePos.X |> int64
                             let mouseDownPulse =
@@ -362,31 +350,36 @@ type NoteChartEditPanelBase() =
                                     (mousePulse - noteGridDeviation |> x.QuantizeCeil comp.TimeSig0) + noteGridDeviation
 
                             //MidiPlayback.playPitch note.Pitch
-                            x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
-                                selection.SetActiveUtt(Some utt))
+                            let pendingDeselectNotes, selection =
+                                if e.ClickCount >= 2 then
+                                    let targetNotes =
+                                        if e.ClickCount >= 3 then utt.Notes :> seq<_> else
+                                            utt.Notes
+                                            |> Seq.partitionBeforeWhen(fun note -> not note.IsHyphen)
+                                            |> Seq.find(fun notes -> notes |> Array.contains note) :> seq<_>
+                                    let pendingDeselectNotes = if selection.GetIsNoteSelected note then Seq.empty else targetNotes
+                                    pendingDeselectNotes, selection.UpdateSelectedNotes(fun selectedNotes -> selectedNotes.Union targetNotes)
 
-                            if not(selection.GetIsNoteSelected note) then
-                                if keyboardModifiers = ModifierKeys.Control then
-                                    x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
-                                        selection.UpdateSelectedNotes(fun selectedNotes ->
-                                            selectedNotes.Add note))
                                 else
-                                    x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
-                                        selection.SetSelectedNotes(
-                                            ImmutableHashSet.Create note))
+                                    match selection.GetIsNoteSelected note, keyboardModifiers with
+                                    | true, ModifierKeys.Control ->
+                                        seq { note }, selection
+                                    | true, _ ->
+                                        Seq.empty, selection
+                                    | false, ModifierKeys.Control ->
+                                        Seq.empty, selection.UpdateSelectedNotes(fun selectedNotes -> selectedNotes.Add note)
+                                    | false, _ ->
+                                        Seq.empty, selection.SetSelectedNotes(ImmutableHashSet.Create note)
 
-                            let mouseDownSelection = !!x.ProgramModel.ActiveSelection
-                            let mouseDownSelection = mouseDownSelection.EnsureIntersectionWith comp
+                            let selection = selection.SetActiveUtt(Some utt).EnsureIntersectionWith comp
+                            x.ProgramModel.ActiveSelection |> Rp.set selection
+
                             let undoWriter =
                                 x.ProgramModel.UndoRedoStack.BeginPushUndo(
-                                    MouseDragNote noteDragType, (comp, mouseDownSelection))
+                                    MouseDragNote noteDragType, (comp, selection))
 
-                            let dragNoteArgs = note, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter
-                            let isPendingDeselect = selection.GetIsNoteSelected note && keyboardModifiers = ModifierKeys.Control
-                            if isPendingDeselect then
-                                return! mouseDownNotePendingDeselect dragNoteArgs
-                            else
-                                return! draggingNote dragNoteArgs
+                            let dragNoteArgs = note, comp, selection, mouseDownPulse, noteDragType, undoWriter
+                            return! mouseDownNotePendingDeselect pendingDeselectNotes dragNoteArgs
 
                     | MouseButton.Middle ->
                         hintSetNone()
@@ -421,20 +414,19 @@ type NoteChartEditPanelBase() =
 
                 | _ -> return! idle() }
 
-            and mouseDownNotePendingDeselect dragNoteArgs = behavior {
+            and mouseDownNotePendingDeselect pendingDeselectNotes dragNoteArgs = behavior {
                 let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
-                    return! (draggingNote dragNoteArgs).Run(ChartMouseMove e)
+                    return! (draggingNote dragNoteArgs : _ BehaviorAction).Run(ChartMouseMove e)
 
                 | ChartMouseRelease e ->
                     x.ProgramModel.ActiveSelection |> Rp.set(
                         mouseDownSelection.UpdateSelectedNotes(fun selectedNotes ->
-                            selectedNotes.Remove mouseDownNote))
-                    hintSetMouseOverNote(e.GetPosition edit)
-                    return! idle()
+                            selectedNotes.Except pendingDeselectNotes))
+                    return! (draggingNote dragNoteArgs).Run(ChartMouseRelease e)
 
-                | _ -> return! mouseDownNotePendingDeselect dragNoteArgs }
+                | _ -> return! mouseDownNotePendingDeselect pendingDeselectNotes dragNoteArgs }
 
             and writingNote(buildNewNote, buildNewComp, prevNote, undoWriter as writeNoteArgs) = behavior {
                 match! () with

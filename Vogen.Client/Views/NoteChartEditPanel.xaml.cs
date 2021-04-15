@@ -45,11 +45,6 @@ namespace Vogen.Client.Views
                 else
                     border.BorderBrush = null;
             };
-
-            lyricTextBox.LostFocus += (sender, e) =>
-            {
-                lyricPopup.IsOpen = false;
-            };
         }
     }
 }
