@@ -38,7 +38,7 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
-      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated"
+      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="18"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
@@ -73,7 +73,7 @@
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
       <Popup x:Name="lyricPopup" Grid.Row="1" Grid.Column="1" StaysOpen="False" AllowsTransparency="True"
         PlacementTarget="{x:Reference chartEditor}">
-        <TextBox x:Name="lyricTextBox" MinWidth="50"/>
+        <TextBox x:Name="lyricTextBox" FontSize="24"/>
       </Popup>
     </Grid>
   </Border>

@@ -11,10 +11,10 @@ type UndoNodeDescription =
     | WriteNote
     | WriteHyphenNote
     | MouseDragNote of noteDragType : NoteDragType
+    | EditNoteLyric
     | DeleteNote
     | CutNote
     | PasteNote
-    | ModifyNoteContent
     | KeyboardNudgeNote
 
 type IUndoNodeWriter<'a> =

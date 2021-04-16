@@ -558,7 +558,7 @@ type ChartEditor() =
                         $"({TextResources.getRomSchemeChar utt.RomScheme})" |]
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
-                ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
+                ft.SetFontSize(0.6 * TextBlock.GetFontSize x)
                 ft.SetForegroundBrush uttStyle.NotePen.Brush
                 dc.DrawText(ft, Point(x0 - 8.0, yMid - half ft.Height))
 
@@ -653,7 +653,6 @@ type ChartEditor() =
                     // text
                     if not note.IsHyphen then
                         let ft = x |> makeFormattedText($"{note.Lyric}{note.Rom}")
-                        ft.SetFontSize((4.0 / 3.0) * TextBlock.GetFontSize x)
                         ft.SetForegroundBrush uttStyle.TextBrush
                         ft.SetFontWeight uttStyle.TextWeight
                         dc.DrawText(ft, Point(x0, yMid - half ft.Height))

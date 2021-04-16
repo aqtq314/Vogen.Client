@@ -331,7 +331,7 @@ module Disposable =
     let inline dispose (d : IDisposable) =
         d.Dispose ()
 
-    let disposeAll mapper collection =
+    let join mapper collection =
         let children = Array.ofSeq (Seq.map mapper collection)
         { new IDisposable with
             member __.Dispose () =
