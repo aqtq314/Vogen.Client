@@ -32,7 +32,7 @@ type Note(pitch, lyric, rom, on, dur) =
     member x.SetOn on = Note(pitch, lyric, rom, on, dur)
     member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
     member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
-    member x.Move(pitch, on, dur) = Note(pitch, lyric, rom, on, dur)
+    member x.MoveDelta(deltaPitch, deltaOn, deltaDur) = Note(pitch + deltaPitch, lyric, rom, on + deltaOn, dur + deltaDur)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On

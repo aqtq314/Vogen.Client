@@ -21,4 +21,9 @@ module MidiPlayback =
         if device <> null then
             device.Send(NoteEvent(0L, 1, MidiCommandCode.NoteOff, pitch, 0).GetAsShortMessage())
 
+    let switchPitch oldPitch newPitch =
+        if oldPitch <> newPitch then
+            stopPitch oldPitch
+            playPitch newPitch
+
 

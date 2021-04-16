@@ -171,20 +171,16 @@ type NoteChartEditPanelBase() =
                     else NoteDragMove
                 utt, note, noteDragType)
 
-        let getPlaybackCursorPos(mousePos : Point) =
-            let comp = !!x.ProgramModel.ActiveComp
-            let newCursorPos = int64(x.PixelToPulse mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
-            newCursorPos |> x.Quantize comp.TimeSig0
-
-        let updatePlaybackCursorPos mousePos =
-            let newCursorPos = getPlaybackCursorPos mousePos
-            x.ProgramModel.ManualSetCursorPos newCursorPos
+        let mouseToCursorPos(mousePos : Point) =
+            int64(x.PixelToPulse mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
+            //|> x.Quantize comp.TimeSig0
 
         let hintSetNone() =
             x.ChartEditorAdornerLayer.EditorHint <- None
 
         let hintSetGhostCursor mousePos =
-            let cursorPos = getPlaybackCursorPos mousePos
+            let comp = !!x.ProgramModel.ActiveComp
+            let cursorPos = mouseToCursorPos mousePos |> x.Quantize comp.TimeSig0
             x.ChartEditorAdornerLayer.EditorHint <- Some(GhostCursor cursorPos)
 
         let hintSetMouseOverNote mousePos =
@@ -273,6 +269,7 @@ type NoteChartEditPanelBase() =
                             x.ProgramModel.ActiveSelection |> Rp.set(
                                 CompSelection(Some utt, ImmutableHashSet.Create note))
 
+                            MidiPlayback.playPitch note.Pitch
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                             x.ProgramModel.CompIsSaved |> Rp.set false
 
@@ -312,6 +309,7 @@ type NoteChartEditPanelBase() =
                             x.ProgramModel.ActiveSelection |> Rp.set(
                                 CompSelection(Some utt, ImmutableHashSet.Create note))
 
+                            MidiPlayback.playPitch note.Pitch
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                             x.ProgramModel.CompIsSaved |> Rp.set false
 
@@ -351,7 +349,6 @@ type NoteChartEditPanelBase() =
                                     let noteGridDeviation = note.Off - (note.Off |> x.QuantizeCeil comp.TimeSig0)
                                     (mousePulse - noteGridDeviation |> x.QuantizeCeil comp.TimeSig0) + noteGridDeviation
 
-                            //MidiPlayback.playPitch note.Pitch
                             let pendingDeselectNotes, selection =
                                 if e.ClickCount >= 2 then
                                     let targetNotes =
@@ -376,11 +373,12 @@ type NoteChartEditPanelBase() =
                             let selection = selection.SetActiveUtt(Some utt).EnsureIntersectionWith comp
                             x.ProgramModel.ActiveSelection |> Rp.set selection
 
+                            MidiPlayback.playPitch note.Pitch
                             let undoWriter =
                                 x.ProgramModel.UndoRedoStack.BeginPushUndo(
                                     MouseDragNote noteDragType, (comp, selection))
 
-                            let dragNoteArgs = note, comp, selection, mouseDownPulse, noteDragType, undoWriter
+                            let dragNoteArgs = note, comp, selection, mouseDownPulse, note, noteDragType, undoWriter
                             return! mouseDownNotePendingDeselect pendingDeselectNotes dragNoteArgs
 
                     | MouseButton.Middle ->
@@ -417,7 +415,7 @@ type NoteChartEditPanelBase() =
                 | _ -> return! idle() }
 
             and mouseDownNotePendingDeselect pendingDeselectNotes dragNoteArgs = behavior {
-                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
+                let mouseDownNote, mouseDownComp, mouseDownSelection, mouseDownPulse, prevNote, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
                     return! (draggingNote dragNoteArgs : _ BehaviorAction).Run(ChartMouseMove e)
@@ -446,6 +444,7 @@ type NoteChartEditPanelBase() =
                         x.ProgramModel.ActiveSelection |> Rp.set(
                             CompSelection(Some utt, ImmutableHashSet.Create note))
 
+                        MidiPlayback.switchPitch prevNote.Pitch note.Pitch
                         undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                         x.ProgramModel.CompIsSaved |> Rp.set false
 
@@ -455,13 +454,14 @@ type NoteChartEditPanelBase() =
                         return! writingNote writeNoteArgs
 
                 | ChartMouseRelease e ->
+                    MidiPlayback.stopPitch prevNote.Pitch
                     hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
                 | _ -> return! writingNote writeNoteArgs }
 
             and draggingNote dragNoteArgs = behavior {
-                let mouseDownNote, comp, mouseDownSelection, mouseDownPulse, noteDragType, undoWriter = dragNoteArgs
+                let mouseDownNote, comp, mouseDownSelection, mouseDownPulse, prevNote, noteDragType, undoWriter = dragNoteArgs
                 match! () with
                 | ChartMouseMove e ->
                     let minKey = edit.MinKey
@@ -503,33 +503,42 @@ type NoteChartEditPanelBase() =
                             let mouseDownSelMaxPitch = mouseDownSelection.SelectedNotes |> Seq.map(fun note -> note.Pitch) |> Seq.max
                             mousePitch - mouseDownNote.Pitch |> clamp(minKey - mouseDownSelMinPitch)(maxKey - mouseDownSelMaxPitch)
 
-                    if deltaPulse = 0L && deltaDur = 0L && deltaPitch = 0 then
-                        x.ProgramModel.ActiveComp |> Rp.set comp
-                        x.ProgramModel.ActiveSelection |> Rp.set mouseDownSelection
-                        undoWriter.UnpushUndo()
+                    let note = mouseDownNote.MoveDelta(deltaPitch, deltaPulse, deltaDur)
+
+                    if (prevNote.On, prevNote.Off, prevNote.Pitch) <> (note.On, note.Off, note.Pitch) then
+                        if deltaPulse = 0L && deltaDur = 0L && deltaPitch = 0 then
+                            x.ProgramModel.ActiveComp |> Rp.set comp
+                            x.ProgramModel.ActiveSelection |> Rp.set mouseDownSelection
+                            MidiPlayback.switchPitch prevNote.Pitch note.Pitch
+                            undoWriter.UnpushUndo()
+
+                        else
+                            // DiffDict: no existance -> no modification
+                            let noteDiffDict = mouseDownSelection.SelectedNotes.ToImmutableDictionary(id, fun (note : Note) ->
+                                note.MoveDelta(deltaPitch, deltaPulse, deltaDur))
+
+                            let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) ->
+                                if utt.Notes |> Seq.forall(fun note -> not(noteDiffDict.ContainsKey note)) then utt else
+                                    utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> noteDiffDict.GetOrDefault note note)))
+
+                            x.ProgramModel.ActiveComp |> Rp.set(
+                                comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt)))
+                            x.ProgramModel.ActiveSelection |> Rp.set(
+                                let activeUtt = mouseDownSelection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
+                                let selectedNotes = ImmutableHashSet.CreateRange noteDiffDict.Values
+                                CompSelection(activeUtt, selectedNotes))
+
+                            MidiPlayback.switchPitch prevNote.Pitch note.Pitch
+                            undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                            x.ProgramModel.CompIsSaved |> Rp.set false
+
+                        return! draggingNote(mouseDownNote, comp, mouseDownSelection, mouseDownPulse, note, noteDragType, undoWriter)
 
                     else
-                        // DiffDict: no existance -> no modification
-                        let noteDiffDict = mouseDownSelection.SelectedNotes.ToImmutableDictionary(id, fun (note : Note) ->
-                            note.Move(note.Pitch + deltaPitch, note.On + deltaPulse, note.Dur + deltaDur))
-
-                        let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) ->
-                            if utt.Notes |> Seq.forall(fun note -> not(noteDiffDict.ContainsKey note)) then utt else
-                                utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> noteDiffDict.GetOrDefault note note)))
-
-                        x.ProgramModel.ActiveComp |> Rp.set(
-                            comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt)))
-                        x.ProgramModel.ActiveSelection |> Rp.set(
-                            let activeUtt = mouseDownSelection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
-                            let selectedNotes = ImmutableHashSet.CreateRange noteDiffDict.Values
-                            CompSelection(activeUtt, selectedNotes))
-
-                        undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                        x.ProgramModel.CompIsSaved |> Rp.set false
-
-                    return! draggingNote dragNoteArgs
+                        return! draggingNote dragNoteArgs
 
                 | ChartMouseRelease e ->
+                    MidiPlayback.stopPitch prevNote.Pitch
                     hintSetMouseOverNote(e.GetPosition edit)
                     return! idle()
 
@@ -571,35 +580,84 @@ type NoteChartEditPanelBase() =
         x.RulerGrid |> ChartMouseEvent.BindEvents(
             let edit = x.RulerGrid
 
+            let playNoteMidi(note : Note) = MidiPlayback.playPitch note.Pitch
+            let stopNoteMidi(note : Note) = MidiPlayback.stopPitch note.Pitch
+
             let rec idle() = behavior {
                 match! () with
                 | ChartMouseDown e ->
                     match e.ChangedButton with
                     | MouseButton.Left ->
                         hintSetNone()
-                        updatePlaybackCursorPos(e.GetPosition edit)
-                        return! mouseLeftDown()
+                        let comp = !!x.ProgramModel.ActiveComp
+                        let playbackPos = mouseToCursorPos(e.GetPosition edit)
+
+                        match Keyboard.Modifiers with
+                        | ModifierKeys.Control ->
+                            let scrubNotes =
+                                comp.AllNotes
+                                |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
+                                |> ImmutableHashSet.CreateRange
+
+                            scrubNotes |> Seq.iter playNoteMidi
+                            x.ProgramModel.ManualSetCursorPos playbackPos
+                            return! mouseLeftDown(Some scrubNotes)
+
+                        | _ ->
+                            let playbackPos = playbackPos |> x.Quantize comp.TimeSig0
+
+                            x.ProgramModel.ManualSetCursorPos playbackPos
+                            return! mouseLeftDown None
+
                     | MouseButton.Middle ->
                         hintSetNone()
                         return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
+
                     | _ -> return! idle()
+
                 | ChartMouseMove e ->
                     hintSetGhostCursor(e.GetPosition edit)
                     return! idle()
+
                 | ChartMouseLeave e ->
                     hintSetNone()
                     return! idle()
+
                 | _ -> return! idle() }
 
-            and mouseLeftDown() = behavior {
+            and mouseLeftDown scrubNotesOp = behavior {
                 match! () with
                 | ChartMouseMove e ->
-                    updatePlaybackCursorPos(e.GetPosition edit)
-                    return! mouseLeftDown()
+                    let comp = !!x.ProgramModel.ActiveComp
+                    let playbackPos = mouseToCursorPos(e.GetPosition edit)
+                    match scrubNotesOp with
+                    | Some prevScrubPitches ->
+                        let scrubNotes =
+                            comp.AllNotes
+                            |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
+                            |> ImmutableHashSet.CreateRange
+
+                        prevScrubPitches.Except scrubNotes |> Seq.iter stopNoteMidi
+                        scrubNotes.Except prevScrubPitches |> Seq.iter playNoteMidi
+                        x.ProgramModel.ManualSetCursorPos playbackPos
+                        return! mouseLeftDown(Some scrubNotes)
+
+                    | None ->
+                        let playbackPos = playbackPos |> x.Quantize comp.TimeSig0
+
+                        x.ProgramModel.ManualSetCursorPos playbackPos
+                        return! mouseLeftDown scrubNotesOp
+
                 | ChartMouseRelease e ->
+                    match scrubNotesOp with
+                    | Some scrubNotes ->
+                        scrubNotes |> Seq.iter stopNoteMidi
+                    | None -> ()
+
                     hintSetGhostCursor(e.GetPosition edit)
                     return! idle()
-                | _ -> return! mouseLeftDown() }
+
+                | _ -> return! mouseLeftDown scrubNotesOp }
 
             Behavior.agent(idle()))
 
