@@ -16,6 +16,8 @@ open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.ViewModel
 
+#nowarn "40"
+
 
 type ChartMouseEvent =
     | ChartMouseDown of e : MouseButtonEventArgs
@@ -760,6 +762,8 @@ type NoteChartEditPanelBase() =
                         let yMax = x.PitchToPixel(float minPitch) + half keyHeight
                         x.LyricPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
                         x.LyricPopup.MinWidth <- xMax - xMin
+                        if Mouse.Captured <> null then 
+                            Mouse.Captured.ReleaseMouseCapture()
                         x.LyricPopup.IsOpen <- true
 
                         let uttSelectedLyricNotes = uttSelectedNotes.RemoveAll(fun note -> note.IsHyphen)

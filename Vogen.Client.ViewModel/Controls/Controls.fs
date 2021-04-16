@@ -300,28 +300,14 @@ type ChartEditor() =
                 Point(center.X - radius, center.Y) |], true, false)
         geometry |>! freeze
 
-    static let makeWaveformGeometry samples pixelToSampleIndex x0 x1 yMid xRes hOffset hScale =
-        let waveformUpperContourPoints = List()
-        let waveformLowerContourPoints = List()
-        for xi0 in x0 .. xRes .. x1 do
-            let si0 = pixelToSampleIndex xi0 |> max 0
-            let si1 = pixelToSampleIndex(xi0 + xRes) |> min(samples |> Array.length)
-            if si0 < samples.Length then
-                let mutable sMax, sMin = samples.[si0], samples.[si0]
-                for si in si0 + 1 .. si1 - 1 do
-                    sMax <- max sMax samples.[si]
-                    sMin <- min sMin samples.[si]
-                waveformUpperContourPoints.Add(Point(xi0, yMid - float sMax * hScale - hOffset))
-                waveformLowerContourPoints.Add(Point(xi0, yMid - float sMin * hScale + hOffset))
-        waveformLowerContourPoints.Reverse()
-        pointsToGeometry true (Seq.append waveformUpperContourPoints waveformLowerContourPoints)
-
     let inactiveBackgroundBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
     let activeBackgroundBrush = SolidColorBrush(rgb -1) |>! freeze
 
     let minGridScreenHop = 5.0
     let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
     let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
+
+    let waveBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
 
     let noteBaseColor = rgb 0xFF8040
     let hyphBaseColor = rgb 0xFF6080
@@ -332,9 +318,7 @@ type ChartEditor() =
         NotePen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0) |>! freeze
         HyphPen = Pen(SolidColorBrush(lerpColor hyphBaseColor (rgb -1) 0.2), 1.0) |>! freeze
         RestPen = Pen(SolidColorBrush(lerpColor noteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
-        WaveBrush = SolidColorBrush(aRgb 0x20 0) |>! freeze
-        TextBrush = Brushes.Black
-        TextWeight = FontWeights.Regular |}
+        TextBrush = Brushes.Black |}
 
     let inactiveNoteBaseColor = lerpColor noteBaseColor (rgb 0xA0A0A0) 0.9
     let inactiveHyphBaseColor = lerpColor hyphBaseColor (rgb 0x808080) 0.9
@@ -345,9 +329,7 @@ type ChartEditor() =
         NotePen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.2), 1.0) |>! freeze
         HyphPen = Pen(SolidColorBrush(lerpColor inactiveHyphBaseColor (rgb -1) 0.6), 1.0) |>! freeze
         RestPen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
-        WaveBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
-        TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze
-        TextWeight = FontWeights.ExtraLight |}
+        TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze |}
 
     let noteSynthingOverlayGeometryBrush = SolidColorBrush(aRgb 0x40 0) |>! freeze
     let noteSynthingOverlayBrushTransform = TranslateTransform()
@@ -451,16 +433,21 @@ type ChartEditor() =
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
+        // validate active utt
+        match selection.ActiveUtt with
+        | Some utt when not(comp.Utts.Contains utt) -> raise(ArgumentException("Active utt not part of composition."))
+        | _ -> ()
+
         // background
         if isPlaying then
             dc.DrawRectangle(activeBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
 
         else
-            dc.DrawRectangle(inactiveBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
-
             // active utt background
             match selection.ActiveUtt with
-            | None -> ()
+            | None ->
+                dc.DrawRectangle(activeBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
+
             | Some utt ->
                 let xMin = pulseToPixel quarterWidth hOffset (float utt.Notes.[0].On) |> clamp 0.0 actualWidth
                 let xMax = pulseToPixel quarterWidth hOffset (float utt.Notes.[^0].Off) |> clamp 0.0 actualWidth
@@ -469,6 +456,7 @@ type ChartEditor() =
                 let uttMinPitch = utt.Notes |> Seq.map(fun note -> note.Pitch) |> Seq.min
                 let yTop = pitchToPixel keyHeight actualHeight vOffset (float uttMaxPitch)
                 let yBot = pitchToPixel keyHeight actualHeight vOffset (float uttMinPitch)
+                dc.DrawRectangle(inactiveBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
                 dc.DrawRectangle(activeBackgroundBrush, null, Rect(xMin, yTop - half keyHeight, xMax - xMin, yBot - yTop + keyHeight))
 
         // time grids
@@ -562,8 +550,79 @@ type ChartEditor() =
                 ft.SetForegroundBrush uttStyle.NotePen.Brush
                 dc.DrawText(ft, Point(x0 - 8.0, yMid - half ft.Height))
 
-        // notes
+        // waveform
         let bpm0 = comp.Bpm0
+
+        let minWaveformSamplesPerFrame = 100
+        let frameRadius = half(max 1.0 (Audio.sampleToPulse bpm0 minWaveformSamplesPerFrame |> pulseToPixel quarterWidth 0.0))
+        let inline pixelToSample x = x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0
+        let inline sampleToPixel si = si |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset
+        let drawWaveformGeometry(uttSynthResult : UttSynthResult) x0 x1 yMid yOffset yScale (sgc : StreamGeometryContext) =
+            if x0 < x1 then
+                let samples = uttSynthResult.AudioSamples
+                let sampleOffset = uttSynthResult.SampleOffset
+                let inline getFrameDrawPoints x =
+                    let si0 = pixelToSample(x - frameRadius) - sampleOffset |> clamp 0 (samples.Length - 1)
+                    let si1 = pixelToSample(x + frameRadius) - sampleOffset |> min samples.Length
+                    let mutable sMin = samples.[si0]
+                    let mutable sMax = samples.[si0]
+                    for si in si0 + 1 .. si1 - 1 do
+                        sMin <- min sMin samples.[si]
+                        sMax <- max sMax samples.[si]
+                    Point(x, yMid - float sMin * yScale - float(sign sMin) * yOffset + 0.5),
+                    Point(x, yMid - float sMax * yScale - float(sign sMax) * yOffset - 0.5)
+
+                let waveformLowerContourPoints = List()
+                let waveformUpperContourPoints = List()
+                for x in x0 .. frameRadius * 2.0 .. x1 do
+                    let pMin, pMax = getFrameDrawPoints x
+                    waveformLowerContourPoints.Add pMin
+                    waveformUpperContourPoints.Add pMax
+
+                if waveformLowerContourPoints.Count > 0 then
+                    let pMin, pMax = getFrameDrawPoints x1
+                    sgc.BeginFigure(pMin, true, true)
+
+                    waveformLowerContourPoints.Reverse()
+                    sgc.PolyLineTo(waveformLowerContourPoints, true, false)
+
+                    waveformUpperContourPoints.Add pMax
+                    sgc.PolyLineTo(waveformUpperContourPoints, true, false)
+
+        let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
+            for utt in uttsReordered do
+                let uttSynthResult = uttSynthCache.GetOrDefault utt
+                if uttSynthResult.HasAudio then
+                    let samples = uttSynthResult.AudioSamples
+                    let sampleOffset = uttSynthResult.SampleOffset
+
+                    for noteIndex in 0 .. utt.Notes.Length - 1 do
+                        let note = utt.Notes.[noteIndex]
+                        if note.Off >= minPulse && note.On <= maxPulse && note.Pitch |> betweenInc botPitch topPitch then
+                            let x0 = pulseToPixel quarterWidth hOffset (float note.On) |> clamp 0.0 actualWidth
+                            let x1 = pulseToPixel quarterWidth hOffset (float note.Off) |> clamp 0.0 actualWidth
+                            let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+
+                            let n1x0 =
+                                if noteIndex = utt.Notes.Length - 1 then x1 else
+                                    pulseToPixel quarterWidth hOffset (float utt.Notes.[noteIndex + 1].On) |> clamp 0.0 actualWidth
+
+                            if noteIndex = 0 then
+                                let x00 = sampleToPixel sampleOffset |> clamp 0.0 actualWidth
+                                sgc |> drawWaveformGeometry uttSynthResult x00 x0 yMid 0.0 50.0
+
+                            sgc |> drawWaveformGeometry uttSynthResult x0 (min x1 n1x0) yMid (half keyHeight) 50.0
+
+                            if x1 < n1x0 then
+                                sgc |> drawWaveformGeometry uttSynthResult x1 n1x0 yMid 0.0 50.0
+
+                            if noteIndex = utt.Notes.Length - 1 then
+                                let uttX1 = sampleToPixel(sampleOffset + samples.Length) |> clamp 0.0 actualWidth
+                                sgc |> drawWaveformGeometry uttSynthResult x1 uttX1 yMid 0.0 50.0
+
+        dc.DrawGeometry(waveBrush, null, waveformGeometry)
+
+        // notes
         for utt in uttsReordered do
             let uttStyle =
                 if isPlaying then activeUttStyle
@@ -586,8 +645,13 @@ type ChartEditor() =
                     let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
                     let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
 
-                    // note connection
                     let hasNextNote = noteIndex < utt.Notes.Length - 1
+                    let n1x0 =
+                        if not hasNextNote then x1 else
+                            let nextNote = utt.Notes.[noteIndex + 1]
+                            pulseToPixel quarterWidth hOffset (float nextNote.On)
+
+                    // note connection
                     if hasNextNote then
                         let nextNote = utt.Notes.[noteIndex + 1]
                         if nextNote.On <= maxPulse then
@@ -598,28 +662,6 @@ type ChartEditor() =
                             let yMidMax = max yMid n1yMid
                             dc.DrawLine(currNotePen, Point(n1x0, yMidMin - half keyHeight - 8.0), Point(n1x0, yMidMax + half keyHeight + 8.0))
 
-                    // waveform
-                    let n1x0 =
-                        if not hasNextNote then x1 else
-                            let nextNote = utt.Notes.[noteIndex + 1]
-                            pulseToPixel quarterWidth hOffset (float nextNote.On)
-                    if uttSynthResult.HasAudio then
-                        let samples = uttSynthResult.AudioSamples
-                        let sampleOffset = uttSynthResult.SampleOffset
-                        let pixelToSampleIndex x =
-                            (x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0) - sampleOffset
-                        let x0 =
-                            if noteIndex > 0 then x0 |> max 0.0 else
-                                sampleOffset
-                                |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset |> max 0.0
-                        let n1x0 =
-                            if noteIndex < utt.Notes.Length - 1 then n1x0 |> min actualWidth else
-                                sampleOffset + samples.Length
-                                |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset |> min actualWidth
-                        let xRes = 1.0
-                        let waveformGeometry = makeWaveformGeometry samples pixelToSampleIndex x0 n1x0 yMid xRes 0.5 50.0
-                        dc.DrawGeometry(uttStyle.WaveBrush, null, waveformGeometry)
-
                     // note
                     let currNoteBrush = if note.IsHyphen then uttStyle.HyphBrush else uttStyle.NoteBrush
                     let currNotePen = if note.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
@@ -628,10 +670,8 @@ type ChartEditor() =
                         if x1 > n1x0 then
                             dc.DrawRectangle(uttStyle.NoteBrushInvalid, currNotePen, Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight))
                         elif x1 < n1x0 then
-                            if nextNote.IsHyphen then
-                                dc.DrawLine(uttStyle.HyphPen, Point(x1, yMid), Point(n1x0, yMid))
-                            else
-                                dc.DrawLine(uttStyle.RestPen, Point(x1, yMid), Point(n1x0, yMid))
+                            let noteConnectPen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.RestPen
+                            dc.DrawLine(noteConnectPen, Point(x1, yMid), Point(n1x0, yMid))
 
                     let noteRectHeight = keyHeight 
                     let noteRect      = Rect(x0, yMid - half noteRectHeight, x1 - x0, noteRectHeight)
@@ -654,7 +694,6 @@ type ChartEditor() =
                     if not note.IsHyphen then
                         let ft = x |> makeFormattedText($"{note.Lyric}{note.Rom}")
                         ft.SetForegroundBrush uttStyle.TextBrush
-                        ft.SetFontWeight uttStyle.TextWeight
                         dc.DrawText(ft, Point(x0, yMid - half ft.Height))
 
         // utt ph bounds
@@ -677,17 +716,17 @@ type ChartEditor() =
         //                dc.DrawText(ft, Point(x0, y)))
 
         // utt f0 samples
-        for utt in uttsReordered do
-            let uttSynthResult = uttSynthCache.GetOrDefault utt
-            let f0Samples = uttSynthResult.F0Samples
-            let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
-            let startSampleIndex =
-                TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) - 1.0
-                |> int |> max 0
-            let endSampleIndex =
-                TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) + 1.0
-                |> ceil |> int |> min f0Samples.Length
-            let f0Geometry = drawGeometry <| fun sgc ->
+        let f0Geometry = drawGeometry FillRule.EvenOdd <| fun sgc ->
+            for utt in uttsReordered do
+                let uttSynthResult = uttSynthCache.GetOrDefault utt
+                let f0Samples = uttSynthResult.F0Samples
+                let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
+                let startSampleIndex =
+                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) - 1.0
+                    |> int |> max 0
+                let endSampleIndex =
+                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) + 1.0
+                    |> ceil |> int |> min f0Samples.Length
                 let mutable prevVuv = false
                 for sampleIndex in startSampleIndex .. endSampleIndex - 1 do
                     let freq = f0Samples.[sampleIndex]
@@ -701,7 +740,7 @@ type ChartEditor() =
                             sgc.LineTo(Point(x, y), true, false)
                     else
                         prevVuv <- false
-            dc.DrawGeometry(null, f0Pen, f0Geometry)
+        dc.DrawGeometry(null, f0Pen, f0Geometry)
 
 type NoteDragType =
     | NoteDragMove

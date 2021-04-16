@@ -74,10 +74,11 @@ module WpfUtil =
             TextBlock.GetForeground x,
             (let dpi = VisualTreeHelper.GetDpi x in dpi.PixelsPerDip))
 
-    let drawGeometry draw =
+    let drawGeometry fillRule draw =
         let g = StreamGeometry()
         do  use sgc = g.Open()
             draw sgc
+        g.FillRule <- fillRule
         g |>! freeze
 
     let pointsToGeometry isClosed (points : #seq<_>) =
