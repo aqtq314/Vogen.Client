@@ -593,7 +593,7 @@ type NoteChartEditPanelBase() =
                         let playbackPos = mouseToCursorPos(e.GetPosition edit)
 
                         match Keyboard.Modifiers with
-                        | ModifierKeys.Control ->
+                        | ModifierKeys.Control when not !!x.ProgramModel.IsPlaying ->
                             let scrubNotes =
                                 comp.AllNotes
                                 |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
@@ -601,13 +601,17 @@ type NoteChartEditPanelBase() =
 
                             scrubNotes |> Seq.iter playNoteMidi
                             x.ProgramModel.ManualSetCursorPos playbackPos
-                            return! mouseLeftDown(Some scrubNotes)
+                            return! mouseLeftDown true (Some scrubNotes)
+
+                        | ModifierKeys.Control ->
+                            x.ProgramModel.ManualSetCursorPos playbackPos
+                            return! mouseLeftDown true None
 
                         | _ ->
                             let playbackPos = playbackPos |> x.Quantize comp.TimeSig0
 
                             x.ProgramModel.ManualSetCursorPos playbackPos
-                            return! mouseLeftDown None
+                            return! mouseLeftDown false None
 
                     | MouseButton.Middle ->
                         hintSetNone()
@@ -625,7 +629,7 @@ type NoteChartEditPanelBase() =
 
                 | _ -> return! idle() }
 
-            and mouseLeftDown scrubNotesOp = behavior {
+            and mouseLeftDown forceNoQuantize scrubNotesOp = behavior {
                 match! () with
                 | ChartMouseMove e ->
                     let comp = !!x.ProgramModel.ActiveComp
@@ -640,13 +644,15 @@ type NoteChartEditPanelBase() =
                         prevScrubPitches.Except scrubNotes |> Seq.iter stopNoteMidi
                         scrubNotes.Except prevScrubPitches |> Seq.iter playNoteMidi
                         x.ProgramModel.ManualSetCursorPos playbackPos
-                        return! mouseLeftDown(Some scrubNotes)
+                        return! mouseLeftDown forceNoQuantize (Some scrubNotes)
 
                     | None ->
-                        let playbackPos = playbackPos |> x.Quantize comp.TimeSig0
+                        let playbackPos =
+                            if forceNoQuantize then playbackPos else
+                                playbackPos |> x.Quantize comp.TimeSig0
 
                         x.ProgramModel.ManualSetCursorPos playbackPos
-                        return! mouseLeftDown scrubNotesOp
+                        return! mouseLeftDown forceNoQuantize scrubNotesOp
 
                 | ChartMouseRelease e ->
                     match scrubNotesOp with
@@ -657,7 +663,7 @@ type NoteChartEditPanelBase() =
                     hintSetGhostCursor(e.GetPosition edit)
                     return! idle()
 
-                | _ -> return! mouseLeftDown scrubNotesOp }
+                | _ -> return! mouseLeftDown forceNoQuantize scrubNotesOp }
 
             Behavior.agent(idle()))
 
