@@ -855,6 +855,7 @@ type NoteChartEditPanelBase() =
                             match e.Key with
                             | Key.Enter ->
                                 x.LyricPopup.IsOpen <- false
+                                x.Focus() |> ignore
                                 e.Handled <- true
 
                             | Key.Escape ->
@@ -862,6 +863,7 @@ type NoteChartEditPanelBase() =
                                 x.ProgramModel.ActiveSelection |> Rp.set selection
                                 undoWriter.UnpushUndo()
                                 x.LyricPopup.IsOpen <- false
+                                x.Focus() |> ignore
                                 e.Handled <- true
 
                             | _ -> ())
