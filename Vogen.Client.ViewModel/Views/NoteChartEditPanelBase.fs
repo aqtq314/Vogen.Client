@@ -14,6 +14,7 @@ open System.Windows.Controls.Primitives
 open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
+open Vogen.Client.Romanization
 open Vogen.Client.ViewModel
 
 #nowarn "40"
@@ -813,16 +814,15 @@ type NoteChartEditPanelBase() =
                             else
                                 let noteLyrics = matches |> Seq.map(fun m -> m.Groups.["ch"].Value) |> Array.ofSeq
                                 let noteRoms = matches |> Seq.map(fun m -> m.Groups.["rom"].Value) |> Array.ofSeq
-                                for i in 0 .. noteRoms.Length - 1 do
-                                    if String.IsNullOrEmpty noteRoms.[i] then
-                                        // TODO: pinyin conversion
-                                        noteRoms.[i] <- "du"
+                                let noteRoms =
+                                    (Romanizer.get utt.RomScheme).Convert noteLyrics noteRoms
+                                    |> Array.map Array.head
 
                                 // DiffDict: no existance -> no modification
                                 let noteDiffDict =
                                     Seq.zip3 candidateLyricNotes noteLyrics noteRoms
-                                    |> Seq.filter(fun (note, newLyric, newRom) -> note.Lyric <> newLyric || note.Rom <> newRom)
-                                    |> Seq.map(fun (note, newLyric, newRom) -> KeyValuePair(note, note.SetText(newLyric, newRom)))
+                                    |> Seq.filter(fun (note, newLyric, newRom) -> note.Lyric <> newLyric.ToString() || note.Rom <> newRom)
+                                    |> Seq.map(fun (note, newLyric, newRom) -> KeyValuePair(note, note.SetText(newLyric.ToString(), newRom)))
                                     |> ImmutableDictionary.CreateRange
 
                                 if noteDiffDict.Count = 0 then

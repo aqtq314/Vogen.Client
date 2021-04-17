@@ -13,6 +13,24 @@
 
   <ItemGroup>
     <EmbeddedResource Include="testComp.vog" />
+    <ContentWithTargetPath Include="Romanization\rime-luna-pinyin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>dict-rom\rime-luna-pinyin.json</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Romanization\rime-cantonese.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>dict-rom\rime-cantonese.json</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Romanization\ngli-wugniu-zaonhe.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>dict-rom\ngli-wugniu-zaonhe.json</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Romanization\ngli-wugniu-soutseu.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>dict-rom\ngli-wugniu-soutseu.json</TargetPath>
+    </ContentWithTargetPath>
+    <Compile Include="Romanization\Trie.fs" />
+    <Compile Include="Romanization\Scheme.fs" />
     <Compile Include="Model\Utils.fs" />
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
