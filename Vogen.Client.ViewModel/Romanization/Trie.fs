@@ -39,13 +39,15 @@ module RomTrie =
                     let romHintRaw = romHints.[offsetIndex + advanceIndex]
                     if String.IsNullOrEmpty romHintRaw then None else Some romHintRaw
                 match trie.TryGetValue ch with
-                | false, _ -> romHintOp     // Trie node not found
+                | false, _ ->   // Trie node not found
+                    if advanceIndex = 0 then romHintOp else None
                 | true, RomTrieNode(romsArr, subTrie) ->
                     let subNodeResult : string option = matchLongestList subTrie offsetIndex (advanceIndex + 1)
                     match subNodeResult, romHintOp with
                     | Some roms, Some romHint when roms.Split().[advanceIndex] = romHint -> Some roms
                     | Some roms, None -> Some roms
                     | _, Some romHint when advanceIndex = 0 -> Some romHint
+                    | _, Some romHint -> None
                     | _, _ ->
                         match romsArr with
                         | [| |] -> None

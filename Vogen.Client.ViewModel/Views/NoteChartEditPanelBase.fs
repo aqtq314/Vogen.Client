@@ -8,6 +8,7 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Text
 open System.Text.RegularExpressions
+open System.Threading.Tasks
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
@@ -791,6 +792,8 @@ type NoteChartEditPanelBase() =
                                 yield! uttSelectedLyricNotes
                                 yield! utt.Notes |> Seq.skipWhile((<>) uttSelectedLyricNotes.[^0]) |> Seq.skip 1
                                     |> Seq.filter(fun note -> not note.IsHyphen) })
+
+                        Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
 
                         let rec eventUnsubscriber =
                             [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
