@@ -170,8 +170,8 @@ type NoteChartEditPanelBase() =
                 let x0 = x.PulseToPixel (float note.On)
                 let x1 = x.PulseToPixel (float note.Off)
                 let noteDragType =
-                    if   mousePos.X <= min(x0 + 6.0)(lerp x0 x1 0.2) then NoteDragResizeLeft
-                    elif mousePos.X >= max(x1 - 6.0)(lerp x0 x1 0.8) then NoteDragResizeRight
+                    if   mousePos.X <= min(x0 + 10.0)(lerp x0 x1 0.2) then NoteDragResizeLeft
+                    elif mousePos.X >= max(x1 - 10.0)(lerp x0 x1 0.8) then NoteDragResizeRight
                     else NoteDragMove
                 utt, note, noteDragType)
 
@@ -751,12 +751,13 @@ type NoteChartEditPanelBase() =
                 | None -> ()
                 | Some utt ->
                     let uttSelectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
-                    if uttSelectedNotes.Length > 0 then
+                    let uttSelectedLyricNotes = uttSelectedNotes.RemoveAll(fun note -> note.IsHyphen)
+                    if uttSelectedLyricNotes.Length > 0 then
                         let keyHeight = x.ChartEditor.KeyHeight
-                        let minPulse = uttSelectedNotes.[0].On
-                        let maxPulse = uttSelectedNotes.[^0].Off
-                        let minPitch = uttSelectedNotes |> Seq.map(fun note -> note.Pitch) |> Seq.min
-                        let maxPitch = uttSelectedNotes |> Seq.map(fun note -> note.Pitch) |> Seq.max
+                        let minPulse = uttSelectedLyricNotes.[0].On
+                        let maxPulse = uttSelectedLyricNotes.[^0].Off
+                        let minPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.min
+                        let maxPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.max
 
                         let xMin = x.PulseToPixel(float minPulse)
                         let xMax = x.PulseToPixel(float maxPulse)
@@ -768,7 +769,6 @@ type NoteChartEditPanelBase() =
                             Mouse.Captured.ReleaseMouseCapture()
                         x.LyricPopup.IsOpen <- true
 
-                        let uttSelectedLyricNotes = uttSelectedNotes.RemoveAll(fun note -> note.IsHyphen)
                         let initLyricText =
                             uttSelectedLyricNotes
                             |> Seq.map(fun note ->
@@ -906,6 +906,12 @@ type NoteChartEditPanelBase() =
                     x.ProgramModel.UndoRedoStack.PushUndo(
                         DeleteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                     x.ProgramModel.CompIsSaved |> Rp.set false
+
+            | Key.Escape ->
+                let selection = !!x.ProgramModel.ActiveSelection
+                match selection.ActiveUtt with
+                | None -> ()
+                | Some _ -> x.ProgramModel.ActiveSelection |> Rp.set(selection.SetActiveUtt None)
 
             | Key.A when keyboardModifiers.IsCtrl ->
                 let comp = !!x.ProgramModel.ActiveComp
