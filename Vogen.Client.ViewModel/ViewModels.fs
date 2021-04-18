@@ -7,6 +7,7 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
 open System.IO
+open System.Runtime.InteropServices
 open System.Windows
 open System.Windows.Media
 open System.Windows.Threading
@@ -157,7 +158,7 @@ type ProgramModel() as x =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.Clear())
         compIsSaved |> Rp.set false
 
-    member x.SynthUtt(dispatcher : Dispatcher, singerName, utt) =
+    member x.SynthUtt(dispatcher : Dispatcher, singerName, utt, [<Optional>] requestDelay) =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                 uttSynthResult.SetIsSynthing true))
@@ -181,6 +182,8 @@ type ProgramModel() as x =
                                 if not uttSynthResult.IsSynthing then uttSynthResult else
                                     uttSynthResult.SetF0Samples f0Samples))
                         compIsSaved |> Rp.set false) |> ignore
+                    // TODO: Not the best way to boost synth order
+                    do! Async.Sleep(requestDelay : TimeSpan)
                     let! audioContent = Synth.requestAc tChars f0Samples singerName
                     dispatcher.BeginInvoke(fun () ->
                         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
@@ -201,9 +204,11 @@ type ProgramModel() as x =
         let comp = !!x.ActiveComp
         x.ActiveUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.SlimWith comp)
         let uttSynthCache = !!x.ActiveUttSynthCache
+        let mutable requestDelay = TimeSpan.Zero
         for utt in comp.Utts do
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
-                x.SynthUtt(dispatcher, singerName, utt)
+                x.SynthUtt(dispatcher, singerName, utt, requestDelay)
+                requestDelay <- requestDelay + TimeSpan.FromSeconds 0.05
 
 

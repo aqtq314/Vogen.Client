@@ -40,7 +40,7 @@ namespace Vogen.Client
             stopButton.Click += (sender, e) => ProgramModel.Stop();
 
             clearAllSynthButton.Click += (sender, e) => ProgramModel.ClearAllSynth();
-            synthButton.Click += (sender, e) => ProgramModel.Synth(Dispatcher, "chao");
+            synthButton.Click += (sender, e) => ProgramModel.Synth(Dispatcher, "gloria");
         }
     }
 }

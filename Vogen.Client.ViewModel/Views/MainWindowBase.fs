@@ -120,7 +120,7 @@ type MainWindowBase() =
     member x.Export() : Result<unit, unit> = result {
         let saveFileDialog =
             let defaultFileName = !!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName
-            let defaultFileName = Path.ChangeExtension(defaultFileName, ".m4a")
+            let defaultFileName = Path.GetFileNameWithoutExtension defaultFileName + ".m4a"
             SaveFileDialog(
                 FileName = defaultFileName,
                 DefaultExt = ".m4a",
