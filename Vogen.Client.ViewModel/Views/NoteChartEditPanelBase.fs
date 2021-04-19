@@ -177,7 +177,6 @@ type NoteChartEditPanelBase() =
 
         let mouseToCursorPos(mousePos : Point) =
             int64(x.PixelToPulse mousePos.X) |> NoteChartEditBase.CoerceCursorPosition x.RulerGrid
-            //|> x.Quantize comp.TimeSig0
 
         let hintSetNone() =
             x.ChartEditorAdornerLayer.EditorHint <- None
@@ -194,6 +193,90 @@ type NoteChartEditPanelBase() =
                 findMouseOverNote mousePos selection.ActiveUtt comp.Utts x.ChartEditor
 
             x.ChartEditorAdornerLayer.EditorHint <- Option.map HoverNote mouseOverNoteOp
+
+        let deleteSelectedNotes undoDesc =
+            let comp = !!x.ProgramModel.ActiveComp
+            let selection = !!x.ProgramModel.ActiveSelection
+            let mouseDownSelection = selection.SelectedNotes.Intersect comp.AllNotes
+            if not mouseDownSelection.IsEmpty then
+                // DelDict: no existance -> deletion
+                let uttDelDict =
+                    comp.Utts
+                    |> Seq.choose(fun utt ->
+                        let newNotes = utt.Notes.RemoveAll(Predicate(selection.GetIsNoteSelected))
+                        if newNotes.Length = 0 then None
+                        elif newNotes.Length = utt.Notes.Length then Some(KeyValuePair(utt, utt))
+                        else Some(KeyValuePair(utt, utt.SetNotes newNotes)))
+                    |> ImmutableDictionary.CreateRange
+                x.ProgramModel.ActiveComp |> Rp.set(
+                    comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values))
+                x.ProgramModel.ActiveSelection |> Rp.set(
+                    let activeUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
+                    CompSelection(activeUtt, ImmutableHashSet.Empty))
+            
+                x.ProgramModel.UndoRedoStack.PushUndo(
+                    undoDesc, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                x.ProgramModel.CompIsSaved |> Rp.set false
+
+        let copySelectedNotes() =
+            let comp = !!x.ProgramModel.ActiveComp
+            let selection = !!x.ProgramModel.ActiveSelection
+            let selection = selection.EnsureIntersectionWith comp
+            if selection.SelectedNotes.Count > 0 then
+                let minNoteOn = selection.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
+
+                let getClipUtt(utt : Utterance) =
+                    let selectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
+                    if selectedNotes.Length = 0 then None
+                    else Some(utt.SetNotes selectedNotes)
+
+                let activeClipUttOp = selection.ActiveUtt |> Option.bind getClipUtt
+
+                let otherClipUtts =
+                    match selection.ActiveUtt with
+                    | None -> comp.Utts
+                    | Some activeUtt -> comp.Utts.Remove activeUtt
+                    |> Seq.choose getClipUtt
+
+                FilePackage.toClipboardText minNoteOn activeClipUttOp otherClipUtts
+                |> Clipboard.SetText
+
+        let paste() =
+            try let hScrollValue = x.HScrollZoom.ScrollValue
+                let comp = !!x.ProgramModel.ActiveComp
+                let selection = !!x.ProgramModel.ActiveSelection
+                let selection = selection.SetSelectedNotes ImmutableHashSet.Empty
+
+                let clipboardText = Clipboard.GetText()
+                let minNoteOn = x.QuantizeCeil comp.TimeSig0 (int64 hScrollValue)
+                let activeClipUttOp, otherClipUtts = FilePackage.ofClipboardText minNoteOn clipboardText
+                let newSelectedNotes =
+                    ImmutableHashSet.CreateRange(
+                        Seq.append(Option.toArray activeClipUttOp) otherClipUtts
+                        |> Seq.collect(fun utt -> utt.Notes))
+
+                let newComp, newSelection =
+                    match activeClipUttOp, selection.ActiveUtt with
+                    | Some activeClipUtt, Some activeUtt ->
+                        let newActiveUtt = activeUtt.UpdateNotes(fun notes -> notes.AddRange activeClipUtt.Notes)
+                        comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, newActiveUtt).AddRange otherClipUtts),
+                        CompSelection(Some newActiveUtt, newSelectedNotes)
+                    | Some activeClipUtt, None ->
+                        comp.UpdateUtts(fun utts -> utts.AddRange(Seq.prependItem activeClipUtt otherClipUtts)),
+                        CompSelection(Some activeClipUtt, newSelectedNotes)
+                    | None, _ ->
+                        comp.UpdateUtts(fun utts -> utts.AddRange otherClipUtts),
+                        CompSelection(None, newSelectedNotes)
+
+                x.ProgramModel.ActiveComp |> Rp.set newComp
+                x.ProgramModel.ActiveSelection |> Rp.set newSelection
+
+                x.ProgramModel.UndoRedoStack.PushUndo(
+                    PasteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                x.ProgramModel.CompIsSaved |> Rp.set false
+
+            with | ex ->
+                System.Media.SystemSounds.Hand.Play()
 
         let hintSetGhostNote mousePos =
             let edit = x.ChartEditor
@@ -884,34 +967,16 @@ type NoteChartEditPanelBase() =
                     programModel.Stop()
 
             | Key.Delete ->
-                let comp = !!x.ProgramModel.ActiveComp
-                let selection = !!x.ProgramModel.ActiveSelection
-                let mouseDownSelection = selection.SelectedNotes.Intersect comp.AllNotes
-                if not mouseDownSelection.IsEmpty then
-                    // DelDict: no existance -> deletion
-                    let uttDelDict =
-                        comp.Utts
-                        |> Seq.choose(fun utt ->
-                            let newNotes = utt.Notes.RemoveAll(Predicate(selection.GetIsNoteSelected))
-                            if newNotes.Length = 0 then None
-                            elif newNotes.Length = utt.Notes.Length then Some(KeyValuePair(utt, utt))
-                            else Some(KeyValuePair(utt, utt.SetNotes newNotes)))
-                        |> ImmutableDictionary.CreateRange
-                    x.ProgramModel.ActiveComp |> Rp.set(
-                        comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values))
-                    x.ProgramModel.ActiveSelection |> Rp.set(
-                        let activeUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
-                        CompSelection(activeUtt, ImmutableHashSet.Empty))
-
-                    x.ProgramModel.UndoRedoStack.PushUndo(
-                        DeleteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                    x.ProgramModel.CompIsSaved |> Rp.set false
+                deleteSelectedNotes DeleteNote
 
             | Key.Escape ->
                 let selection = !!x.ProgramModel.ActiveSelection
                 match selection.ActiveUtt with
                 | None -> ()
                 | Some _ -> x.ProgramModel.ActiveSelection |> Rp.set(selection.SetActiveUtt None)
+
+            | Key.F5 ->
+                x.ProgramModel.Synth(x.Dispatcher, "gloria")
 
             | Key.A when keyboardModifiers.IsCtrl ->
                 let comp = !!x.ProgramModel.ActiveComp
@@ -926,6 +991,16 @@ type NoteChartEditPanelBase() =
 
             | Key.Z when keyboardModifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
                 x.ProgramModel.Redo()
+
+            | Key.X when keyboardModifiers.IsCtrl ->
+                copySelectedNotes()
+                deleteSelectedNotes CutNote
+
+            | Key.C when keyboardModifiers.IsCtrl ->
+                copySelectedNotes()
+
+            | Key.V when keyboardModifiers.IsCtrl ->
+                paste()
 
             | _ -> ()
 

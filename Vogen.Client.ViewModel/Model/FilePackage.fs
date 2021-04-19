@@ -48,6 +48,33 @@ module FilePackage =
             { Name = uttName; RomScheme = utt.RomScheme; Notes = fNotes }
 
     [<NoComparison; ReferenceEquality>]
+    type FClip = {
+        [<JsonProperty("utts", Required=Required.Always)>] Utts : FUtt [] }
+        with
+        static member toUtts refNoteOn x =
+            let { Utts = fUtts } = x
+            let uttAndNames = fUtts |> Array.map(fun fUtt ->
+                let utt, name = FUtt.toUtt fUtt
+                let utt = utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> note.SetOn(note.On + refNoteOn)))
+                utt, name)
+            let activeUttOp = uttAndNames |> Array.tryPick(fun (utt, name) -> if name = "active" then Some utt else None)
+            let otherUtts = uttAndNames |> Seq.filter(fun (utt, name) -> name <> "active") |> Seq.map(fun (utt, name) -> utt)
+            activeUttOp, ImmutableArray.CreateRange otherUtts
+
+        static member ofUtts refNoteOn activeUttOp otherUtts =
+            let uttAndNames =
+                Seq.append
+                    (activeUttOp |> Option.map(fun utt -> utt, "active") |> Option.toArray)
+                    (otherUtts |> Seq.mapi(fun i utt -> utt, $"utt-{i}"))
+            let fUtts =
+                uttAndNames
+                |> Seq.map(fun (utt : Utterance, name) ->
+                    let utt = utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> note.SetOn(note.On - refNoteOn)))
+                    FUtt.ofUtt name utt)
+                |> Array.ofSeq
+            { Utts = fUtts }
+
+    [<NoComparison; ReferenceEquality>]
     type FPh = {
         [<JsonProperty("ph", Required=Required.Always)>]  Ph : string
         [<JsonProperty("on", Required=Required.Always)>]  On : int
@@ -167,5 +194,13 @@ module FilePackage =
             if uttSynthResult.HasAudio then
                 use fileStream = zipFile.CreateEntry($"{uttName}.m4a", CompressionLevel.Fastest).Open()
                 fileStream.Write(uttSynthResult.AudioFileBytes, 0, uttSynthResult.AudioFileBytes.Length))
+
+    let toClipboardText refNoteOn activeUttOp otherUtts =
+        let fClip = FClip.ofUtts refNoteOn activeUttOp otherUtts
+        JsonConvert.SerializeObjectFormatted fClip
+
+    let ofClipboardText refNoteOn jStr =
+        let fClip = JsonConvert.DeserializeObject<_> jStr
+        FClip.toUtts refNoteOn fClip
 
 
