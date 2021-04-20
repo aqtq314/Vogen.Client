@@ -84,6 +84,8 @@ type NoteChartEditPanelBase() =
     default x.LyricPopup = Unchecked.defaultof<_>
     abstract LyricTextBox : TextBox
     default x.LyricTextBox = Unchecked.defaultof<_>
+    abstract ChartEditorContextMenu : ContextMenu
+    default x.ChartEditorContextMenu = Unchecked.defaultof<_>
 
     member x.PixelToPulse xPos =
         let quarterWidth = x.ChartEditor.QuarterWidth
@@ -116,6 +118,241 @@ type NoteChartEditPanelBase() =
         let quantization = x.Quantization
         let snap = x.Snap
         quantizeCeil snap quantization timeSig pulses
+
+    member x.EditSelectedNoteLyrics() =
+        let comp = !!x.ProgramModel.ActiveComp
+        let selection = !!x.ProgramModel.ActiveSelection
+        match selection.ActiveUtt with
+        | None -> ()
+        | Some utt ->
+            let uttSelectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
+            let uttSelectedLyricNotes = uttSelectedNotes.RemoveAll(fun note -> note.IsHyphen)
+            if uttSelectedLyricNotes.Length > 0 then
+                let keyHeight = x.ChartEditor.KeyHeight
+                let minPulse = uttSelectedLyricNotes.[0].On
+                let maxPulse = uttSelectedLyricNotes.[^0].Off
+                let minPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.min
+                let maxPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.max
+
+                let xMin = x.PulseToPixel(float minPulse)
+                let xMax = x.PulseToPixel(float maxPulse)
+                let yMin = x.PitchToPixel(float maxPitch) - half keyHeight
+                let yMax = x.PitchToPixel(float minPitch) + half keyHeight
+                x.LyricPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
+                x.LyricPopup.MinWidth <- xMax - xMin
+                if Mouse.Captured <> null then 
+                    Mouse.Captured.ReleaseMouseCapture()
+                x.LyricPopup.IsOpen <- true
+
+                let initLyricText =
+                    uttSelectedLyricNotes
+                    |> Seq.map(fun note ->
+                        let lyricOrSpace = if String.IsNullOrEmpty note.Lyric then " " else note.Lyric
+                        lyricOrSpace + note.Rom)
+                    |> String.concat ""
+                    |> fun s -> s.TrimStart()
+                x.LyricTextBox.Text <- initLyricText
+                x.LyricTextBox.SelectAll()
+                x.LyricTextBox.Focus() |> ignore
+
+                let selection = selection.SetSelectedNotes(ImmutableHashSet.CreateRange uttSelectedLyricNotes)
+                x.ProgramModel.ActiveSelection |> Rp.set selection
+
+                let undoWriter =
+                    x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                        EditNoteLyric, (comp, selection))
+
+                let candidateLyricNotes =
+                    ImmutableArray.CreateRange(seq {
+                        yield! uttSelectedLyricNotes
+                        yield! utt.Notes |> Seq.skipWhile((<>) uttSelectedLyricNotes.[^0]) |> Seq.skip 1
+                            |> Seq.filter(fun note -> not note.IsHyphen) })
+
+                Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
+
+                let rec eventUnsubscriber =
+                    [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
+                    |> Disposable.join id
+
+                and textChangeSubscriber = x.LyricTextBox.TextChanged.Subscribe(fun e ->
+                    let lyricText = x.LyricTextBox.Text.Trim()
+
+                    let pChar = @"[\u3400-\u4DBF\u4E00-\u9FFF]"
+                    let pAlphaNum = @"[A-Za-z0-9]"
+                    let pattern = Regex($@"\G\s*(?<ch>{pChar})(?<rom>{pAlphaNum}*)|\G\s*(?<ch>)(?<rom>{pAlphaNum}+)")
+                    let matches = pattern.Matches lyricText
+
+                    let matchedCharCount =
+                        if matches.Count = 0 then 0 else
+                            let lastCapture = matches.[matches.Count - 1]
+                            lastCapture.Index + lastCapture.Length
+                    if matchedCharCount <> lyricText.Length then
+                        // TODO: Error prompt
+                        ()
+                    else
+                        let noteLyrics = matches |> Seq.map(fun m -> m.Groups.["ch"].Value) |> Array.ofSeq
+                        let noteRoms = matches |> Seq.map(fun m -> m.Groups.["rom"].Value) |> Array.ofSeq
+                        let noteRoms =
+                            (Romanizer.get utt.RomScheme).Convert noteLyrics noteRoms
+                            |> Array.map(fun roms -> roms.[0], ImmutableArray.CreateRange roms.[1..])
+
+                        // DiffDict: no existance -> no modification
+                        let noteDiffDict =
+                            Seq.zip3 candidateLyricNotes noteLyrics noteRoms
+                            |> Seq.filter(fun (note, newLyric, (newRom, newMoreRoms)) ->
+                                note.Lyric <> newLyric.ToString() || note.Rom <> newRom)
+                            |> Seq.map(fun (note, newLyric, (newRom, newMoreRoms)) ->
+                                KeyValuePair(note, note.SetText(newLyric.ToString(), newRom, newMoreRoms)))
+                            |> ImmutableDictionary.CreateRange
+
+                        if noteDiffDict.Count = 0 then
+                            x.ProgramModel.ActiveComp |> Rp.set comp
+                            x.ProgramModel.ActiveSelection |> Rp.set(
+                                selection.SetSelectedNotes(
+                                    ImmutableHashSet.CreateRange(
+                                        candidateLyricNotes
+                                        |> Seq.take(min matches.Count candidateLyricNotes.Length))))
+                            undoWriter.UnpushUndo()
+
+                        else
+                            let newUtt =
+                                utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note ->
+                                    noteDiffDict.GetOrDefault note note))
+
+                            x.ProgramModel.ActiveComp |> Rp.set(comp.SetUtts(comp.Utts.Replace(utt, newUtt)))
+                            x.ProgramModel.ActiveSelection |> Rp.set(
+                                let newSelectedNotes =
+                                    ImmutableHashSet.CreateRange(
+                                        candidateLyricNotes
+                                        |> Seq.take(min matches.Count candidateLyricNotes.Length)
+                                        |> Seq.map(fun note -> noteDiffDict.GetOrDefault note note))
+                                CompSelection(Some newUtt, newSelectedNotes))
+
+                            undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                            x.ProgramModel.CompIsSaved |> Rp.set false)
+
+                and keyDownSubscriber = x.LyricTextBox.KeyDown.Subscribe(fun e ->
+                    match e.Key with
+                    | Key.Enter ->
+                        x.LyricPopup.IsOpen <- false
+                        x.Focus() |> ignore
+                        e.Handled <- true
+
+                    | Key.Escape ->
+                        x.ProgramModel.ActiveComp |> Rp.set comp
+                        x.ProgramModel.ActiveSelection |> Rp.set selection
+                        undoWriter.UnpushUndo()
+                        x.LyricPopup.IsOpen <- false
+                        x.Focus() |> ignore
+                        e.Handled <- true
+
+                    | _ -> ())
+
+                and popupClosedSubscriber = x.LyricPopup.Closed.Subscribe(fun e ->
+                    eventUnsubscriber |> Disposable.dispose)
+
+                ()
+
+    member x.CutSelectedNotes() =
+        x.CopySelectedNotes()
+        x.DeleteSelectedNotes CutNote
+
+    member x.CopySelectedNotes() =
+        let comp = !!x.ProgramModel.ActiveComp
+        let selection = !!x.ProgramModel.ActiveSelection
+        let selection = selection.EnsureIntersectionWith comp
+        if selection.SelectedNotes.Count > 0 then
+            let minNoteOn = selection.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
+
+            let getClipUtt(utt : Utterance) =
+                let selectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
+                if selectedNotes.Length = 0 then None
+                else Some(utt.SetNotes selectedNotes)
+
+            let activeClipUttOp = selection.ActiveUtt |> Option.bind getClipUtt
+
+            let otherClipUtts =
+                match selection.ActiveUtt with
+                | None -> comp.Utts
+                | Some activeUtt -> comp.Utts.Remove activeUtt
+                |> Seq.choose getClipUtt
+
+            FilePackage.toClipboardText minNoteOn activeClipUttOp otherClipUtts
+            |> Clipboard.SetText
+
+    member x.Paste() =
+        try let hScrollValue = x.HScrollZoom.ScrollValue
+            let comp = !!x.ProgramModel.ActiveComp
+            let selection = !!x.ProgramModel.ActiveSelection
+            let selection = selection.SetSelectedNotes ImmutableHashSet.Empty
+
+            let clipboardText = Clipboard.GetText()
+            let minNoteOn = x.QuantizeCeil comp.TimeSig0 (int64 hScrollValue)
+            let activeClipUttOp, otherClipUtts = FilePackage.ofClipboardText minNoteOn clipboardText
+            let newSelectedNotes =
+                ImmutableHashSet.CreateRange(
+                    Seq.append(Option.toArray activeClipUttOp) otherClipUtts
+                    |> Seq.collect(fun utt -> utt.Notes))
+
+            let newComp, newSelection =
+                match activeClipUttOp, selection.ActiveUtt with
+                | Some activeClipUtt, Some activeUtt ->
+                    let newActiveUtt = activeUtt.UpdateNotes(fun notes -> notes.AddRange activeClipUtt.Notes)
+                    comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, newActiveUtt).AddRange otherClipUtts),
+                    CompSelection(Some newActiveUtt, newSelectedNotes)
+                | Some activeClipUtt, None ->
+                    comp.UpdateUtts(fun utts -> utts.AddRange(Seq.prependItem activeClipUtt otherClipUtts)),
+                    CompSelection(Some activeClipUtt, newSelectedNotes)
+                | None, _ ->
+                    comp.UpdateUtts(fun utts -> utts.AddRange otherClipUtts),
+                    CompSelection(None, newSelectedNotes)
+
+            x.ProgramModel.ActiveComp |> Rp.set newComp
+            x.ProgramModel.ActiveSelection |> Rp.set newSelection
+
+            x.ProgramModel.UndoRedoStack.PushUndo(
+                PasteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+            x.ProgramModel.CompIsSaved |> Rp.set false
+
+        with | ex ->
+            System.Media.SystemSounds.Exclamation.Play()
+
+    member x.DeleteSelectedNotes undoDesc =
+        let comp = !!x.ProgramModel.ActiveComp
+        let selection = !!x.ProgramModel.ActiveSelection
+        let mouseDownSelection = selection.SelectedNotes.Intersect comp.AllNotes
+        if not mouseDownSelection.IsEmpty then
+            // DelDict: no existance -> deletion
+            let uttDelDict =
+                comp.Utts
+                |> Seq.choose(fun utt ->
+                    let newNotes = utt.Notes.RemoveAll(Predicate(selection.GetIsNoteSelected))
+                    if newNotes.Length = 0 then None
+                    elif newNotes.Length = utt.Notes.Length then Some(KeyValuePair(utt, utt))
+                    else Some(KeyValuePair(utt, utt.SetNotes newNotes)))
+                |> ImmutableDictionary.CreateRange
+            x.ProgramModel.ActiveComp |> Rp.set(
+                comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values))
+            x.ProgramModel.ActiveSelection |> Rp.set(
+                let activeUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
+                CompSelection(activeUtt, ImmutableHashSet.Empty))
+
+            x.ProgramModel.UndoRedoStack.PushUndo(
+                undoDesc, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+            x.ProgramModel.CompIsSaved |> Rp.set false
+
+    member x.SelectAll() =
+        let comp = !!x.ProgramModel.ActiveComp
+        x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
+            selection.SetSelectedNotes(ImmutableHashSet.CreateRange comp.AllNotes))
+
+    static member val EditLyricsCmd = RoutedUICommand()
+
+    static member val CutCmd = RoutedUICommand()
+    static member val CopyCmd = RoutedUICommand()
+    static member val PasteCmd = RoutedUICommand()
+    static member val DeleteCmd = RoutedUICommand()
+    static member val SelectAllCmd = RoutedUICommand()
 
     member x.BindBehaviors() =
         let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
@@ -193,90 +430,6 @@ type NoteChartEditPanelBase() =
                 findMouseOverNote mousePos selection.ActiveUtt comp.Utts x.ChartEditor
 
             x.ChartEditorAdornerLayer.EditorHint <- Option.map HoverNote mouseOverNoteOp
-
-        let deleteSelectedNotes undoDesc =
-            let comp = !!x.ProgramModel.ActiveComp
-            let selection = !!x.ProgramModel.ActiveSelection
-            let mouseDownSelection = selection.SelectedNotes.Intersect comp.AllNotes
-            if not mouseDownSelection.IsEmpty then
-                // DelDict: no existance -> deletion
-                let uttDelDict =
-                    comp.Utts
-                    |> Seq.choose(fun utt ->
-                        let newNotes = utt.Notes.RemoveAll(Predicate(selection.GetIsNoteSelected))
-                        if newNotes.Length = 0 then None
-                        elif newNotes.Length = utt.Notes.Length then Some(KeyValuePair(utt, utt))
-                        else Some(KeyValuePair(utt, utt.SetNotes newNotes)))
-                    |> ImmutableDictionary.CreateRange
-                x.ProgramModel.ActiveComp |> Rp.set(
-                    comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values))
-                x.ProgramModel.ActiveSelection |> Rp.set(
-                    let activeUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
-                    CompSelection(activeUtt, ImmutableHashSet.Empty))
-            
-                x.ProgramModel.UndoRedoStack.PushUndo(
-                    undoDesc, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                x.ProgramModel.CompIsSaved |> Rp.set false
-
-        let copySelectedNotes() =
-            let comp = !!x.ProgramModel.ActiveComp
-            let selection = !!x.ProgramModel.ActiveSelection
-            let selection = selection.EnsureIntersectionWith comp
-            if selection.SelectedNotes.Count > 0 then
-                let minNoteOn = selection.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
-
-                let getClipUtt(utt : Utterance) =
-                    let selectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
-                    if selectedNotes.Length = 0 then None
-                    else Some(utt.SetNotes selectedNotes)
-
-                let activeClipUttOp = selection.ActiveUtt |> Option.bind getClipUtt
-
-                let otherClipUtts =
-                    match selection.ActiveUtt with
-                    | None -> comp.Utts
-                    | Some activeUtt -> comp.Utts.Remove activeUtt
-                    |> Seq.choose getClipUtt
-
-                FilePackage.toClipboardText minNoteOn activeClipUttOp otherClipUtts
-                |> Clipboard.SetText
-
-        let paste() =
-            try let hScrollValue = x.HScrollZoom.ScrollValue
-                let comp = !!x.ProgramModel.ActiveComp
-                let selection = !!x.ProgramModel.ActiveSelection
-                let selection = selection.SetSelectedNotes ImmutableHashSet.Empty
-
-                let clipboardText = Clipboard.GetText()
-                let minNoteOn = x.QuantizeCeil comp.TimeSig0 (int64 hScrollValue)
-                let activeClipUttOp, otherClipUtts = FilePackage.ofClipboardText minNoteOn clipboardText
-                let newSelectedNotes =
-                    ImmutableHashSet.CreateRange(
-                        Seq.append(Option.toArray activeClipUttOp) otherClipUtts
-                        |> Seq.collect(fun utt -> utt.Notes))
-
-                let newComp, newSelection =
-                    match activeClipUttOp, selection.ActiveUtt with
-                    | Some activeClipUtt, Some activeUtt ->
-                        let newActiveUtt = activeUtt.UpdateNotes(fun notes -> notes.AddRange activeClipUtt.Notes)
-                        comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, newActiveUtt).AddRange otherClipUtts),
-                        CompSelection(Some newActiveUtt, newSelectedNotes)
-                    | Some activeClipUtt, None ->
-                        comp.UpdateUtts(fun utts -> utts.AddRange(Seq.prependItem activeClipUtt otherClipUtts)),
-                        CompSelection(Some activeClipUtt, newSelectedNotes)
-                    | None, _ ->
-                        comp.UpdateUtts(fun utts -> utts.AddRange otherClipUtts),
-                        CompSelection(None, newSelectedNotes)
-
-                x.ProgramModel.ActiveComp |> Rp.set newComp
-                x.ProgramModel.ActiveSelection |> Rp.set newSelection
-
-                x.ProgramModel.UndoRedoStack.PushUndo(
-                    PasteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                x.ProgramModel.CompIsSaved |> Rp.set false
-
-            with | ex ->
-                System.Media.SystemSounds.Hand.Play()
 
         let hintSetGhostNote mousePos =
             let edit = x.ChartEditor
@@ -486,6 +639,72 @@ type NoteChartEditPanelBase() =
                         | _ -> ()
 
                         return! edit |> mouseMidDownDragging(e.GetPosition edit, idle)
+
+                    | MouseButton.Right ->
+                        // Context menu preparations
+                        let comp = !!x.ProgramModel.ActiveComp
+                        let selection = !!x.ProgramModel.ActiveSelection
+                        let mousePos = e.GetPosition edit
+                        let mouseDownNoteOp = findMouseOverNote mousePos selection.ActiveUtt comp.Utts edit
+                        match mouseDownNoteOp with
+                        | None ->
+                            match keyboardModifiers with
+                            | ModifierKeys.Control -> ()
+                            | _ ->
+                                x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
+                                    selection.SetSelectedNotes ImmutableHashSet.Empty)
+
+                        | Some(utt, note, noteDragType) ->
+                            let selection =
+                                match selection.GetIsNoteSelected note, keyboardModifiers with
+                                | true, _ ->
+                                    selection
+                                | false, ModifierKeys.Control ->
+                                    selection.UpdateSelectedNotes(fun selectedNotes -> selectedNotes.Add note)
+                                | false, _ ->
+                                    selection.SetSelectedNotes(ImmutableHashSet.Create note)
+
+                            let selection = selection.SetActiveUtt(Some utt).EnsureIntersectionWith comp
+                            x.ProgramModel.ActiveSelection |> Rp.set selection
+
+                            if not note.IsHyphen then
+                                let romMenuItems = List()
+                                do for i in 0 .. note.MoreRoms.Length - 1 do
+                                    let rom = note.MoreRoms.[i]
+                                    let romMenuItem = MenuItem(Header = TextResources.getContextMenuSetRom note.Lyric rom)
+                                    romMenuItem.Click.Add(fun e ->
+                                        let comp = !!x.ProgramModel.ActiveComp
+
+                                        let newMoreRoms = ImmutableArray.CreateRange(Seq.prependItem note.Rom (note.MoreRoms.Remove rom))
+                                        let newNote = note.SetText(note.Lyric, rom, newMoreRoms)
+                                        let newUtt = utt.SetNotes(utt.Notes.Replace(note, newNote))
+
+                                        x.ProgramModel.ActiveComp |> Rp.set(
+                                            comp.SetUtts(comp.Utts.Replace(utt, newUtt)))
+                                        x.ProgramModel.ActiveSelection |> Rp.set(
+                                            CompSelection(Some newUtt, ImmutableHashSet.Create newNote))
+
+                                        x.ProgramModel.UndoRedoStack.PushUndo(
+                                            SetNoteRomContextMenu,
+                                            (comp, CompSelection(Some utt, ImmutableHashSet.Create note)),
+                                            (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                                        x.ProgramModel.CompIsSaved |> Rp.set false)
+
+                                    x.ChartEditorContextMenu.Items.Insert(i, romMenuItem)
+                                    romMenuItems.Add romMenuItem
+
+                                let rec eventUnsubscriber =
+                                    [| contextMenuClosedSubscriber |] 
+                                    |> Disposable.join id
+
+                                and contextMenuClosedSubscriber = x.ChartEditorContextMenu.Closed.Subscribe(fun e ->
+                                    for romMenuItem in romMenuItems do
+                                        x.ChartEditorContextMenu.Items.Remove romMenuItem
+                                    eventUnsubscriber |> Disposable.dispose)
+
+                                ()
+
+                        return! idle()
 
                     | _ -> return! idle()
 
@@ -827,147 +1046,12 @@ type NoteChartEditPanelBase() =
             let keyboardModifiers = Keyboard.Modifiers
 
             match e.Key with
-            | Key.Enter ->
-                let comp = !!x.ProgramModel.ActiveComp
-                let selection = !!x.ProgramModel.ActiveSelection
-                match selection.ActiveUtt with
-                | None -> ()
-                | Some utt ->
-                    let uttSelectedNotes = utt.Notes |> Seq.filter selection.GetIsNoteSelected |> ImmutableArray.CreateRange
-                    let uttSelectedLyricNotes = uttSelectedNotes.RemoveAll(fun note -> note.IsHyphen)
-                    if uttSelectedLyricNotes.Length > 0 then
-                        let keyHeight = x.ChartEditor.KeyHeight
-                        let minPulse = uttSelectedLyricNotes.[0].On
-                        let maxPulse = uttSelectedLyricNotes.[^0].Off
-                        let minPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.min
-                        let maxPitch = uttSelectedLyricNotes |> Seq.map(fun note -> note.Pitch) |> Seq.max
-
-                        let xMin = x.PulseToPixel(float minPulse)
-                        let xMax = x.PulseToPixel(float maxPulse)
-                        let yMin = x.PitchToPixel(float maxPitch) - half keyHeight
-                        let yMax = x.PitchToPixel(float minPitch) + half keyHeight
-                        x.LyricPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
-                        x.LyricPopup.MinWidth <- xMax - xMin
-                        if Mouse.Captured <> null then 
-                            Mouse.Captured.ReleaseMouseCapture()
-                        x.LyricPopup.IsOpen <- true
-
-                        let initLyricText =
-                            uttSelectedLyricNotes
-                            |> Seq.map(fun note ->
-                                let lyricOrSpace = if String.IsNullOrEmpty note.Lyric then " " else note.Lyric
-                                lyricOrSpace + note.Rom)
-                            |> String.concat ""
-                            |> fun s -> s.TrimStart()
-                        x.LyricTextBox.Text <- initLyricText
-                        x.LyricTextBox.SelectAll()
-                        x.LyricTextBox.Focus() |> ignore
-
-                        let selection = selection.SetSelectedNotes(ImmutableHashSet.CreateRange uttSelectedLyricNotes)
-                        x.ProgramModel.ActiveSelection |> Rp.set selection
-
-                        let undoWriter =
-                            x.ProgramModel.UndoRedoStack.BeginPushUndo(
-                                EditNoteLyric, (comp, selection))
-
-                        let candidateLyricNotes =
-                            ImmutableArray.CreateRange(seq {
-                                yield! uttSelectedLyricNotes
-                                yield! utt.Notes |> Seq.skipWhile((<>) uttSelectedLyricNotes.[^0]) |> Seq.skip 1
-                                    |> Seq.filter(fun note -> not note.IsHyphen) })
-
-                        Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
-
-                        let rec eventUnsubscriber =
-                            [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
-                            |> Disposable.join id
-
-                        and textChangeSubscriber = x.LyricTextBox.TextChanged.Subscribe(fun e ->
-                            let lyricText = x.LyricTextBox.Text.Trim()
-
-                            let pChar = @"[\u3400-\u4DBF\u4E00-\u9FFF]"
-                            let pAlphaNum = @"[A-Za-z0-9]"
-                            let pattern = Regex($@"\G\s*(?<ch>{pChar})(?<rom>{pAlphaNum}*)|\G\s*(?<ch>)(?<rom>{pAlphaNum}+)")
-                            let matches = pattern.Matches lyricText
-
-                            let matchedCharCount =
-                                if matches.Count = 0 then 0 else
-                                    let lastCapture = matches.[matches.Count - 1]
-                                    lastCapture.Index + lastCapture.Length
-                            if matchedCharCount <> lyricText.Length then
-                                // TODO: Error prompt
-                                ()
-                            else
-                                let noteLyrics = matches |> Seq.map(fun m -> m.Groups.["ch"].Value) |> Array.ofSeq
-                                let noteRoms = matches |> Seq.map(fun m -> m.Groups.["rom"].Value) |> Array.ofSeq
-                                let noteRoms =
-                                    (Romanizer.get utt.RomScheme).Convert noteLyrics noteRoms
-                                    |> Array.map Array.head
-
-                                // DiffDict: no existance -> no modification
-                                let noteDiffDict =
-                                    Seq.zip3 candidateLyricNotes noteLyrics noteRoms
-                                    |> Seq.filter(fun (note, newLyric, newRom) -> note.Lyric <> newLyric.ToString() || note.Rom <> newRom)
-                                    |> Seq.map(fun (note, newLyric, newRom) -> KeyValuePair(note, note.SetText(newLyric.ToString(), newRom)))
-                                    |> ImmutableDictionary.CreateRange
-
-                                if noteDiffDict.Count = 0 then
-                                    x.ProgramModel.ActiveComp |> Rp.set comp
-                                    x.ProgramModel.ActiveSelection |> Rp.set(
-                                        selection.SetSelectedNotes(
-                                            ImmutableHashSet.CreateRange(
-                                                candidateLyricNotes
-                                                |> Seq.take(min matches.Count candidateLyricNotes.Length))))
-                                    undoWriter.UnpushUndo()
-
-                                else
-                                    let newUtt =
-                                        utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note ->
-                                            noteDiffDict.GetOrDefault note note))
-
-                                    x.ProgramModel.ActiveComp |> Rp.set(comp.SetUtts(comp.Utts.Replace(utt, newUtt)))
-                                    x.ProgramModel.ActiveSelection |> Rp.set(
-                                        let newSelectedNotes =
-                                            ImmutableHashSet.CreateRange(
-                                                candidateLyricNotes
-                                                |> Seq.take(min matches.Count candidateLyricNotes.Length)
-                                                |> Seq.map(fun note -> noteDiffDict.GetOrDefault note note))
-                                        CompSelection(Some newUtt, newSelectedNotes))
-
-                                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                                    x.ProgramModel.CompIsSaved |> Rp.set false)
-
-                        and keyDownSubscriber = x.LyricTextBox.KeyDown.Subscribe(fun e ->
-                            match e.Key with
-                            | Key.Enter ->
-                                x.LyricPopup.IsOpen <- false
-                                x.Focus() |> ignore
-                                e.Handled <- true
-
-                            | Key.Escape ->
-                                x.ProgramModel.ActiveComp |> Rp.set comp
-                                x.ProgramModel.ActiveSelection |> Rp.set selection
-                                undoWriter.UnpushUndo()
-                                x.LyricPopup.IsOpen <- false
-                                x.Focus() |> ignore
-                                e.Handled <- true
-
-                            | _ -> ())
-
-                        and popupClosedSubscriber = x.LyricPopup.Closed.Subscribe(fun e ->
-                            eventUnsubscriber |> Disposable.dispose)
-
-                        ()
-
             | Key.Space ->
                 let programModel = x.ProgramModel
                 if not !!programModel.IsPlaying then
                     programModel.Play()
                 else
                     programModel.Stop()
-
-            | Key.Delete ->
-                deleteSelectedNotes DeleteNote
 
             | Key.Escape ->
                 let selection = !!x.ProgramModel.ActiveSelection
@@ -978,11 +1062,6 @@ type NoteChartEditPanelBase() =
             | Key.F5 ->
                 x.ProgramModel.Synth(x.Dispatcher, "gloria")
 
-            | Key.A when keyboardModifiers.IsCtrl ->
-                let comp = !!x.ProgramModel.ActiveComp
-                x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
-                    selection.SetSelectedNotes(ImmutableHashSet.CreateRange comp.AllNotes))
-
             | Key.Z when keyboardModifiers.IsCtrl ->
                 x.ProgramModel.Undo()
 
@@ -991,16 +1070,6 @@ type NoteChartEditPanelBase() =
 
             | Key.Z when keyboardModifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
                 x.ProgramModel.Redo()
-
-            | Key.X when keyboardModifiers.IsCtrl ->
-                copySelectedNotes()
-                deleteSelectedNotes CutNote
-
-            | Key.C when keyboardModifiers.IsCtrl ->
-                copySelectedNotes()
-
-            | Key.V when keyboardModifiers.IsCtrl ->
-                paste()
 
             | _ -> ()
 

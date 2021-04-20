@@ -50,4 +50,7 @@ let getQuantizationDescription quantization =
     | 20L   -> "1/64 三连音（1/96）"
     | _ -> raise(KeyNotFoundException($"Unknown quantization duration {quantization}"))
 
+let getContextMenuSetRom lyric rom =
+    $"设置发音为 {rom}"
+
 

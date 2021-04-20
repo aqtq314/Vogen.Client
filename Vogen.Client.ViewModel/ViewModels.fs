@@ -1,4 +1,4 @@
-﻿namespace Vogen.Client.ViewModel
+﻿namespace rec Vogen.Client.ViewModel
 
 open Doaz.Reactive
 open NAudio.Wave
@@ -173,15 +173,15 @@ type ProgramModel() as x =
                         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                                 if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    uttSynthResult.SetCharGrids charGrids))
-                        compIsSaved |> Rp.set false) |> ignore
+                                    compIsSaved |> Rp.set false
+                                    uttSynthResult.SetCharGrids charGrids))) |> ignore
                     let! f0Samples = Synth.requestF0 tUtt tChars
                     dispatcher.BeginInvoke(fun () ->
                         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                                 if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    uttSynthResult.SetF0Samples f0Samples))
-                        compIsSaved |> Rp.set false) |> ignore
+                                    compIsSaved |> Rp.set false
+                                    uttSynthResult.SetF0Samples f0Samples))) |> ignore
                     // TODO: Not the best way to boost synth order
                     do! Async.Sleep(requestDelay : TimeSpan)
                     let! audioContent = Synth.requestAc tChars f0Samples singerName
@@ -189,8 +189,8 @@ type ProgramModel() as x =
                         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                                 if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    uttSynthResult.SetAudio audioContent))
-                        compIsSaved |> Rp.set false) |> ignore
+                                    compIsSaved |> Rp.set false
+                                    uttSynthResult.SetAudio audioContent))) |> ignore
                 with ex ->
                     Trace.WriteLine ex
             finally

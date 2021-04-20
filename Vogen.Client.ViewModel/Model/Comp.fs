@@ -15,24 +15,27 @@ open System.Text
 open System.Text.Encodings
 
 
-type Note(pitch, lyric, rom, on, dur) =
+type Note(pitch, lyric, rom, moreRoms, on, dur) =
     do  if dur <= 0L then
             raise(ArgumentException("Note dur <= 0"))
 
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
     member x.Rom : string = rom
+    member x.MoreRoms : ImmutableArray<string> = moreRoms
     member x.On : int64 = on
     member x.Dur : int64 = dur
 
     member x.Off = x.On + x.Dur
     member x.IsHyphen = x.Lyric = "-"
 
-    member x.SetText(lyric, rom) = Note(pitch, lyric, rom, on, dur)
-    member x.SetOn on = Note(pitch, lyric, rom, on, dur)
-    member x.SetDur dur = Note(pitch, lyric, rom, on, dur)
-    member x.SetOff off = Note(pitch, lyric, rom, on, off - on)
-    member x.MoveDelta(deltaPitch, deltaOn, deltaDur) = Note(pitch + deltaPitch, lyric, rom, on + deltaOn, dur + deltaDur)
+    new(pitch, lyric, rom, on, dur) = Note(pitch, lyric, rom, ImmutableArray.Empty, on, dur)
+
+    member x.SetText(lyric, rom, moreRoms) = Note(pitch, lyric, rom, moreRoms, on, dur)
+    member x.SetOn on = Note(pitch, lyric, rom, moreRoms, on, dur)
+    member x.SetDur dur = Note(pitch, lyric, rom, moreRoms, on, dur)
+    member x.SetOff off = Note(pitch, lyric, rom, moreRoms, on, off - on)
+    member x.MoveDelta(deltaPitch, deltaOn, deltaDur) = Note(pitch + deltaPitch, lyric, rom, moreRoms, on + deltaOn, dur + deltaDur)
 
     static member CompareByPosition(n1 : Note)(n2 : Note) =
         let onDiff = compare n1.On n2.On

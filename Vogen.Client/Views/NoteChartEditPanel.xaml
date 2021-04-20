@@ -11,6 +11,22 @@
                            mc:Ignorable="d" 
                            d:DesignHeight="450" d:DesignWidth="800"
                            d:DataContext="{x:Static vm:DesignerModels.programModel}">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.EditLyricsCmd}" Executed="OnExecuteCmdEditLyrics" CanExecute="CanExecuteCmdSelectionHasLyric"/>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.CutCmd}"        Executed="OnExecuteCmdCut" CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.CopyCmd}"       Executed="OnExecuteCmdCopy" CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.PasteCmd}"      Executed="OnExecuteCmdPaste"/>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.DeleteCmd}"     Executed="OnExecuteCmdDelete" CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:NoteChartEditPanelBase.SelectAllCmd}"  Executed="OnExecuteCmdSelectAll"/>
+  </UIElement.CommandBindings>
+  <UIElement.InputBindings>
+    <KeyBinding Gesture="Enter" Command="{x:Static vv:NoteChartEditPanelBase.EditLyricsCmd}"/>
+    <KeyBinding Gesture="Ctrl+X" Command="{x:Static vv:NoteChartEditPanelBase.CutCmd}"/>
+    <KeyBinding Gesture="Ctrl+C" Command="{x:Static vv:NoteChartEditPanelBase.CopyCmd}"/>
+    <KeyBinding Gesture="Ctrl+V" Command="{x:Static vv:NoteChartEditPanelBase.PasteCmd}"/>
+    <KeyBinding Gesture="Del" Command="{x:Static vv:NoteChartEditPanelBase.DeleteCmd}"/>
+    <KeyBinding Gesture="Ctrl+A" Command="{x:Static vv:NoteChartEditPanelBase.SelectAllCmd}"/>
+  </UIElement.InputBindings>
   <Border x:Name="border" Background="White" BorderThickness="0,2,0,0">
     <Grid>
       <Grid.ColumnDefinitions>
@@ -48,7 +64,22 @@
         IsPlaying="{Binding IsPlaying.Value}"
         Composition="{Binding ActiveComp.Value}"
         UttSynthCache="{Binding ActiveUttSynthCache.Value}"
-        Selection="{Binding ActiveSelection.Value}"/>
+        Selection="{Binding ActiveSelection.Value}">
+        <FrameworkElement.ContextMenu>
+          <ContextMenu x:Name="chartEditorContextMenu">
+            <MenuItem Header="编辑歌词 (_E)" InputGestureText="Enter" Command="{x:Static vv:NoteChartEditPanelBase.EditLyricsCmd}"/>
+            <Separator/>
+            <MenuItem Header="剪切 (_T)" InputGestureText="Ctrl+X" Command="{x:Static vv:NoteChartEditPanelBase.CutCmd}"/>
+            <MenuItem Header="复制 (_C)" InputGestureText="Ctrl+C" Command="{x:Static vv:NoteChartEditPanelBase.CopyCmd}"/>
+            <MenuItem Header="粘贴 (_P)" InputGestureText="Ctrl+V" Command="{x:Static vv:NoteChartEditPanelBase.PasteCmd}"/>
+            <MenuItem Header="删除 (_D)" InputGestureText="Del" Command="{x:Static vv:NoteChartEditPanelBase.DeleteCmd}"/>
+            <MenuItem Header="全选 (_A)" InputGestureText="Ctrl+A" Command="{x:Static vv:NoteChartEditPanelBase.SelectAllCmd}"/>
+            <!--<Separator/>
+            <MenuItem Header="拆分乐句 (_S)" InputGestureText=""/>
+            <MenuItem Header="合并乐句 (_J)" InputGestureText="Ctrl+J"/>-->
+          </ContextMenu>
+        </FrameworkElement.ContextMenu>
+      </vc:ChartEditor>
       <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"

@@ -22,6 +22,7 @@
     <Compile Include="State.fs" />
     <Compile Include="StateOperations.fs" />
     <Compile Include="StateWpfView.fs" />
+    <Compile Include="Command.fs" />
     <Compile Include="Controls.RenderControl.fs" />
     <Compile Include="Controls.TrivialPanel.fs" />
     <Compile Include="Controls.GraphicsCanvas.fs" />

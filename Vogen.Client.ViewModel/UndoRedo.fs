@@ -12,6 +12,7 @@ type UndoNodeDescription =
     | WriteHyphenNote
     | MouseDragNote of noteDragType : NoteDragType
     | EditNoteLyric
+    | SetNoteRomContextMenu
     | DeleteNote
     | CutNote
     | PasteNote
