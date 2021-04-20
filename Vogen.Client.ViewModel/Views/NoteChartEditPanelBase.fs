@@ -13,6 +13,7 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Input
+open System.Runtime.InteropServices
 open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.Romanization
@@ -341,18 +342,19 @@ type NoteChartEditPanelBase() =
                 undoDesc, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
             x.ProgramModel.CompIsSaved |> Rp.set false
 
+    member x.DeleteSelectedNotes() =
+        x.DeleteSelectedNotes DeleteNote
+
     member x.SelectAll() =
         let comp = !!x.ProgramModel.ActiveComp
         x.ProgramModel.ActiveSelection |> Rp.modify(fun selection ->
             selection.SetSelectedNotes(ImmutableHashSet.CreateRange comp.AllNotes))
 
-    static member val EditLyricsCmd = RoutedUICommand()
-
-    static member val CutCmd = RoutedUICommand()
-    static member val CopyCmd = RoutedUICommand()
-    static member val PasteCmd = RoutedUICommand()
-    static member val DeleteCmd = RoutedUICommand()
-    static member val SelectAllCmd = RoutedUICommand()
+    member x.BlurUtt() =
+        let selection = !!x.ProgramModel.ActiveSelection
+        match selection.ActiveUtt with
+        | None -> ()
+        | Some _ -> x.ProgramModel.ActiveSelection |> Rp.set(selection.SetActiveUtt None)
 
     member x.BindBehaviors() =
         let rec mouseMidDownDragging(prevMousePos : Point, idle)(edit : NoteChartEditBase) = behavior {
@@ -1043,36 +1045,6 @@ type NoteChartEditPanelBase() =
 
         // key events
         x.KeyDown.Add <| fun e ->
-            let keyboardModifiers = Keyboard.Modifiers
-
-            match e.Key with
-            | Key.Space ->
-                let programModel = x.ProgramModel
-                if not !!programModel.IsPlaying then
-                    programModel.Play()
-                else
-                    programModel.Stop()
-
-            | Key.Escape ->
-                let selection = !!x.ProgramModel.ActiveSelection
-                match selection.ActiveUtt with
-                | None -> ()
-                | Some _ -> x.ProgramModel.ActiveSelection |> Rp.set(selection.SetActiveUtt None)
-
-            | Key.F5 ->
-                x.ProgramModel.Synth(x.Dispatcher, "gloria")
-
-            | Key.Z when keyboardModifiers.IsCtrl ->
-                x.ProgramModel.Undo()
-
-            | Key.Y when keyboardModifiers.IsCtrl ->
-                x.ProgramModel.Redo()
-
-            | Key.Z when keyboardModifiers = (ModifierKeys.Control ||| ModifierKeys.Shift) ->
-                x.ProgramModel.Redo()
-
-            | _ -> ()
-
             x.ChartEditorAdornerLayer.InvalidateVisual()
 
 

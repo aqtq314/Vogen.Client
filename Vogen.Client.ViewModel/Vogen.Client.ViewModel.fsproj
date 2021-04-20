@@ -44,6 +44,7 @@
     <Compile Include="Controls\Controls.fs" />
     <Compile Include="UndoRedo.fs" />
     <Compile Include="ViewModels.fs" />
+    <Compile Include="Views\Commands.fs" />
     <Compile Include="Views\NoteChartEditPanelBase.fs" />
     <Compile Include="Views\MainWindowBase.fs" />
     <Compile Include="DesignerModels.fs" />

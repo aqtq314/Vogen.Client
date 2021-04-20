@@ -22,19 +22,112 @@
   <FrameworkElement.DataContext>
     <vm:ProgramModel/>
   </FrameworkElement.DataContext>
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static vv:Commands.New}"        Executed="OnExecuteCmdNew"/>
+    <CommandBinding Command="{x:Static vv:Commands.Open}"       Executed="OnExecuteCmdOpen"/>
+    <CommandBinding Command="{x:Static vv:Commands.Save}"       Executed="OnExecuteCmdSave"/>
+    <CommandBinding Command="{x:Static vv:Commands.SaveAs}"     Executed="OnExecuteCmdSaveAs"/>
+    <CommandBinding Command="{x:Static vv:Commands.Import}"     Executed="OnExecuteCmdImport"/>
+    <CommandBinding Command="{x:Static vv:Commands.Export}"     Executed="OnExecuteCmdExport"/>
+    <CommandBinding Command="{x:Static vv:Commands.Exit}"       Executed="OnExecuteCmdExit"/>
+    <CommandBinding Command="{x:Static vv:Commands.Undo}"       Executed="OnExecuteCmdUndo"       CanExecute="CanExecuteCmdUndo"/>
+    <CommandBinding Command="{x:Static vv:Commands.Redo}"       Executed="OnExecuteCmdRedo"       CanExecute="CanExecuteCmdRedo"/>
+    <CommandBinding Command="{x:Static vv:Commands.Cut}"        Executed="OnExecuteCmdCut"        CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.Copy}"       Executed="OnExecuteCmdCopy"       CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.Paste}"      Executed="OnExecuteCmdPaste"/>
+    <CommandBinding Command="{x:Static vv:Commands.Delete}"     Executed="OnExecuteCmdDelete"     CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.SelectAll}"  Executed="OnExecuteCmdSelectAll"/>
+    <CommandBinding Command="{x:Static vv:Commands.BlurUtt}"    Executed="OnExecuteCmdBlurUtt"    CanExecute="CanExecuteCmdHasActiveUtt"/>
+    <CommandBinding Command="{x:Static vv:Commands.EditLyrics}" Executed="OnExecuteCmdEditLyrics" CanExecute="CanExecuteCmdSelectionHasLyric"/>
+    <CommandBinding Command="{x:Static vv:Commands.Synth}"      Executed="OnExecuteCmdSynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.Resynth}"    Executed="OnExecuteCmdResynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.ClearSynth}" Executed="OnExecuteCmdClearSynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.PlayStop}"   Executed="OnExecuteCmdPlayStop"/>
+    <CommandBinding Command="{x:Static vv:Commands.Play}"       Executed="OnExecuteCmdPlay"       CanExecute="CanExecuteCmdIsNotPlaying"/>
+    <CommandBinding Command="{x:Static vv:Commands.Stop}"       Executed="OnExecuteCmdStop"       CanExecute="CanExecuteCmdIsPlaying"/>
+  </UIElement.CommandBindings>
+  <UIElement.InputBindings>
+    <KeyBinding Gesture="Ctrl+N"       Command="{x:Static vv:Commands.New}"/>
+    <KeyBinding Gesture="Ctrl+O"       Command="{x:Static vv:Commands.Open}"/>
+    <KeyBinding Gesture="Ctrl+S"       Command="{x:Static vv:Commands.Save}"/>
+    <KeyBinding Gesture="Ctrl+Shift+S" Command="{x:Static vv:Commands.SaveAs}"/>
+    <KeyBinding Gesture="F12"          Command="{x:Static vv:Commands.SaveAs}"/>
+    <KeyBinding Gesture="Ctrl+I"       Command="{x:Static vv:Commands.Import}"/>
+    <KeyBinding Gesture="Ctrl+Shift+E" Command="{x:Static vv:Commands.Export}"/>
+    <KeyBinding Gesture="Ctrl+Z"       Command="{x:Static vv:Commands.Undo}"/>
+    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{x:Static vv:Commands.Undo}"/>
+    <KeyBinding Gesture="Ctrl+Y"       Command="{x:Static vv:Commands.Redo}"/>
+    <KeyBinding Gesture="Ctrl+X"       Command="{x:Static vv:Commands.Cut}"/>
+    <KeyBinding Gesture="Ctrl+C"       Command="{x:Static vv:Commands.Copy}"/>
+    <KeyBinding Gesture="Ctrl+V"       Command="{x:Static vv:Commands.Paste}"/>
+    <KeyBinding Gesture="Del"          Command="{x:Static vv:Commands.Delete}"/>
+    <KeyBinding Gesture="Ctrl+A"       Command="{x:Static vv:Commands.SelectAll}"/>
+    <KeyBinding Gesture="Esc"          Command="{x:Static vv:Commands.BlurUtt}"/>
+    <KeyBinding Gesture="Enter"        Command="{x:Static vv:Commands.EditLyrics}"/>
+    <KeyBinding Gesture="F5"           Command="{x:Static vv:Commands.Synth}"/>
+    <KeyBinding Gesture="Space"        Command="{x:Static vv:Commands.PlayStop}"/>
+  </UIElement.InputBindings>
   <DockPanel>
-    <ToolBar DockPanel.Dock="Top" KeyboardNavigation.TabNavigation="Continue">
-      <Button x:Name="newButton" Content="新建"/>
-      <Button x:Name="openButton" Content="打开"/>
-      <Button x:Name="saveButton" Content="保存"/>
-      <Button x:Name="saveAsButton" Content="另存为"/>
-      <Separator/>
-      <Button x:Name="importButton" Content="导入曲谱"/>
-      <Button x:Name="exportButton" Content="导出音频"/>
-      <Separator/>
-      <Button x:Name="undoButton" Content="撤销" IsEnabled="{Binding UndoRedoStack.CanUndo.Value}"/>
-      <Button x:Name="redoButton" Content="重做" IsEnabled="{Binding UndoRedoStack.CanRedo.Value}"/>
-    </ToolBar>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="文件 (_F)">
+        <MenuItem Header="新建 (_N)"       InputGestureText="Ctrl+N"             Command="{x:Static vv:Commands.New}"/>
+        <MenuItem Header="打开 ... (_O)"   InputGestureText="Ctrl+O"             Command="{x:Static vv:Commands.Open}"/>
+        <MenuItem Header="保存 (_O)"       InputGestureText="Ctrl+S"             Command="{x:Static vv:Commands.Save}"/>
+        <MenuItem Header="另存为 ... (_A)" InputGestureText="Ctrl+Shift+S / F12" Command="{x:Static vv:Commands.SaveAs}"/>
+        <Separator/>
+        <MenuItem Header="导入曲谱 ... (_I)" InputGestureText="Ctrl+I"       Command="{x:Static vv:Commands.Import}"/>
+        <MenuItem Header="导出音频 ... (_E)" InputGestureText="Ctrl+Shift+E" Command="{x:Static vv:Commands.Export}"/>
+        <Separator/>
+        <MenuItem Header="退出 (_X)" InputGestureText="Alt+F4" Command="{x:Static vv:Commands.Exit}"/>
+      </MenuItem>
+      <MenuItem Header="编辑 (_E)">
+        <MenuItem Header="撤销 (_U)" InputGestureText="Ctrl+Z"                Command="{x:Static vv:Commands.Undo}"/>
+        <MenuItem Header="重做 (_R)" InputGestureText="Ctrl+Shift+Z / Ctrl+Y" Command="{x:Static vv:Commands.Redo}"/>
+        <Separator/>
+        <MenuItem Header="剪切 (_T)" InputGestureText="Ctrl+X" Command="{x:Static vv:Commands.Cut}"/>
+        <MenuItem Header="复制 (_C)" InputGestureText="Ctrl+C" Command="{x:Static vv:Commands.Copy}"/>
+        <MenuItem Header="粘贴 (_P)" InputGestureText="Ctrl+V" Command="{x:Static vv:Commands.Paste}"/>
+        <MenuItem Header="删除 (_D)" InputGestureText="Del"    Command="{x:Static vv:Commands.Delete}"/>
+        <Separator/>
+        <MenuItem Header="全选 (_A)"        InputGestureText="Ctrl+A" Command="{x:Static vv:Commands.SelectAll}"/>
+        <MenuItem Header="取消选择乐句 (_X)" InputGestureText="Esc"    Command="{x:Static vv:Commands.BlurUtt}"/>
+      </MenuItem>
+      <MenuItem Header="视图 (_V)">
+        <MenuItem Header="量化至网格 (_S)" IsCheckable="True"/>
+        <MenuItem Header="设置格线 (_G)" ItemsSource="{x:Static vc:RulerGrid.Quantizations}"/>
+        <!--<Separator/>
+        <MenuItem Header="显示音高曲线 (_P)" IsChecked="True" IsEnabled="False"/>
+        <MenuItem Header="显示非当前乐句 (_U)" IsChecked="True" IsEnabled="False"/>-->
+      </MenuItem>
+      <MenuItem Header="乐谱 (_C)">
+        <MenuItem Header="编辑节拍 (_B)"/>
+        <MenuItem Header="编辑速度 (_T)"/>
+        <Separator/>
+        <MenuItem Header="编辑音符歌词 (_L)" InputGestureText="Enter" Command="{x:Static vv:Commands.EditLyrics}"/>
+        <Separator/>
+        <MenuItem Header="设置乐句发音表 (_P)"/>
+        <MenuItem Header="设置乐句声库 (_V)"/>
+        <!--<Separator/>
+        <MenuItem Header="拆分乐句 (_S)"/>
+        <MenuItem Header="合并乐句 (_J)"/>-->
+      </MenuItem>
+      <MenuItem Header="音频 (_A)">
+        <MenuItem Header="合成 (_S)" InputGestureText="F5" Command="{x:Static vv:Commands.Synth}"/>
+        <MenuItem Header="重新合成 (_R)"                   Command="{x:Static vv:Commands.Resynth}"/>
+        <MenuItem Header="清除合成结果 (_C)"                Command="{x:Static vv:Commands.ClearSynth}"/>
+        <Separator/>
+        <MenuItem Header="播放 (_P)" InputGestureText="Space" Command="{x:Static vv:Commands.Play}"/>
+        <MenuItem Header="停止 (_O)" InputGestureText="Space" Command="{x:Static vv:Commands.Stop}"/>
+      </MenuItem>
+      <MenuItem Header="关于 (_H)">
+        <MenuItem Header="清华大学智能技术与系统国家重点实验室" IsEnabled="False"/>
+        <MenuItem Header="清华大学未来动漫·游戏技术兴趣团队" IsEnabled="False"/>
+        <Separator/>
+        <MenuItem Header="Project Vogen" IsEnabled="False"/>
+        <MenuItem Header="引擎：Doaz" IsEnabled="False"/>
+        <MenuItem Header="编辑器：Doaz" IsEnabled="False"/>
+      </MenuItem>
+    </Menu>
     <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
       <TextBlock Width="80" VerticalAlignment="Center">
         <TextBlock.Text>
@@ -44,11 +137,11 @@
           </MultiBinding>
         </TextBlock.Text>
       </TextBlock>
-      <Button x:Name="playButton" Content="播放"/>
-      <Button x:Name="stopButton" Content="停止"/>
+      <Button Content="播放" Command="{x:Static vv:Commands.Play}"/>
+      <Button Content="停止" Command="{x:Static vv:Commands.Stop}"/>
       <Separator/>
-      <Button x:Name="clearAllSynthButton" Content="清除合成结果"/>
-      <Button x:Name="synthButton" Content="合成"/>
+      <Button Content="清除合成结果" Command="{x:Static vv:Commands.ClearSynth}"/>
+      <Button Content="合成"        Command="{x:Static vv:Commands.Synth}"/>
       <Separator/>
       <ToggleButton x:Name="quantizeButton" Content="量化至网格" IsChecked="True"/>
       <ComboBox x:Name="quantizationDropDown" Width="80" SelectedIndex="3" ItemsSource="{x:Static vc:RulerGrid.Quantizations}">

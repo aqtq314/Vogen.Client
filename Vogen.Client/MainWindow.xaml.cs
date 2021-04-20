@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.FSharp.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,23 +25,47 @@ namespace Vogen.Client
         {
             InitializeComponent();
             noteChartEditPanel.Focus();
-
-            newButton.Click += (sender, e) => New();
-            openButton.Click += (sender, e) => Open();
-            saveButton.Click += (sender, e) => Save();
-            saveAsButton.Click += (sender, e) => SaveAs();
-
-            importButton.Click += (sender, e) => Import();
-            exportButton.Click += (sender, e) => Export();
-
-            undoButton.Click += (sender, e) => ProgramModel.Undo();
-            redoButton.Click += (sender, e) => ProgramModel.Redo();
-
-            playButton.Click += (sender, e) => ProgramModel.Play();
-            stopButton.Click += (sender, e) => ProgramModel.Stop();
-
-            clearAllSynthButton.Click += (sender, e) => ProgramModel.ClearAllSynth();
-            synthButton.Click += (sender, e) => ProgramModel.Synth(Dispatcher, "gloria");
         }
+
+        private void CanExecuteCmdUndo(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = ProgramModel.UndoRedoStack.CanUndo.Value;
+        private void CanExecuteCmdRedo(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = ProgramModel.UndoRedoStack.CanRedo.Value;
+        private void CanExecuteCmdSelectionHasLyric(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = ProgramModel.ActiveSelection.Value.SelectedNotes.Any(note => !note.IsHyphen);
+        private void CanExecuteCmdHasSelection(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = ProgramModel.ActiveSelection.Value.SelectedNotes.Count > 0;
+        private void CanExecuteCmdHasActiveUtt(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = OptionModule.IsSome(ProgramModel.ActiveSelection.Value.ActiveUtt);
+        private void CanExecuteCmdIsPlaying(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = ProgramModel.IsPlaying.Value;
+        private void CanExecuteCmdIsNotPlaying(object sender, CanExecuteRoutedEventArgs e) =>
+            e.CanExecute = !ProgramModel.IsPlaying.Value;
+
+        private void OnExecuteCmdNew(object sender, ExecutedRoutedEventArgs e) => New();
+        private void OnExecuteCmdOpen(object sender, ExecutedRoutedEventArgs e) => Open();
+        private void OnExecuteCmdSave(object sender, ExecutedRoutedEventArgs e) => Save();
+        private void OnExecuteCmdSaveAs(object sender, ExecutedRoutedEventArgs e) => SaveAs();
+        private void OnExecuteCmdImport(object sender, ExecutedRoutedEventArgs e) => Import();
+        private void OnExecuteCmdExport(object sender, ExecutedRoutedEventArgs e) => Export();
+        private void OnExecuteCmdExit(object sender, ExecutedRoutedEventArgs e) => Close();
+
+        private void OnExecuteCmdUndo(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Undo();
+        private void OnExecuteCmdRedo(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Redo();
+        private void OnExecuteCmdCut(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.CutSelectedNotes();
+        private void OnExecuteCmdCopy(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.CopySelectedNotes();
+        private void OnExecuteCmdPaste(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.Paste();
+        private void OnExecuteCmdDelete(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.DeleteSelectedNotes();
+        private void OnExecuteCmdSelectAll(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.SelectAll();
+        private void OnExecuteCmdBlurUtt(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.BlurUtt();
+
+        private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
+
+        private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher, "gloria");
+        private void OnExecuteCmdResynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Resynth(Dispatcher, "gloria");
+        private void OnExecuteCmdClearSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.ClearAllSynth();
+        private void OnExecuteCmdPlayStop(object sender, ExecutedRoutedEventArgs e) => ProgramModel.PlayOrStop();
+        private void OnExecuteCmdPlay(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Play();
+        private void OnExecuteCmdStop(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Stop();
     }
 }

@@ -154,6 +154,12 @@ type ProgramModel() as x =
         isPlaying |> Rp.set false
         x.PlaybackSyncCursorPos()
 
+    member x.PlayOrStop() =
+        if not !!isPlaying then
+            x.Play()
+        else
+            x.Stop()
+
     member x.ClearAllSynth() =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.Clear())
         compIsSaved |> Rp.set false
@@ -210,5 +216,9 @@ type ProgramModel() as x =
             if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
                 x.SynthUtt(dispatcher, singerName, utt, requestDelay)
                 requestDelay <- requestDelay + TimeSpan.FromSeconds 0.05
+
+    member x.Resynth(dispatcher, singerName) =
+        x.ClearAllSynth()
+        x.Synth(dispatcher, singerName)
 
 
