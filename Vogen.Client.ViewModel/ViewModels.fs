@@ -13,26 +13,37 @@ open System.Windows.Media
 open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
+open Vogen.Client.Romanization
 
 
 type ProgramModel() as x =
     let activeComp = rp Composition.Empty
-    let activeUttSynthCache = rp UttSynthCache.Empty
     let activeSelection = rp CompSelection.Empty
+    let activeUttSynthCache = rp UttSynthCache.Empty
     let undoRedoStack = UndoRedoStack()
+
+    let mutable suspendUttPanelSync = false
+    let uttPanelSingerId = rp Singer.defaultId
+    let uttPanelRomScheme = rp Romanizer.defaultId
+    do  (activeComp, activeSelection) |> Rpo.map2(fun comp selection -> comp, selection) |> Rpo.leaf(fun (comp, selection) ->
+            x.UpdateUttPanelValues(comp, selection))
+        uttPanelSingerId |> Rpo.leaf(fun singerId ->
+            x.SyncUttPanelEdits(singerId, !!uttPanelRomScheme))
+        uttPanelRomScheme |> Rpo.leaf(fun romScheme ->
+            x.SyncUttPanelEdits(!!uttPanelSingerId, romScheme))
 
     let compFilePathOp = rp None
     let compFileName = rp "Untitled.vog"
     let compIsSaved = rp true
 
-    static let latency = 80
-    static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
     let isPlaying = rp false
     let cursorPos = rp 0L
     do  CompositionTarget.Rendering.Add <| fun e ->
             if isPlaying.Value then
                 x.PlaybackSyncCursorPos()
 
+    static let latency = 80
+    static let latencyTimeSpan = TimeSpan.FromMilliseconds(float latency)
     let audioEngine = AudioPlaybackEngine()
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
@@ -41,15 +52,27 @@ type ProgramModel() as x =
     do  activeUttSynthCache |> Rpo.leaf(fun uttSynthCache ->
             audioEngine.UttSynthCache <- uttSynthCache)
 
+    member x.ActiveComp = activeComp :> ReactiveProperty<_>
+    member x.ActiveSelection = activeSelection
+    member x.ActiveUttSynthCache = activeUttSynthCache
+    member x.UndoRedoStack = undoRedoStack
+
+    member x.UttPanelSingerId = uttPanelSingerId
+    member x.UttPanelRomScheme = uttPanelRomScheme
+    member val UttPanelSingerIdWpf = MutableReactivePropertyWpfView(uttPanelSingerId)
+    member val UttPanelRomSchemeWpf = MutableReactivePropertyWpfView(uttPanelRomScheme)
+
     member val CompFilePathOp = compFilePathOp |> Rpo.map id
     member val CompFileName = compFileName |> Rpo.map id
     member x.CompIsSaved = compIsSaved
-    member x.ActiveComp = activeComp
-    member x.ActiveUttSynthCache = activeUttSynthCache
-    member x.ActiveSelection = activeSelection
-    member x.UndoRedoStack = undoRedoStack
+
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
+
+    member x.SetComp(comp, selection) =
+        use bulk = Rp.bulkSetter()
+        activeComp |> bulk.LockSetProp comp
+        activeSelection |> bulk.LockSetProp selection
 
     member x.OpenOrNew filePathOp =
         if isPlaying.Value then x.Stop()
@@ -60,9 +83,8 @@ type ProgramModel() as x =
                 use fileStream = File.OpenRead filePath
                 let comp, uttSynthCache = FilePackage.read fileStream
                 Path.GetFileName filePath, comp, uttSynthCache
-        activeComp |> Rp.set comp
+        x.SetComp(comp, CompSelection.Empty)
         activeUttSynthCache |> Rp.set uttSynthCache
-        activeSelection |> Rp.set CompSelection.Empty
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set filePathOp
         compFileName |> Rp.set fileName
@@ -86,16 +108,17 @@ type ProgramModel() as x =
                 FilePackage.read stream
             | ".vpr" ->
                 use stream = File.OpenRead filePath
-                let comp = External.loadVpr "gloria" "man" stream
+                let singerId = !!x.UttPanelSingerId
+                let romScheme = !!x.UttPanelRomScheme
+                let comp = External.loadVpr singerId romScheme stream
                 comp, UttSynthCache.Create comp.Bpm0
             | ext ->
                 raise(KeyNotFoundException($"Unknwon file extension {ext}"))
         let selection =
             CompSelection(None, ImmutableHashSet.CreateRange comp.AllNotes)
 
-        activeComp |> Rp.set comp
+        x.SetComp(comp, selection)
         activeUttSynthCache |> Rp.set uttSynthCache
-        activeSelection |> Rp.set selection
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set None
         compFileName |> Rp.set(Path.GetFileNameWithoutExtension filePath + ".vog")
@@ -115,16 +138,14 @@ type ProgramModel() as x =
         match undoRedoStack.TryPopUndo() with
         | None -> ()
         | Some(comp, selection) ->
-            activeComp |> Rp.set comp
-            activeSelection |> Rp.set selection
+            x.SetComp(comp, selection)
             compIsSaved |> Rp.set false
 
     member x.Redo() =
         match undoRedoStack.TryPopRedo() with
         | None -> ()
         | Some(comp, selection) ->
-            activeComp |> Rp.set comp
-            activeSelection |> Rp.set selection
+            x.SetComp(comp, selection)
             compIsSaved |> Rp.set false
 
     member x.ManualSetCursorPos newCursorPos =
@@ -220,5 +241,76 @@ type ProgramModel() as x =
     member x.Resynth dispatcher =
         x.ClearAllSynth()
         x.Synth dispatcher
+
+    // TODO: ugly two-way data sync
+    member val private PrevNonNullSingerId = !!uttPanelSingerId with get, set
+    member val private PrevNonNullRomScheme = !!uttPanelRomScheme with get, set
+    member x.UpdateUttPanelValues(comp, selection) =
+        if not suspendUttPanelSync then
+            suspendUttPanelSync <- true
+
+            let getDisplayValue fallback (values : seq<_>) =
+                let iter = values.GetEnumerator()
+                if not(iter.MoveNext()) then fallback   // 0 value
+                else
+                    let head = iter.Current
+                    if not(iter.MoveNext()) then head   // 1 value
+                    else null                           // 2+ values
+
+            let selectedUtts =
+                if selection.SelectedNotes.IsEmpty then Seq.empty else
+                    comp.Utts |> Seq.filter(fun utt -> Seq.exists selection.GetIsNoteSelected utt.Notes) |> Seq.cache
+            let editingUtts =
+                if not(Seq.isEmpty selectedUtts) then selectedUtts else
+                    selection.ActiveUtt |> Option.toArray :> _
+
+            do  use bulk = Rp.bulkSetter()
+                let newSingerId = editingUtts |> Seq.map(fun utt -> utt.SingerId) |> Seq.distinct |> getDisplayValue x.PrevNonNullSingerId
+                let newRomScheme = editingUtts |> Seq.map(fun utt -> utt.RomScheme) |> Seq.distinct |> getDisplayValue x.PrevNonNullRomScheme
+                uttPanelSingerId |> bulk.LockSetPropIfDiff newSingerId
+                uttPanelRomScheme |> bulk.LockSetPropIfDiff newRomScheme
+                if newSingerId <> null then x.PrevNonNullSingerId <- newSingerId
+                if newRomScheme <> null then x.PrevNonNullRomScheme <- newRomScheme
+
+            suspendUttPanelSync <- false
+
+    member x.SyncUttPanelEdits(singerId, romScheme) =
+        if not suspendUttPanelSync then
+            suspendUttPanelSync <- true
+
+            let comp = !!activeComp
+            let selection = !!activeSelection
+            let selectedUtts =
+                if selection.SelectedNotes.IsEmpty then Seq.empty else
+                    comp.Utts |> Seq.filter(fun utt -> Seq.exists selection.GetIsNoteSelected utt.Notes) |> Seq.cache
+            let editingUtts =
+                if not(Seq.isEmpty selectedUtts) then selectedUtts else
+                    selection.ActiveUtt |> Option.toArray :> _
+
+            let uttDiffDict =
+                ImmutableDictionary.CreateRange(
+                    editingUtts
+                    |> Seq.map(fun utt ->
+                        let newUtt =
+                            utt
+                            |> fun utt -> if singerId = null || utt.SingerId = singerId then utt else utt.SetSingerId singerId
+                            |> fun utt -> if romScheme = null || utt.RomScheme = romScheme then utt else utt.SetRomScheme romScheme
+                        KeyValuePair(utt, newUtt))
+                    |> Seq.filter(fun (KeyValue(utt, newUtt)) -> utt <> newUtt))
+
+            if uttDiffDict.Count > 0 then
+                let newComp = comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt))
+                let newSelection =
+                    let activeUtt = selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
+                    selection.SetActiveUtt activeUtt
+                x.SetComp(newComp, newSelection)
+
+                x.UndoRedoStack.PushUndo(
+                    EditUttPanelValue,
+                    (comp, selection),
+                    (!!x.ActiveComp, !!x.ActiveSelection))
+                x.CompIsSaved |> Rp.set false
+        
+            suspendUttPanelSync <- false
 
 

@@ -164,19 +164,18 @@
       </ComboBox>
       <Separator/>
       <TextBlock Text="声库" Margin="3 0 0 0" VerticalAlignment="Center"/>
-      <ComboBox Width="80" SelectedIndex="0" ItemsSource="{x:Static vo:VoiceBank.all}">
+      <ComboBox x:Name="singerIdDropDown" Width="60" SelectedItem="{Binding UttPanelSingerIdWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static vo:Singer.all}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <TextBlock Text="{Binding Converter={x:Static vc:TextResources.singerNameConverter}}"/>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ComboBox>
-      <Separator/>
       <TextBlock Text="发音词典" Margin="3 0 0 0" VerticalAlignment="Center"/>
-      <ComboBox Width="80" SelectedIndex="0" ItemsSource="{x:Static vr:Romanizer.all}">
+      <ComboBox x:Name="romSchemeDropDown" Width="80" SelectedItem="{Binding UttPanelRomSchemeWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static vr:Romanizer.allIds}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <TextBlock Text="{Binding Key, Converter={x:Static vc:TextResources.romSchemeNameConverter}}"/>
+            <TextBlock Text="{Binding Converter={x:Static vc:TextResources.romSchemeNameConverter}}"/>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ComboBox>

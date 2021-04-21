@@ -9,7 +9,7 @@ open System.Text
 open System.Text.RegularExpressions
 
 
-module VoiceBank =
+module Singer =
     let all = [|
         "gloria"
         "wonder"
@@ -19,4 +19,6 @@ module VoiceBank =
         "aquachord"
         "kiritan"
         "kurumi" |]
+
+    let defaultId = Seq.head all
 

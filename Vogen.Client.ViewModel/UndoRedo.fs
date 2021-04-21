@@ -17,6 +17,7 @@ type UndoNodeDescription =
     | CutNote
     | PasteNote
     | KeyboardNudgeNote
+    | EditUttPanelValue
 
 type IUndoNodeWriter<'a> =
     abstract UnpushUndo : unit -> unit

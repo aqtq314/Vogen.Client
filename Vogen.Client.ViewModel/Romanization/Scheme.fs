@@ -64,4 +64,8 @@ module Romanizer =
     let get romScheme =
         all.[romScheme].Value
 
+    let allIds = all.Keys
+
+    let defaultId = Seq.head all.Keys
+
 

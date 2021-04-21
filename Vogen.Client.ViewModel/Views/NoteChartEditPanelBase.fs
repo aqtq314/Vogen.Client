@@ -207,8 +207,8 @@ type NoteChartEditPanelBase() =
                             |> ImmutableDictionary.CreateRange
 
                         if noteDiffDict.Count = 0 then
-                            x.ProgramModel.ActiveComp |> Rp.set comp
-                            x.ProgramModel.ActiveSelection |> Rp.set(
+                            x.ProgramModel.SetComp(
+                                comp,
                                 selection.SetSelectedNotes(
                                     ImmutableHashSet.CreateRange(
                                         candidateLyricNotes
@@ -219,14 +219,14 @@ type NoteChartEditPanelBase() =
                             let newUtt =
                                 utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note ->
                                     noteDiffDict.GetOrDefault note note))
+                            let newSelectedNotes =
+                                ImmutableHashSet.CreateRange(
+                                    candidateLyricNotes
+                                    |> Seq.take(min matches.Count candidateLyricNotes.Length)
+                                    |> Seq.map(fun note -> noteDiffDict.GetOrDefault note note))
 
-                            x.ProgramModel.ActiveComp |> Rp.set(comp.SetUtts(comp.Utts.Replace(utt, newUtt)))
-                            x.ProgramModel.ActiveSelection |> Rp.set(
-                                let newSelectedNotes =
-                                    ImmutableHashSet.CreateRange(
-                                        candidateLyricNotes
-                                        |> Seq.take(min matches.Count candidateLyricNotes.Length)
-                                        |> Seq.map(fun note -> noteDiffDict.GetOrDefault note note))
+                            x.ProgramModel.SetComp(
+                                comp.SetUtts(comp.Utts.Replace(utt, newUtt)),
                                 CompSelection(Some newUtt, newSelectedNotes))
 
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -240,8 +240,7 @@ type NoteChartEditPanelBase() =
                         e.Handled <- true
 
                     | Key.Escape ->
-                        x.ProgramModel.ActiveComp |> Rp.set comp
-                        x.ProgramModel.ActiveSelection |> Rp.set selection
+                        x.ProgramModel.SetComp(comp, selection)
                         undoWriter.UnpushUndo()
                         x.LyricPopup.IsOpen <- false
                         x.Focus() |> ignore
@@ -308,8 +307,7 @@ type NoteChartEditPanelBase() =
                     comp.UpdateUtts(fun utts -> utts.AddRange otherClipUtts),
                     CompSelection(None, newSelectedNotes)
 
-            x.ProgramModel.ActiveComp |> Rp.set newComp
-            x.ProgramModel.ActiveSelection |> Rp.set newSelection
+            x.ProgramModel.SetComp(newComp, newSelection)
 
             x.ProgramModel.UndoRedoStack.PushUndo(
                 PasteNote, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -332,11 +330,10 @@ type NoteChartEditPanelBase() =
                     elif newNotes.Length = utt.Notes.Length then Some(KeyValuePair(utt, utt))
                     else Some(KeyValuePair(utt, utt.SetNotes newNotes)))
                 |> ImmutableDictionary.CreateRange
-            x.ProgramModel.ActiveComp |> Rp.set(
-                comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values))
-            x.ProgramModel.ActiveSelection |> Rp.set(
-                let activeUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
-                CompSelection(activeUtt, ImmutableHashSet.Empty))
+            let newActiveUtt = selection.ActiveUtt |> Option.bind(uttDelDict.TryGetValue >> Option.ofByRef)
+            x.ProgramModel.SetComp(
+                comp.SetUtts(ImmutableArray.CreateRange uttDelDict.Values),
+                CompSelection(newActiveUtt, ImmutableHashSet.Empty))
 
             x.ProgramModel.UndoRedoStack.PushUndo(
                 undoDesc, (comp, selection), (!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -498,18 +495,20 @@ type NoteChartEditPanelBase() =
 
                             let buildNewComp =
                                 match selection.ActiveUtt with
-                                | None -> fun note ->
-                                    let utt = Utterance("gloria", "man", ImmutableArray.Create(note : Note))
-                                    utt, comp.UpdateUtts(fun utts -> utts.Add utt)
-                                | Some activeUtt -> fun note ->
-                                    let utt = activeUtt.UpdateNotes(fun notes -> notes.Add note)
-                                    utt, comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, utt))
+                                | None ->
+                                    let singerId = !!x.ProgramModel.UttPanelSingerId
+                                    let romScheme = !!x.ProgramModel.UttPanelRomScheme
+                                    fun note ->
+                                        let utt = Utterance(singerId, romScheme, ImmutableArray.Create(note : Note))
+                                        utt, comp.UpdateUtts(fun utts -> utts.Add utt)
+                                | Some activeUtt ->
+                                    fun note ->
+                                        let utt = activeUtt.UpdateNotes(fun notes -> notes.Add note)
+                                        utt, comp.UpdateUtts(fun utts -> utts.Replace(activeUtt, utt))
 
                             let note = buildNewNote mousePulse mousePitch
                             let utt, comp = buildNewComp note
-                            x.ProgramModel.ActiveComp |> Rp.set comp
-                            x.ProgramModel.ActiveSelection |> Rp.set(
-                                CompSelection(Some utt, ImmutableHashSet.Create note))
+                            x.ProgramModel.SetComp(comp, CompSelection(Some utt, ImmutableHashSet.Create note))
 
                             MidiPlayback.playPitch note.Pitch
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -547,9 +546,7 @@ type NoteChartEditPanelBase() =
 
                             let note = buildNewNote mousePulse mouseDownNote.Pitch
                             let utt, comp = buildNewComp note
-                            x.ProgramModel.ActiveComp |> Rp.set comp
-                            x.ProgramModel.ActiveSelection |> Rp.set(
-                                CompSelection(Some utt, ImmutableHashSet.Create note))
+                            x.ProgramModel.SetComp(comp, CompSelection(Some utt, ImmutableHashSet.Create note))
 
                             MidiPlayback.playPitch note.Pitch
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -681,9 +678,8 @@ type NoteChartEditPanelBase() =
                                         let newNote = note.SetText(note.Lyric, rom, newMoreRoms)
                                         let newUtt = utt.SetNotes(utt.Notes.Replace(note, newNote))
 
-                                        x.ProgramModel.ActiveComp |> Rp.set(
-                                            comp.SetUtts(comp.Utts.Replace(utt, newUtt)))
-                                        x.ProgramModel.ActiveSelection |> Rp.set(
+                                        x.ProgramModel.SetComp(
+                                            comp.SetUtts(comp.Utts.Replace(utt, newUtt)),
                                             CompSelection(Some newUtt, ImmutableHashSet.Create newNote))
 
                                         x.ProgramModel.UndoRedoStack.PushUndo(
@@ -748,9 +744,7 @@ type NoteChartEditPanelBase() =
                     if (prevNote.On, prevNote.Off, prevNote.Pitch) <> (note.On, note.Off, note.Pitch) then
                         let utt, comp = buildNewComp note
 
-                        x.ProgramModel.ActiveComp |> Rp.set comp
-                        x.ProgramModel.ActiveSelection |> Rp.set(
-                            CompSelection(Some utt, ImmutableHashSet.Create note))
+                        x.ProgramModel.SetComp(comp, CompSelection(Some utt, ImmutableHashSet.Create note))
 
                         MidiPlayback.switchPitch prevNote.Pitch note.Pitch
                         undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
@@ -815,8 +809,7 @@ type NoteChartEditPanelBase() =
 
                     if (prevNote.On, prevNote.Off, prevNote.Pitch) <> (note.On, note.Off, note.Pitch) then
                         if deltaPulse = 0L && deltaDur = 0L && deltaPitch = 0 then
-                            x.ProgramModel.ActiveComp |> Rp.set comp
-                            x.ProgramModel.ActiveSelection |> Rp.set mouseDownSelection
+                            x.ProgramModel.SetComp(comp, mouseDownSelection)
                             MidiPlayback.switchPitch prevNote.Pitch note.Pitch
                             undoWriter.UnpushUndo()
 
@@ -829,12 +822,10 @@ type NoteChartEditPanelBase() =
                                 if utt.Notes |> Seq.forall(fun note -> not(noteDiffDict.ContainsKey note)) then utt else
                                     utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> noteDiffDict.GetOrDefault note note)))
 
-                            x.ProgramModel.ActiveComp |> Rp.set(
-                                comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt)))
-                            x.ProgramModel.ActiveSelection |> Rp.set(
-                                let activeUtt = mouseDownSelection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
-                                let selectedNotes = ImmutableHashSet.CreateRange noteDiffDict.Values
-                                CompSelection(activeUtt, selectedNotes))
+                            let newComp = comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt))
+                            let activeUtt = mouseDownSelection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
+                            let selectedNotes = ImmutableHashSet.CreateRange noteDiffDict.Values
+                            x.ProgramModel.SetComp(newComp, CompSelection(activeUtt, selectedNotes))
 
                             MidiPlayback.switchPitch prevNote.Pitch note.Pitch
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))

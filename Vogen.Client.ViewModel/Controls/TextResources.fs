@@ -69,10 +69,10 @@ let getContextMenuSetRom lyric rom =
     $"设置发音为 {rom}"
 
 let romSchemeNameConverter =
-    ValueConverter.Create getRomSchemeName
+    ValueConverter.Create(function | null | "" -> null | romScheme -> getRomSchemeName romScheme)
 
 let singerNameConverter =
-    ValueConverter.Create getSingerName
+    ValueConverter.Create(function | null | "" -> null | singerId -> getSingerName singerId)
 
 let quantizationDescriptionConverter =
     ValueConverter.Create getQuantizationDescription
