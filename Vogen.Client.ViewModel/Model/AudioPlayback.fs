@@ -42,14 +42,11 @@ module AudioSamples =
         let rec readBuffer() =
             let bytesRead = sampleReader.Read(buffer, 0, buffer.Length)
             if bytesRead > 0 then
-                sampleChunks.Add buffer.[..bytesRead]
+                sampleChunks.Add buffer.[..bytesRead - 1]
                 readBuffer()
         readBuffer()
 
-        let outSamples = Array.concat sampleChunks
-        outSamples.[^0] <- 0f
-
-        fileBytes, outSamples
+        fileBytes, Array.concat sampleChunks
 
     let loadFromFile filePath =
         use fileStream = File.OpenRead filePath
