@@ -52,6 +52,7 @@ type Utterance(singerId, romScheme, notes) =
     member x.Notes : ImmutableArray<Note> = notes
     member x.On = notes.[0].On
 
+    member x.Copy() = Utterance(singerId, romScheme, notes)
     member x.SetSingerId singerId = Utterance(singerId, romScheme, notes)
     member x.SetRomScheme romScheme = Utterance(singerId, romScheme, notes)
     member x.SetNotes notes = Utterance(singerId, romScheme, notes)

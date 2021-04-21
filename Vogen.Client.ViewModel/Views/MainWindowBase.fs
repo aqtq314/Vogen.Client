@@ -7,13 +7,17 @@ open FSharp.Linq
 open Microsoft.Win32
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.IO
 open System.Windows
 open System.Windows.Controls
+open System.Windows.Controls.Primitives
 open System.Windows.Input
 open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.ViewModel
+
+#nowarn "40"
 
 
 type MainWindowBase() =
@@ -32,6 +36,11 @@ type MainWindowBase() =
             raise(ArgumentException()))
 
     member x.ProgramModel = x.DataContext :?> ProgramModel
+
+    abstract TempoPopup : Popup
+    default x.TempoPopup = Unchecked.defaultof<_>
+    abstract TempoTextBox : TextBox
+    default x.TempoTextBox = Unchecked.defaultof<_>
 
     override x.OnClosing e =
         match x.AskSaveChanges() with
@@ -129,5 +138,83 @@ type MainWindowBase() =
         if dialogResult ?= true then
             let filePath = saveFileDialog.FileName
             x.ProgramModel.Export filePath }
+
+    member x.EditTempo() =
+        let comp = !!x.ProgramModel.ActiveComp
+        let selection = !!x.ProgramModel.ActiveSelection
+        let tempo = comp.Bpm0
+
+        //x.TempoPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
+        //x.TempoPopup.MinWidth <- xMax - xMin
+        if Mouse.Captured <> null then 
+            Mouse.Captured.ReleaseMouseCapture()
+        x.TempoPopup.IsOpen <- true
+
+        let initText = tempo.ToString()
+        x.TempoTextBox.Text <- initText
+        x.TempoTextBox.SelectAll()
+        x.TempoTextBox.Focus() |> ignore
+
+        //let selection = selection.SetSelectedNotes(ImmutableHashSet.CreateRange uttSelectedLyricNotes)
+        //x.ProgramModel.ActiveSelection |> Rp.set selection
+
+        let undoWriter =
+            x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                EditCompPanelValue, (comp, selection))
+
+        //let candidateLyricNotes =
+        //    ImmutableArray.CreateRange(seq {
+        //        yield! uttSelectedLyricNotes
+        //        yield! utt.Notes |> Seq.skipWhile((<>) uttSelectedLyricNotes.[^0]) |> Seq.skip 1
+        //            |> Seq.filter(fun note -> not note.IsHyphen) })
+
+        //Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
+
+        let rec eventUnsubscriber =
+            [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
+            |> Disposable.join id
+
+        and textChangeSubscriber = x.TempoTextBox.TextChanged.Subscribe(fun e ->
+            let tempoText = x.TempoTextBox.Text.Trim()
+            let newTempoOp = tempoText |> Double.TryParse |> Option.ofByRef
+
+            match newTempoOp with
+            | Some newTempo when newTempo |> betweenInc 40.0 300.0 ->
+                if tempo = newTempo then
+                    x.ProgramModel.SetComp(comp, selection)
+                    undoWriter.UnpushUndo()
+
+                else
+                    let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.Copy())
+                    let newComp = comp.SetBpm(newTempo).SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.[utt]))
+                    let newSelection = selection.SetActiveUtt(selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.[utt]))
+
+                    x.ProgramModel.SetComp(newComp, newSelection)
+                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.CompIsSaved |> Rp.set false
+            | _ ->
+                // TODO: Error prompt
+                ())
+
+        and keyDownSubscriber = x.TempoTextBox.KeyDown.Subscribe(fun e ->
+            match e.Key with
+            | Key.Enter ->
+                x.TempoPopup.IsOpen <- false
+                x.Focus() |> ignore
+                e.Handled <- true
+
+            | Key.Escape ->
+                x.ProgramModel.SetComp(comp, selection)
+                undoWriter.UnpushUndo()
+                x.TempoPopup.IsOpen <- false
+                x.Focus() |> ignore
+                e.Handled <- true
+
+            | _ -> ())
+
+        and popupClosedSubscriber = x.TempoPopup.Closed.Subscribe(fun e ->
+            eventUnsubscriber |> Disposable.dispose)
+
+        ()
 
 

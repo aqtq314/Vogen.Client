@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -26,6 +27,9 @@ namespace Vogen.Client
             InitializeComponent();
             noteChartEditPanel.Focus();
         }
+
+        public override Popup TempoPopup => tempoPopup;
+        public override TextBox TempoTextBox => tempoTextBox;
 
         private void CanExecuteCmdUndo(object sender, CanExecuteRoutedEventArgs e) =>
             e.CanExecute = ProgramModel.UndoRedoStack.CanUndo.Value;
@@ -61,6 +65,7 @@ namespace Vogen.Client
 
         private void OnExecuteCmdSetGrid(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.Quantization = (long)e.Parameter;
 
+        private void OnExecuteCmdEditTempo(object sender, ExecutedRoutedEventArgs e) => EditTempo();
         private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
 
         private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher);
