@@ -66,6 +66,7 @@ namespace Vogen.Client
         private void OnExecuteCmdSetGrid(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.Quantization = (long)e.Parameter;
 
         private void OnExecuteCmdEditTempo(object sender, ExecutedRoutedEventArgs e) => EditTempo();
+        private void OnExecuteCmdEditTimeSig(object sender, ExecutedRoutedEventArgs e) => EditTimeSig();
         private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
 
         private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher);

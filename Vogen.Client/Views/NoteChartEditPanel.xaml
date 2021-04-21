@@ -31,7 +31,8 @@
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
-        IsPlaying="{Binding IsPlaying.Value}"/>
+        IsPlaying="{Binding IsPlaying.Value}"
+        TimeSignature="{Binding ActiveComp.Value.TimeSig0}"/>
       <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"

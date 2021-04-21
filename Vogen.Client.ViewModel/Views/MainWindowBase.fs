@@ -158,15 +158,43 @@ type MainWindowBase() =
             match newTempoOp with
             | Some newTempo when newTempo |> betweenInc 40.0 300.0 ->
                 if newTempo = initTempo then
-                    x.ProgramModel.SetComp(comp, selection)
-                    undoWriter.UnpushUndo()
-
+                    revertChanges()
                 else
                     let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.Copy())
                     let newComp = comp.SetBpm(newTempo).SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.[utt]))
                     let newSelection = selection.SetActiveUtt(selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.[utt]))
 
                     x.ProgramModel.SetComp(newComp, newSelection)
+                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.CompIsSaved |> Rp.set false
+
+                Ok()
+
+            | _ ->
+                Error()
+
+    member x.EditTimeSig() =
+        let comp = !!x.ProgramModel.ActiveComp
+        let selection = !!x.ProgramModel.ActiveSelection
+        let initTimeSig = comp.TimeSig0
+
+        let undoWriter =
+            x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                EditCompPanelValue, (comp, selection))
+
+        let revertChanges() =
+            x.ProgramModel.SetComp(comp, selection)
+            undoWriter.UnpushUndo()
+
+        x.TimeSigPopup.Open(initTimeSig.ToString()) revertChanges <| fun timeSigText ->
+            let newTimeSigOp = timeSigText.Trim() |> TimeSignature.TryParse
+
+            match newTimeSigOp with
+            | Some newTimeSig ->
+                if newTimeSig = initTimeSig then
+                    revertChanges()
+                else
+                    x.ProgramModel.SetComp(comp.SetTimeSig(newTimeSig), selection)
                     undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                     x.ProgramModel.CompIsSaved |> Rp.set false
 

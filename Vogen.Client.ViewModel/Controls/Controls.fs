@@ -48,13 +48,6 @@ type NoteChartEditBase() =
     default x.CanScrollH = true
     default x.CanScrollV = true
 
-    member x.TimeSignature
-        with get() = x.GetValue NoteChartEditBase.TimeSignatureProperty :?> TimeSignature
-        and set(v : TimeSignature) = x.SetValue(NoteChartEditBase.TimeSignatureProperty, box v)
-    static member val TimeSignatureProperty =
-        Dp.reg<TimeSignature, NoteChartEditBase> "TimeSignature"
-            (Dp.Meta(timeSignature 4 4, Dp.MetaFlags.AffectsRender))
-
     member x.Quantization
         with get() = x.GetValue NoteChartEditBase.QuantizationProperty :?> int64
         and set(v : int64) = x.SetValue(NoteChartEditBase.QuantizationProperty, box v)
@@ -248,6 +241,13 @@ type RulerGrid() =
     //    let height = fontSize * fontFamily.LineSpacing + max majorTickHeight minorTickHeight
     //    Size(s.Width, height)
 
+    member x.TimeSignature
+        with get() = x.GetValue RulerGrid.TimeSignatureProperty :?> TimeSignature
+        and set(v : TimeSignature) = x.SetValue(RulerGrid.TimeSignatureProperty, box v)
+    static member val TimeSignatureProperty =
+        Dp.reg<TimeSignature, RulerGrid> "TimeSignature"
+            (Dp.Meta(timeSignature 4 4, Dp.MetaFlags.AffectsRender))
+
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
@@ -411,7 +411,6 @@ type ChartEditor() =
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
         let actualHeight = x.ActualHeight
-        let timeSig = x.TimeSignature
         let quantization = x.Quantization
         let quarterWidth = x.QuarterWidth
         let keyHeight = x.KeyHeight
@@ -460,6 +459,7 @@ type ChartEditor() =
                 dc.DrawRectangle(activeBackgroundBrush, null, Rect(xMin, yTop - half keyHeight, xMax - xMin, yBot - yTop + keyHeight))
 
         // time grids
+        let timeSig = comp.TimeSig0
         let measureHop =
             Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i)
             |> Seq.find(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)

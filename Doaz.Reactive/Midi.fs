@@ -3,6 +3,8 @@
 open Doaz.Reactive.Math
 open System
 open System.Collections.Generic
+open System.Text
+open System.Text.RegularExpressions
 
 
 module Midi =
@@ -41,11 +43,15 @@ module Midi =
 type TimeSignature(numerator, denominator) =
     inherit obj()
 
+    static let isValidNumerator numerator = numerator |> betweenInc 1 256
     static let allowedDenominators = [| 1; 2; 4; 8; 16; 32; 64; 128 |]
+
+    do  if not(isValidNumerator numerator) then
+            raise(ArgumentException(sprintf "TimeSignature numerator %d is not valid." numerator))
 
     let denominatorExp = Array.IndexOf(allowedDenominators, denominator)
     do  if denominatorExp < 0 then
-            raise(ArgumentException(sprintf "Denominator %d is not part of %A." denominator allowedDenominators))
+            raise(ArgumentException(sprintf "TimeSignature denominator %d is not part of %A." denominator allowedDenominators))
 
     static member AllowedDenominators = allowedDenominators
 
@@ -67,6 +73,23 @@ type TimeSignature(numerator, denominator) =
         numerator * 8 + denominatorExp
 
     override x.ToString() = sprintf "%d/%d" numerator (1 <<< denominatorExp)
+
+    static member TryParse timeSigStr =
+        let m = Regex.Match(timeSigStr, @"^\s*(?<num>[0-9]{1,3})\s*/\s*(?<denom>[0-9]{1,3})\s*$")
+        if m.Success then
+            let numerator = Int32.Parse m.Groups.["num"].Value
+            let denominator = Int32.Parse m.Groups.["denom"].Value
+            if isValidNumerator numerator && Array.IndexOf(allowedDenominators, denominator) >= 0 then
+                Some(TimeSignature(numerator, denominator))
+            else
+                None
+        else
+            None
+
+    static member Parse timeSigStr =
+        match TimeSignature.TryParse timeSigStr with
+        | Some timeSig -> timeSig
+        | None -> raise(FormatException($"Cannot parse time signature \"{timeSigStr}\"."))
 
 [<AutoOpen>]
 module TimeSignatureUtils =

@@ -42,6 +42,7 @@
     <CommandBinding Command="{x:Static vv:Commands.BlurUtt}"    Executed="OnExecuteCmdBlurUtt"    CanExecute="CanExecuteCmdHasActiveUtt"/>
     <CommandBinding Command="{x:Static vv:Commands.SetGrid}"    Executed="OnExecuteCmdSetGrid"/>
     <CommandBinding Command="{x:Static vv:Commands.EditTempo}"  Executed="OnExecuteCmdEditTempo"/>
+    <CommandBinding Command="{x:Static vv:Commands.EditTimeSig}"  Executed="OnExecuteCmdEditTimeSig"/>
     <CommandBinding Command="{x:Static vv:Commands.EditLyrics}" Executed="OnExecuteCmdEditLyrics" CanExecute="CanExecuteCmdSelectionHasLyric"/>
     <CommandBinding Command="{x:Static vv:Commands.Synth}"      Executed="OnExecuteCmdSynth"/>
     <CommandBinding Command="{x:Static vv:Commands.Resynth}"    Executed="OnExecuteCmdResynth"/>
