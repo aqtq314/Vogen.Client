@@ -100,17 +100,4 @@ module ChartConverters =
                 let p = if isNull p then 0.0 else Convert.ToDouble p
                 log2 linearValue + p))
 
-    let quantizationDescriptionConverter =
-        ValueConverter.Create TextResources.getQuantizationDescription
-
-    let pulseToStringFormatter =
-        ValueConverter.CreateMulti(fun vs ->
-            match vs with
-            | [| timeSig; pulses |] ->
-                let timeSig = timeSig |> unbox
-                let pulses = Convert.ToInt64 pulses
-                Midi.formatFull timeSig pulses
-            | _ ->
-                raise(ArgumentException()))
-
 

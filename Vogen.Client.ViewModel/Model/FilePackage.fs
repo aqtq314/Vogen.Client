@@ -35,17 +35,19 @@ module FilePackage =
     [<NoComparison; ReferenceEquality>]
     type FUtt = {
         [<JsonProperty("name", Required=Required.Always)>]      Name : string
+        [<JsonProperty("singerId", Required=Required.Default)>] SingerId : string
         [<JsonProperty("romScheme", Required=Required.Always)>] RomScheme : string
         [<JsonProperty("notes", Required=Required.Always)>]     Notes : FNote [] }
         with
         static member toUtt x =
-            let { Name = name; RomScheme = romScheme; Notes = fNotes } = x
+            let { Name = name; SingerId = singerId; RomScheme = romScheme; Notes = fNotes } = x
+            let singerId = if String.IsNullOrEmpty singerId then "gloria" else singerId
             let notes = ImmutableArray.CreateRange(Seq.map FNote.toNote fNotes)
-            Utterance(romScheme, notes), name
+            Utterance(singerId, romScheme, notes), name
 
         static member ofUtt uttName (utt : Utterance) =
             let fNotes = Array.ofSeq(Seq.map FNote.ofNote utt.Notes)
-            { Name = uttName; RomScheme = utt.RomScheme; Notes = fNotes }
+            { Name = uttName; SingerId = utt.SingerId; RomScheme = utt.RomScheme; Notes = fNotes }
 
     [<NoComparison; ReferenceEquality>]
     type FClip = {

@@ -17,7 +17,7 @@ open System.Text.Encodings
 
 
 module External =
-    let loadVpr romScheme stream =
+    let loadVpr singerId romScheme stream =
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Read)
         use seqStream = (zipFile.GetEntry @"Project\sequence.json").Open()
         use seqReader = new StreamReader(seqStream)
@@ -53,7 +53,7 @@ module External =
                 let dur = vprNote.["duration"].ToObject<int64>()
                 Note(pitch, lyric, rom, on, dur)))
             if notes.Length > 0 then
-                Some(Utterance(romScheme, notes))
+                Some(Utterance(singerId, romScheme, notes))
             else
                 None)
 

@@ -542,12 +542,13 @@ type ChartEditor() =
 
                 let ft =
                     let text = String.concat Environment.NewLine [|
-                        //$"Gloria"
+                        $"{TextResources.getSingerName utt.SingerId}"
                         $"({TextResources.getRomSchemeChar utt.RomScheme})" |]
                     x |> makeFormattedText text
                 ft.TextAlignment <- TextAlignment.Right
-                ft.SetFontSize(0.6 * TextBlock.GetFontSize x)
+                ft.SetFontSize(0.65 * TextBlock.GetFontSize x)
                 ft.SetForegroundBrush uttStyle.NotePen.Brush
+                //ft.SetFontWeight FontWeights.Bold
                 dc.DrawText(ft, Point(x0 - 8.0, yMid - half ft.Height))
 
         // waveform

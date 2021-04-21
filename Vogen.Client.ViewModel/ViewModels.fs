@@ -86,7 +86,7 @@ type ProgramModel() as x =
                 FilePackage.read stream
             | ".vpr" ->
                 use stream = File.OpenRead filePath
-                let comp = External.loadVpr "man" stream
+                let comp = External.loadVpr "gloria" "man" stream
                 comp, UttSynthCache.Create comp.Bpm0
             | ext ->
                 raise(KeyNotFoundException($"Unknwon file extension {ext}"))
@@ -164,7 +164,7 @@ type ProgramModel() as x =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.Clear())
         compIsSaved |> Rp.set false
 
-    member x.SynthUtt(dispatcher : Dispatcher, singerName, utt, [<Optional>] requestDelay) =
+    member x.SynthUtt(dispatcher : Dispatcher, utt, [<Optional>] requestDelay) =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                 uttSynthResult.SetIsSynthing true))
@@ -190,7 +190,7 @@ type ProgramModel() as x =
                                     uttSynthResult.SetF0Samples f0Samples))) |> ignore
                     // TODO: Not the best way to boost synth order
                     do! Async.Sleep(requestDelay : TimeSpan)
-                    let! audioContent = Synth.requestAc tChars f0Samples singerName
+                    let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId
                     dispatcher.BeginInvoke(fun () ->
                         activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                             utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
@@ -206,7 +206,7 @@ type ProgramModel() as x =
                             uttSynthResult.SetIsSynthing false))
                     compIsSaved |> Rp.set false) |> ignore }
 
-    member x.Synth(dispatcher, singerName) =
+    member x.Synth dispatcher =
         let comp = !!x.ActiveComp
         x.ActiveUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.SlimWith comp)
         let uttSynthCache = !!x.ActiveUttSynthCache
@@ -214,11 +214,11 @@ type ProgramModel() as x =
         for utt in comp.Utts do
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
-                x.SynthUtt(dispatcher, singerName, utt, requestDelay)
+                x.SynthUtt(dispatcher, utt, requestDelay)
                 requestDelay <- requestDelay + TimeSpan.FromSeconds 0.05
 
-    member x.Resynth(dispatcher, singerName) =
+    member x.Resynth dispatcher =
         x.ClearAllSynth()
-        x.Synth(dispatcher, singerName)
+        x.Synth dispatcher
 
 

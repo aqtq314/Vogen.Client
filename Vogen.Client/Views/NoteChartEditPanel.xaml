@@ -38,7 +38,7 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
-      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="18"
+      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="20"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"

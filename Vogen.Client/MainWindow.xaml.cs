@@ -63,8 +63,8 @@ namespace Vogen.Client
 
         private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
 
-        private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher, "gloria");
-        private void OnExecuteCmdResynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Resynth(Dispatcher, "gloria");
+        private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher);
+        private void OnExecuteCmdResynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Resynth(Dispatcher);
         private void OnExecuteCmdClearSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.ClearAllSynth();
         private void OnExecuteCmdPlayStop(object sender, ExecutedRoutedEventArgs e) => ProgramModel.PlayOrStop();
         private void OnExecuteCmdPlay(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Play();

@@ -499,7 +499,7 @@ type NoteChartEditPanelBase() =
                             let buildNewComp =
                                 match selection.ActiveUtt with
                                 | None -> fun note ->
-                                    let utt = Utterance("man", ImmutableArray.Create(note : Note))
+                                    let utt = Utterance("gloria", "man", ImmutableArray.Create(note : Note))
                                     utt, comp.UpdateUtts(fun utts -> utts.Add utt)
                                 | Some activeUtt -> fun note ->
                                     let utt = activeUtt.UpdateNotes(fun notes -> notes.Add note)

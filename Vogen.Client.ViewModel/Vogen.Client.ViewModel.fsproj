@@ -32,6 +32,7 @@
     <Compile Include="Romanization\Trie.fs" />
     <Compile Include="Romanization\Scheme.fs" />
     <Compile Include="Model\Utils.fs" />
+    <Compile Include="Model\VoiceBank.fs" />
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
     <Compile Include="Model\MidiPlayback.fs" />
