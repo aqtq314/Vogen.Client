@@ -81,10 +81,8 @@ type NoteChartEditPanelBase() =
     default x.HScrollZoom = Unchecked.defaultof<_>
     abstract VScrollZoom : ChartScrollZoomKitBase
     default x.VScrollZoom = Unchecked.defaultof<_>
-    abstract LyricPopup : Popup
+    abstract LyricPopup : TextBoxPopupBase
     default x.LyricPopup = Unchecked.defaultof<_>
-    abstract LyricTextBox : TextBox
-    default x.LyricTextBox = Unchecked.defaultof<_>
     abstract ChartEditorContextMenu : ContextMenu
     default x.ChartEditorContextMenu = Unchecked.defaultof<_>
 
@@ -141,9 +139,6 @@ type NoteChartEditPanelBase() =
                 let yMax = x.PitchToPixel(float minPitch) + half keyHeight
                 x.LyricPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
                 x.LyricPopup.MinWidth <- xMax - xMin
-                if Mouse.Captured <> null then 
-                    Mouse.Captured.ReleaseMouseCapture()
-                x.LyricPopup.IsOpen <- true
 
                 let initLyricText =
                     uttSelectedLyricNotes
@@ -152,9 +147,6 @@ type NoteChartEditPanelBase() =
                         lyricOrSpace + note.Rom)
                     |> String.concat ""
                     |> fun s -> s.TrimStart()
-                x.LyricTextBox.Text <- initLyricText
-                x.LyricTextBox.SelectAll()
-                x.LyricTextBox.Focus() |> ignore
 
                 let selection = selection.SetSelectedNotes(ImmutableHashSet.CreateRange uttSelectedLyricNotes)
                 x.ProgramModel.ActiveSelection |> Rp.set selection
@@ -171,12 +163,12 @@ type NoteChartEditPanelBase() =
 
                 Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
 
-                let rec eventUnsubscriber =
-                    [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
-                    |> Disposable.join id
+                let revertChanges() =
+                    x.ProgramModel.SetComp(comp, selection)
+                    undoWriter.UnpushUndo()
 
-                and textChangeSubscriber = x.LyricTextBox.TextChanged.Subscribe(fun e ->
-                    let lyricText = x.LyricTextBox.Text.Trim()
+                x.LyricPopup.Open initLyricText revertChanges <| fun lyricText ->
+                    let lyricText = lyricText.Trim()
 
                     let pChar = @"[\u3400-\u4DBF\u4E00-\u9FFF]"
                     let pAlphaNum = @"[A-Za-z0-9]"
@@ -189,7 +181,8 @@ type NoteChartEditPanelBase() =
                             lastCapture.Index + lastCapture.Length
                     if matchedCharCount <> lyricText.Length then
                         // TODO: Error prompt
-                        ()
+                        Error()
+
                     else
                         let noteLyrics = matches |> Seq.map(fun m -> m.Groups.["ch"].Value) |> Array.ofSeq
                         let noteRoms = matches |> Seq.map(fun m -> m.Groups.["rom"].Value) |> Array.ofSeq
@@ -230,28 +223,9 @@ type NoteChartEditPanelBase() =
                                 CompSelection(Some newUtt, newSelectedNotes))
 
                             undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
-                            x.ProgramModel.CompIsSaved |> Rp.set false)
+                            x.ProgramModel.CompIsSaved |> Rp.set false
 
-                and keyDownSubscriber = x.LyricTextBox.KeyDown.Subscribe(fun e ->
-                    match e.Key with
-                    | Key.Enter ->
-                        x.LyricPopup.IsOpen <- false
-                        x.Focus() |> ignore
-                        e.Handled <- true
-
-                    | Key.Escape ->
-                        x.ProgramModel.SetComp(comp, selection)
-                        undoWriter.UnpushUndo()
-                        x.LyricPopup.IsOpen <- false
-                        x.Focus() |> ignore
-                        e.Handled <- true
-
-                    | _ -> ())
-
-                and popupClosedSubscriber = x.LyricPopup.Closed.Subscribe(fun e ->
-                    eventUnsubscriber |> Disposable.dispose)
-
-                ()
+                        Ok()
 
     member x.CutSelectedNotes() =
         x.CopySelectedNotes()

@@ -28,8 +28,8 @@ namespace Vogen.Client
             noteChartEditPanel.Focus();
         }
 
-        public override Popup TempoPopup => tempoPopup;
-        public override TextBox TempoTextBox => tempoTextBox;
+        public override TextBoxPopupBase TempoPopup => tempoPopup;
+        public override TextBoxPopupBase TimeSigPopup => timeSigPopup;
 
         private void CanExecuteCmdUndo(object sender, CanExecuteRoutedEventArgs e) =>
             e.CanExecute = ProgramModel.UndoRedoStack.CanUndo.Value;

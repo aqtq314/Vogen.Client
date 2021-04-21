@@ -37,10 +37,10 @@ type MainWindowBase() =
 
     member x.ProgramModel = x.DataContext :?> ProgramModel
 
-    abstract TempoPopup : Popup
+    abstract TempoPopup : TextBoxPopupBase
     default x.TempoPopup = Unchecked.defaultof<_>
-    abstract TempoTextBox : TextBox
-    default x.TempoTextBox = Unchecked.defaultof<_>
+    abstract TimeSigPopup : TextBoxPopupBase
+    default x.TimeSigPopup = Unchecked.defaultof<_>
 
     override x.OnClosing e =
         match x.AskSaveChanges() with
@@ -142,45 +142,22 @@ type MainWindowBase() =
     member x.EditTempo() =
         let comp = !!x.ProgramModel.ActiveComp
         let selection = !!x.ProgramModel.ActiveSelection
-        let tempo = comp.Bpm0
-
-        //x.TempoPopup.PlacementRectangle <- Rect(xMin, yMin, xMax - xMin, yMax - yMin)
-        //x.TempoPopup.MinWidth <- xMax - xMin
-        if Mouse.Captured <> null then 
-            Mouse.Captured.ReleaseMouseCapture()
-        x.TempoPopup.IsOpen <- true
-
-        let initText = tempo.ToString()
-        x.TempoTextBox.Text <- initText
-        x.TempoTextBox.SelectAll()
-        x.TempoTextBox.Focus() |> ignore
-
-        //let selection = selection.SetSelectedNotes(ImmutableHashSet.CreateRange uttSelectedLyricNotes)
-        //x.ProgramModel.ActiveSelection |> Rp.set selection
+        let initTempo = comp.Bpm0
 
         let undoWriter =
             x.ProgramModel.UndoRedoStack.BeginPushUndo(
                 EditCompPanelValue, (comp, selection))
 
-        //let candidateLyricNotes =
-        //    ImmutableArray.CreateRange(seq {
-        //        yield! uttSelectedLyricNotes
-        //        yield! utt.Notes |> Seq.skipWhile((<>) uttSelectedLyricNotes.[^0]) |> Seq.skip 1
-        //            |> Seq.filter(fun note -> not note.IsHyphen) })
+        let revertChanges() =
+            x.ProgramModel.SetComp(comp, selection)
+            undoWriter.UnpushUndo()
 
-        //Task.Run(fun () -> Romanizer.get utt.RomScheme) |> ignore
-
-        let rec eventUnsubscriber =
-            [| textChangeSubscriber; keyDownSubscriber; popupClosedSubscriber |] 
-            |> Disposable.join id
-
-        and textChangeSubscriber = x.TempoTextBox.TextChanged.Subscribe(fun e ->
-            let tempoText = x.TempoTextBox.Text.Trim()
-            let newTempoOp = tempoText |> Double.TryParse |> Option.ofByRef
+        x.TempoPopup.Open(initTempo.ToString()) revertChanges <| fun tempoText ->
+            let newTempoOp = tempoText.Trim() |> Double.TryParse |> Option.ofByRef
 
             match newTempoOp with
             | Some newTempo when newTempo |> betweenInc 40.0 300.0 ->
-                if tempo = newTempo then
+                if newTempo = initTempo then
                     x.ProgramModel.SetComp(comp, selection)
                     undoWriter.UnpushUndo()
 
@@ -192,29 +169,10 @@ type MainWindowBase() =
                     x.ProgramModel.SetComp(newComp, newSelection)
                     undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
                     x.ProgramModel.CompIsSaved |> Rp.set false
+
+                Ok()
+
             | _ ->
-                // TODO: Error prompt
-                ())
-
-        and keyDownSubscriber = x.TempoTextBox.KeyDown.Subscribe(fun e ->
-            match e.Key with
-            | Key.Enter ->
-                x.TempoPopup.IsOpen <- false
-                x.Focus() |> ignore
-                e.Handled <- true
-
-            | Key.Escape ->
-                x.ProgramModel.SetComp(comp, selection)
-                undoWriter.UnpushUndo()
-                x.TempoPopup.IsOpen <- false
-                x.Focus() |> ignore
-                e.Handled <- true
-
-            | _ -> ())
-
-        and popupClosedSubscriber = x.TempoPopup.Closed.Subscribe(fun e ->
-            eventUnsubscriber |> Disposable.dispose)
-
-        ()
+                Error()
 
 

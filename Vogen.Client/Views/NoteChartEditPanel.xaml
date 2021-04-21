@@ -4,6 +4,7 @@
                            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                            xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                            xmlns:c="clr-namespace:Vogen.Client.Controls"
+                           xmlns:v="clr-namespace:Vogen.Client.Views"
                            xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
                            xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
                            xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
@@ -86,10 +87,7 @@
         Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-2, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=2, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
-      <Popup x:Name="lyricPopup" Grid.Row="1" Grid.Column="1" StaysOpen="False" AllowsTransparency="True"
-        PlacementTarget="{x:Reference chartEditor}">
-        <TextBox x:Name="lyricTextBox" FontSize="24"/>
-      </Popup>
+      <v:TextBoxPopup x:Name="lyricPopup" Grid.Row="1" Grid.Column="1" PlacementTarget="{x:Reference chartEditor}" TextBlock.FontSize="24"/>
     </Grid>
   </Border>
 </vv:NoteChartEditPanelBase>

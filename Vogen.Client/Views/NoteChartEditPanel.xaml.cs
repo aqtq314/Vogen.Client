@@ -26,8 +26,7 @@ namespace Vogen.Client.Views
         public override SideKeyboard SideKeyboard => sideKeyboard;
         public override ChartScrollZoomKitBase HScrollZoom => hScrollZoom;
         public override ChartScrollZoomKitBase VScrollZoom => vScrollZoom;
-        public override Popup LyricPopup => lyricPopup;
-        public override TextBox LyricTextBox => lyricTextBox;
+        public override TextBoxPopupBase LyricPopup => lyricPopup;
         public override ContextMenu ChartEditorContextMenu => chartEditorContextMenu;
 
         public NoteChartEditPanel()
