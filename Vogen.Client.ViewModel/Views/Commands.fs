@@ -27,6 +27,8 @@ let Delete = RoutedUICommand()
 let SelectAll = RoutedUICommand()
 let BlurUtt = RoutedUICommand()
 
+let SetGrid = RoutedUICommand()
+
 let EditTimeSig = RoutedUICommand()
 let EditTempo = RoutedUICommand()
 let EditLyrics = RoutedUICommand()

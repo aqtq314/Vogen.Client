@@ -59,6 +59,8 @@ namespace Vogen.Client
         private void OnExecuteCmdSelectAll(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.SelectAll();
         private void OnExecuteCmdBlurUtt(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.BlurUtt();
 
+        private void OnExecuteCmdSetGrid(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.Quantization = (long)e.Parameter;
+
         private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
 
         private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher, "gloria");
