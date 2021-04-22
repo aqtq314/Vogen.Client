@@ -169,6 +169,10 @@ type UttSynthCache(uttSynthResultDict) =
     static member val Empty = UttSynthCache(ImmutableDictionary.Empty)
     static member Create(bpm0 : float) = UttSynthCache(ImmutableDictionary.Empty)
 
+    member x.SetUttSynthResult uttSynthResult utt =
+        let uttSynthResultDict = uttSynthResultDict.SetItem(utt, uttSynthResult)
+        UttSynthCache(uttSynthResultDict)
+
     member x.UpdateUttSynthResult updateUttSynthResult utt =
         let uttSynthResultDict = uttSynthResultDict.SetItem(utt, updateUttSynthResult(x.GetOrDefault utt))
         UttSynthCache(uttSynthResultDict)

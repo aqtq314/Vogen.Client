@@ -56,10 +56,10 @@ module TimeTable =
             CharGrid(pitch, phs))
         |> Array.ofSeq
 
-    let ofUtt bpm0 (utt : Utterance) =
+    let ofUtt(utt : Utterance) =
         let allNotes = utt.Notes.ToList()
-        let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
-        let uttEnd = (float allNotes.[^0].Off |> Midi.toTimeSpan bpm0) + tailSil
+        let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan utt.Bpm0) - headSil
+        let uttEnd = (float allNotes.[^0].Off |> Midi.toTimeSpan utt.Bpm0) + tailSil
         let uttDur = uttEnd - uttStart
 
         // remove note with same onset-time
@@ -87,8 +87,8 @@ module TimeTable =
             charNotes
             |> Array.map(fun notes ->
                 let outNotes = ImmutableList.CreateRange(notes |> Seq.map(fun note ->
-                    let on = (float note.On |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
-                    let off = (float note.Off |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> int
+                    let on = (float note.On |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> int
+                    let off = (float note.Off |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> int
                     { Pitch = note.Pitch; On = on; Off = off }))
                 let ch = notes.[0].Lyric
                 let rom = notes.[0].Rom

@@ -209,58 +209,70 @@ type ProgramModel() as x =
         activeUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.Clear())
         compIsSaved |> Rp.set false
 
-    member x.SynthUtt(dispatcher : Dispatcher, utt, [<Optional>] requestDelay) =
-        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
-            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
-                uttSynthResult.SetIsSynthing true))
-        compIsSaved |> Rp.set false
-
-        let bpm0 = (!!activeComp).Bpm0
-        Async.Start <| async {
-            try try let tUtt = TimeTable.ofUtt bpm0 utt
-                    let! tChars = Synth.requestPO tUtt
-                    let charGrids = TimeTable.toCharGrids tChars
-                    dispatcher.BeginInvoke(fun () ->
-                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
-                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
-                                if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    compIsSaved |> Rp.set false
-                                    uttSynthResult.SetCharGrids charGrids))) |> ignore
-                    let! f0Samples = Synth.requestF0 tUtt tChars
-                    dispatcher.BeginInvoke(fun () ->
-                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
-                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
-                                if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    compIsSaved |> Rp.set false
-                                    uttSynthResult.SetF0Samples f0Samples))) |> ignore
-                    // TODO: Not the best way to boost synth order
-                    do! Async.Sleep(requestDelay : TimeSpan)
-                    let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId
-                    dispatcher.BeginInvoke(fun () ->
-                        activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
-                            utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
-                                if not uttSynthResult.IsSynthing then uttSynthResult else
-                                    compIsSaved |> Rp.set false
-                                    uttSynthResult.SetAudio audioContent))) |> ignore
-                with ex ->
-                    Trace.WriteLine ex
-            finally
-                dispatcher.BeginInvoke(fun () ->
+    member x.SynthUtt(dispatcher : Dispatcher) utt = async {
+        try try dispatcher.BeginInvoke(fun () ->
                     activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                         utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
-                            uttSynthResult.SetIsSynthing false))
-                    compIsSaved |> Rp.set false) |> ignore }
+                            uttSynthResult.SetIsSynthing true))
+                    compIsSaved |> Rp.set false) |> ignore
 
-    member x.Synth dispatcher =
+                let updateSynthResultInCache updateUttSynthResult utt =
+                    let success = dispatcher.Invoke(fun () ->
+                        let uttSynthCache = !!activeUttSynthCache
+                        let uttSynthResult = uttSynthCache.GetOrDefault utt
+                        if uttSynthResult.IsSynthing then
+                            compIsSaved |> Rp.set false
+                            activeUttSynthCache |> Rp.set(
+                                utt |> uttSynthCache.UpdateUttSynthResult updateUttSynthResult)
+                        uttSynthResult.IsSynthing)
+                    if not success then
+                        raise(OperationCanceledException("Utt requested for synth has already be changed."))
+
+                let tUtt = TimeTable.ofUtt utt
+                let! tChars = Synth.requestPO tUtt
+                let charGrids = TimeTable.toCharGrids tChars
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
+
+                let! f0Samples = Synth.requestF0 tUtt tChars
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
+
+                let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
+                return true
+
+            with ex ->
+                Trace.WriteLine ex
+                return false
+
+        finally
+            dispatcher.BeginInvoke(fun () ->
+                activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
+                    utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
+                        uttSynthResult.SetIsSynthing false))
+                compIsSaved |> Rp.set false) |> ignore }
+
+    // TODO: cancellation and multiple worker prevention
+    member x.Synth(dispatcher : Dispatcher) =
         let comp = !!x.ActiveComp
-        x.ActiveUttSynthCache |> Rp.modify(fun uttSynthCache -> uttSynthCache.SlimWith comp)
-        let uttSynthCache = !!x.ActiveUttSynthCache
-        let mutable requestDelay = TimeSpan.Zero
-        for utt in comp.Utts do
-            let uttSynthResult = uttSynthCache.GetOrDefault utt
-            if not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio then
-                x.SynthUtt(dispatcher, utt, requestDelay)
-                requestDelay <- requestDelay + TimeSpan.FromSeconds 0.05
+        let uttSynthCache = (!!x.ActiveUttSynthCache).SlimWith comp
+        x.ActiveUttSynthCache |> Rp.set uttSynthCache
+
+        List.ofSeq comp.Utts
+        |> fix(fun synthNext uttList -> async {
+            match uttList with
+            | [] -> ()
+            | utt :: uttListCont ->
+                let needSynth = dispatcher.Invoke(fun () ->
+                    let uttSynthCache = !!x.ActiveUttSynthCache
+                    let uttSynthResult = uttSynthCache.GetOrDefault utt
+                    not uttSynthResult.IsSynthing && not uttSynthResult.HasAudio)
+                if needSynth then
+                    let! success = utt |> x.SynthUtt dispatcher
+                    if success then
+                        return! synthNext uttListCont
+                else
+                    return! synthNext uttListCont })
+        |> Async.Start
 
     member x.Resynth dispatcher =
         x.ClearAllSynth()
