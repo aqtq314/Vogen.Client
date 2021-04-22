@@ -1044,7 +1044,7 @@ type NoteChartEditPanelBase() =
         x.ChartEditor.MouseWheel.Add(onMouseWheel x.ChartEditor)
         x.RulerGrid.MouseWheel.Add(onMouseWheel x.RulerGrid)
         x.SideKeyboard.MouseWheel.Add(onMouseWheel x.SideKeyboard)
-        x.BgAudioDisplay.MouseWheel.Add(onMouseWheel x.SideKeyboard)
+        x.BgAudioDisplay.MouseWheel.Add(onMouseWheel x.BgAudioDisplay)
 
         // playback cursor
         x.ChartEditor.CursorPositionChanged.Add <| fun (prevPlayPos, playPos) ->

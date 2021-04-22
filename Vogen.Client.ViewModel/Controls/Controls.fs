@@ -344,10 +344,10 @@ type BgAudioDisplay() =
                     sgc.PolyLineTo(waveformUpperContourPoints, true, false)
 
         if audioTrack.HasAudio then
-            let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
-                let samples = audioTrack.AudioSamples
-                let sampleOffset = audioTrack.SampleOffset
+            let samples = audioTrack.AudioSamples
+            let sampleOffset = audioTrack.SampleOffset
 
+            let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
                 let x0 = 0.0
                 let x1 = actualWidth
                 let yMid = half actualHeight
@@ -355,6 +355,10 @@ type BgAudioDisplay() =
                 sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (0.75 * actualHeight)
 
             dc.DrawGeometry(waveBrush, null, waveformGeometry)
+
+            let timeStr = pixelToSample 0.0 - sampleOffset |> Audio.sampleToTime |> sprintf "%A"
+            let ft = x |> makeFormattedText timeStr
+            dc.DrawText(ft, Point())
 
         else
             dc.DrawRectangle(waveBrush, null, Rect(0.0, half actualHeight - 0.5, actualWidth, 1.0))
