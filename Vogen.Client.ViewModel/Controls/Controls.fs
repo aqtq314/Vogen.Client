@@ -352,7 +352,7 @@ type BgAudioDisplay() =
                 let x1 = actualWidth
                 let yMid = half actualHeight
 
-                sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (0.75 * actualHeight)
+                sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (3.0 * actualHeight)
 
             dc.DrawGeometry(waveBrush, null, waveformGeometry)
 

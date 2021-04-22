@@ -193,7 +193,8 @@ module FilePackage =
             let fCompStr = JsonConvert.SerializeObjectFormatted fComp
             chartWriter.Write fCompStr
 
-        do  use fileStream = zipFile.CreateEntry("accom.bin", CompressionLevel.Fastest).Open()
+        if comp.BgAudio.HasAudio then
+            use fileStream = zipFile.CreateEntry("accom.bin", CompressionLevel.Fastest).Open()
             fileStream.Write(comp.BgAudio.AudioFileBytes, 0, comp.BgAudio.AudioFileBytes.Length)
 
         comp.Utts |> Seq.iter(fun utt ->
