@@ -74,7 +74,7 @@ type CharGrid(pitch, phs) =
     member x.Phs : PhonemeInterval [] = phs
 
 // TODO: use weak reference to avoid memory leak when saved in undo/redo
-type AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples) =
+type AudioTrack private(sampleOffset, hasAudio, audioFileBytes, audioSamples) =
     member x.SampleOffset : int = sampleOffset
     member x.HasAudio : bool = hasAudio
     member x.AudioFileBytes : byte [] = audioFileBytes
@@ -85,7 +85,10 @@ type AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples) =
 
     member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples)
     member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
-    member x.SetAudio(audioFileBytes, audioSamples) = AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
+    member x.SetAudio(audioFileBytes, audioSamples : _ []) =
+        for i in 0 .. audioSamples.Length - 1 do
+            audioSamples.[i] <- audioSamples.[i] * 0.5f
+        AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
 
     member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFileBytes, audioSamples)
 
