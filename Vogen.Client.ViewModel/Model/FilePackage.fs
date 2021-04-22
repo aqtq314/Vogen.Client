@@ -39,11 +39,11 @@ module FilePackage =
         [<JsonProperty("romScheme", Required=Required.Always)>] RomScheme : string
         [<JsonProperty("notes", Required=Required.Always)>]     Notes : FNote [] }
         with
-        static member toUtt x =
+        static member toUtt bpm0 x =
             let { Name = name; SingerId = singerId; RomScheme = romScheme; Notes = fNotes } = x
             let singerId = if String.IsNullOrEmpty singerId then "gloria" else singerId
             let notes = ImmutableArray.CreateRange(Seq.map FNote.toNote fNotes)
-            Utterance(singerId, romScheme, notes), name
+            Utterance(singerId, romScheme, bpm0, notes), name
 
         static member ofUtt uttName (utt : Utterance) =
             let fNotes = Array.ofSeq(Seq.map FNote.ofNote utt.Notes)
@@ -53,10 +53,10 @@ module FilePackage =
     type FClip = {
         [<JsonProperty("utts", Required=Required.Always)>] Utts : FUtt [] }
         with
-        static member toUtts refNoteOn x =
+        static member toUtts bpm0 refNoteOn x =
             let { Utts = fUtts } = x
             let uttAndNames = fUtts |> Array.map(fun fUtt ->
-                let utt, name = FUtt.toUtt fUtt
+                let utt, name = FUtt.toUtt bpm0 fUtt
                 let utt = utt.SetNotes(ImmutableArray.CreateRange(utt.Notes, fun note -> note.SetOn(note.On + refNoteOn)))
                 utt, name)
             let activeUttOp = uttAndNames |> Array.tryPick(fun (utt, name) -> if name = "active" then Some utt else None)
@@ -116,7 +116,7 @@ module FilePackage =
                 match timeSig0Str with
                 | null | "" -> timeSignature 4 4
                 | _ -> TimeSignature.Parse timeSig0Str
-            let uttsByNameDict = dict(Seq.map FUtt.toUtt fUtts)
+            let uttsByNameDict = dict(Seq.map(FUtt.toUtt bpm0)fUtts)
             let utts = ImmutableArray.CreateRange uttsByNameDict.Keys
             let getUttName utt = uttsByNameDict.[utt]
             Composition(timeSig0, bpm0, utts).SetBgAudioOffset accomOffset, getUttName
@@ -220,8 +220,8 @@ module FilePackage =
         let fClip = FClip.ofUtts refNoteOn activeUttOp otherUtts
         JsonConvert.SerializeObjectFormatted fClip
 
-    let ofClipboardText refNoteOn jStr =
+    let ofClipboardText bpm0 refNoteOn jStr =
         let fClip = JsonConvert.DeserializeObject<_> jStr
-        FClip.toUtts refNoteOn fClip
+        FClip.toUtts bpm0 refNoteOn fClip
 
 

@@ -42,21 +42,22 @@ type Note(pitch, lyric, rom, moreRoms, on, dur) =
         if onDiff <> 0 then onDiff
         else compare n1.Dur n2.Dur
 
-type Utterance(singerId, romScheme, notes) =
+type Utterance(singerId, romScheme, bpm0, notes) =
     let notes = (notes : ImmutableArray<Note>).Sort Note.CompareByPosition
     do  if notes.Length = 0 then
             raise(ArgumentException("An utterance must have notes.Length > 0"))
 
     member x.SingerId : string = singerId
     member x.RomScheme : string = romScheme
+    member x.Bpm0 : float = bpm0
     member x.Notes : ImmutableArray<Note> = notes
     member x.On = notes.[0].On
 
-    member x.Copy() = Utterance(singerId, romScheme, notes)
-    member x.SetSingerId singerId = Utterance(singerId, romScheme, notes)
-    member x.SetRomScheme romScheme = Utterance(singerId, romScheme, notes)
-    member x.SetNotes notes = Utterance(singerId, romScheme, notes)
-    member x.UpdateNotes updateNotes = Utterance(singerId, romScheme, updateNotes notes)
+    member x.SetSingerId singerId = Utterance(singerId, romScheme, bpm0, notes)
+    member x.SetRomScheme romScheme = Utterance(singerId, romScheme, bpm0, notes)
+    member x.SetBpm0 bpm0 = Utterance(singerId, romScheme, bpm0, notes)
+    member x.SetNotes notes = Utterance(singerId, romScheme, bpm0, notes)
+    member x.UpdateNotes updateNotes = Utterance(singerId, romScheme, bpm0, updateNotes notes)
 
     static member CompareByPosition(utt1 : Utterance)(utt2 : Utterance) =
         match compare utt1.On utt2.On with
@@ -102,10 +103,10 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
 
     static member Create sampleOffset = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
 
-    static member Create(bpm0, utt : Utterance) =
+    static member Create(utt : Utterance) =
         let sampleOffset =
             float utt.On
-            |> Midi.toTimeSpan bpm0
+            |> Midi.toTimeSpan utt.Bpm0
             |> (+) -headSil
             |> Audio.timeToSample
         UttSynthResult.Create sampleOffset
@@ -152,25 +153,23 @@ type Composition(timeSig0, bpm0, bgAudio, utts) =
     member x.UpdateBgAudioOffset updateBgAudioOffset = Composition(timeSig0, bpm0, bgAudio.UpdateSampleOffset updateBgAudioOffset, utts)
     member x.UpdateUtts updateUtts = Composition(timeSig0, bpm0, bgAudio, updateUtts utts)
 
-type UttSynthCache(bpm0, uttSynthResultDict) =
-    // TODO: move bpm dependency to inside utterance
-    member x.Bpm0 : float = bpm0
+type UttSynthCache(uttSynthResultDict) =
     member x.UttSynthResultDict : ImmutableDictionary<Utterance, UttSynthResult> = uttSynthResultDict
 
     member x.GetOrDefault utt =
         match uttSynthResultDict.TryGetValue utt with
         | true, uttSynthResult -> uttSynthResult
-        | false, _ -> UttSynthResult.Create(bpm0, utt)
+        | false, _ -> UttSynthResult.Create utt
 
-    static member val Empty = UttSynthCache(Composition.Empty.Bpm0, ImmutableDictionary.Empty)
-    static member Create(bpm0 : float) = UttSynthCache(bpm0, ImmutableDictionary.Empty)
+    static member val Empty = UttSynthCache(ImmutableDictionary.Empty)
+    static member Create(bpm0 : float) = UttSynthCache(ImmutableDictionary.Empty)
 
     member x.UpdateUttSynthResult updateUttSynthResult utt =
         let uttSynthResultDict = uttSynthResultDict.SetItem(utt, updateUttSynthResult(x.GetOrDefault utt))
-        UttSynthCache(bpm0, uttSynthResultDict)
+        UttSynthCache(uttSynthResultDict)
 
     member x.Clear() =
-        UttSynthCache(bpm0, ImmutableDictionary.Empty)
+        UttSynthCache(ImmutableDictionary.Empty)
 
     member x.SlimWith(comp : Composition) =
         let uttSynthResultDict =
@@ -178,7 +177,7 @@ type UttSynthCache(bpm0, uttSynthResultDict) =
                 match uttSynthResultDict.TryGetValue utt with
                 | false, _ -> None
                 | true, uttSynthResult -> Some(KeyValuePair(utt, uttSynthResult))))
-        UttSynthCache(bpm0, uttSynthResultDict)
+        UttSynthCache(uttSynthResultDict)
 
 type CompSelection(activeUtt, selectedNotes) =
     member x.ActiveUtt : Utterance option = activeUtt

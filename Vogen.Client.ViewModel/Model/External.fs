@@ -53,7 +53,7 @@ module External =
                 let dur = vprNote.["duration"].ToObject<int64>()
                 Note(pitch, lyric, rom, on, dur)))
             if notes.Length > 0 then
-                Some(Utterance(singerId, romScheme, notes))
+                Some(Utterance(singerId, romScheme, bpm0, notes))
             else
                 None)
 

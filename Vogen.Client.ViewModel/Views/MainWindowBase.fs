@@ -160,7 +160,7 @@ type MainWindowBase() =
                 if newTempo = initTempo then
                     revertChanges()
                 else
-                    let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.Copy())
+                    let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.SetBpm0 newTempo)
                     let newComp = comp.SetBpm(newTempo).SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.[utt]))
                     let newSelection = selection.SetActiveUtt(selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.[utt]))
 

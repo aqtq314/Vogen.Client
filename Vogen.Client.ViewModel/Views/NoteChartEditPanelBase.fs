@@ -264,7 +264,7 @@ type NoteChartEditPanelBase() =
 
             let clipboardText = Clipboard.GetText()
             let minNoteOn = x.QuantizeCeil comp.TimeSig0 (int64 hScrollValue)
-            let activeClipUttOp, otherClipUtts = FilePackage.ofClipboardText minNoteOn clipboardText
+            let activeClipUttOp, otherClipUtts = FilePackage.ofClipboardText comp.Bpm0 minNoteOn clipboardText
             let newSelectedNotes =
                 ImmutableHashSet.CreateRange(
                     Seq.append(Option.toArray activeClipUttOp) otherClipUtts
@@ -475,7 +475,7 @@ type NoteChartEditPanelBase() =
                                     let singerId = !!x.ProgramModel.UttPanelSingerId
                                     let romScheme = !!x.ProgramModel.UttPanelRomScheme
                                     fun note ->
-                                        let utt = Utterance(singerId, romScheme, ImmutableArray.Create(note : Note))
+                                        let utt = Utterance(singerId, romScheme, comp.Bpm0, ImmutableArray.Create(note : Note))
                                         utt, comp.UpdateUtts(fun utts -> utts.Add utt)
                                 | Some activeUtt ->
                                     fun note ->
