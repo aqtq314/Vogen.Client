@@ -8,6 +8,7 @@
                            xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
                            xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
                            xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
+                           xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
                            Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}"
                            mc:Ignorable="d" 
                            d:DesignHeight="450" d:DesignWidth="800"
@@ -24,19 +25,15 @@
         <RowDefinition/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="24.5"
+      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="54.5"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
-        VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
-        KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
         TimeSignature="{Binding ActiveComp.Value.TimeSig0}"/>
       <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
-        HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
-        QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
@@ -66,6 +63,16 @@
           </ContextMenu>
         </FrameworkElement.ContextMenu>
       </vc:ChartEditor>
+      <dc:BasicPanel Grid.Row="0" Grid.Column="0" Height="30" VerticalAlignment="Top">
+        <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
+          <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </dc:TrivialPanel>
+      </dc:BasicPanel>
+      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
+        HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
+        QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
+        Bpm0="{Binding ActiveComp.Value.Bpm0}"
+        AudioTrack="{Binding ActiveComp.Value.BgAudio}"/>
       <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"

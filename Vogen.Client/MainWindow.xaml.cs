@@ -69,6 +69,8 @@ namespace Vogen.Client
         private void OnExecuteCmdEditTimeSig(object sender, ExecutedRoutedEventArgs e) => EditTimeSig();
         private void OnExecuteCmdEditLyrics(object sender, ExecutedRoutedEventArgs e) => noteChartEditPanel.EditSelectedNoteLyrics();
 
+        private void OnExecuteCmdLoadAccom(object sender, ExecutedRoutedEventArgs e) => LoadAccom();
+        private void OnExecuteCmdClearAccom(object sender, ExecutedRoutedEventArgs e) => ProgramModel.ClearAccom();
         private void OnExecuteCmdSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Synth(Dispatcher);
         private void OnExecuteCmdResynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Resynth(Dispatcher);
         private void OnExecuteCmdClearSynth(object sender, ExecutedRoutedEventArgs e) => ProgramModel.ClearAllSynth();

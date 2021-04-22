@@ -203,4 +203,14 @@ type MainWindowBase() =
             | _ ->
                 Error()
 
+    member x.LoadAccom() =
+        try let openFileDialog =
+                OpenFileDialog(
+                    Filter = "Audio Files|*.*")
+            let dialogResult = openFileDialog.ShowDialog x
+            if dialogResult ?= true then
+                let filePath = openFileDialog.FileName
+                x.ProgramModel.LoadAccom filePath
+        with ex ->
+            x.ShowError ex
 

@@ -77,6 +77,8 @@ type NoteChartEditPanelBase() =
     default x.RulerGrid = Unchecked.defaultof<_>
     abstract SideKeyboard : SideKeyboard
     default x.SideKeyboard = Unchecked.defaultof<_>
+    abstract BgAudioDisplay : BgAudioDisplay
+    default x.BgAudioDisplay = Unchecked.defaultof<_>
     abstract HScrollZoom : ChartScrollZoomKitBase
     default x.HScrollZoom = Unchecked.defaultof<_>
     abstract VScrollZoom : ChartScrollZoomKitBase
@@ -954,6 +956,52 @@ type NoteChartEditPanelBase() =
 
             Behavior.agent(idle()))
 
+        x.BgAudioDisplay |> ChartMouseEvent.BindEvents(
+            let edit = x.BgAudioDisplay
+
+            let rec idle() = behavior {
+                match! () with
+                | ChartMouseDown e ->
+                    match e.ChangedButton with
+                    | MouseButton.Left ->
+                        let comp = !!x.ProgramModel.ActiveComp
+                        let selection = !!x.ProgramModel.ActiveSelection
+                        let mouseDownPos = e.GetPosition edit
+
+                        let undoWriter =
+                            x.ProgramModel.UndoRedoStack.BeginPushUndo(
+                                MoveBgAudio, (comp, selection))
+
+                        return! mouseDragging mouseDownPos comp selection undoWriter
+
+                    | _ -> return! idle()
+
+                | _ -> return! idle() }
+
+            and mouseDragging mouseDownPos comp selection undoWriter = behavior {
+                match! () with
+                | ChartMouseMove e ->
+                    let mousePos = e.GetPosition edit
+                    let mouseDownSamplePos = mouseDownPos.X |> x.PixelToPulse |> Audio.pulseToSample comp.Bpm0
+                    let mouseSamplePos     = mousePos.X     |> x.PixelToPulse |> Audio.pulseToSample comp.Bpm0
+
+                    let newComp = comp.UpdateBgAudioOffset(fun sampleOffset ->
+                        sampleOffset - mouseDownSamplePos + mouseSamplePos)
+                    x.ProgramModel.SetComp(newComp, !!x.ProgramModel.ActiveSelection)
+
+                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.CompIsSaved |> Rp.set false
+
+                    return! mouseDragging mouseDownPos comp selection undoWriter
+
+                | ChartMouseRelease e ->
+                    return! idle()
+
+                | _ ->
+                    return! mouseDragging mouseDownPos comp selection undoWriter }
+
+            Behavior.agent(idle()))
+
         // mouse wheel events
         let onMouseWheel(edit : NoteChartEditBase)(e : MouseWheelEventArgs) =
             if edit.CanScrollH then
@@ -996,6 +1044,7 @@ type NoteChartEditPanelBase() =
         x.ChartEditor.MouseWheel.Add(onMouseWheel x.ChartEditor)
         x.RulerGrid.MouseWheel.Add(onMouseWheel x.RulerGrid)
         x.SideKeyboard.MouseWheel.Add(onMouseWheel x.SideKeyboard)
+        x.BgAudioDisplay.MouseWheel.Add(onMouseWheel x.SideKeyboard)
 
         // playback cursor
         x.ChartEditor.CursorPositionChanged.Add <| fun (prevPlayPos, playPos) ->

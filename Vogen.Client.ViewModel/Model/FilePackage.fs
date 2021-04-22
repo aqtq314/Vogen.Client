@@ -105,20 +105,28 @@ module FilePackage =
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
-        [<JsonProperty("bpm0", Required=Required.Always)>]  Bpm0 : float
-        [<JsonProperty("utts", Required=Required.Always)>]  Utts : FUtt [] }
+        [<JsonProperty("timeSig0", Required=Required.Default)>]    TimeSig0 : string
+        [<JsonProperty("bpm0", Required=Required.Always)>]         Bpm0 : float
+        [<JsonProperty("accomOffset", Required=Required.Default)>] AccomOffset : int
+        [<JsonProperty("utts", Required=Required.Always)>]         Utts : FUtt [] }
         with
         static member toComp x =
-            let { Bpm0 = bpm0; Utts = fUtts } = x
+            let { TimeSig0 = timeSig0Str; Bpm0 = bpm0; AccomOffset = accomOffset; Utts = fUtts } = x
+            let timeSig0 =
+                match timeSig0Str with
+                | null | "" -> timeSignature 4 4
+                | _ -> TimeSignature.Parse timeSig0Str
             let uttsByNameDict = dict(Seq.map FUtt.toUtt fUtts)
             let utts = ImmutableArray.CreateRange uttsByNameDict.Keys
             let getUttName utt = uttsByNameDict.[utt]
-            Composition(bpm0, utts), getUttName
+            Composition(timeSig0, bpm0, utts).SetBgAudioOffset accomOffset, getUttName
 
         static member ofComp getUttName (comp : Composition) =
+            let timeSig0Str = comp.TimeSig0.ToString()
+            let accomOffset = comp.BgAudio.SampleOffset
             let uttNames = Seq.map getUttName comp.Utts
             let fUtts = Array.ofSeq(Seq.map2 FUtt.ofUtt uttNames comp.Utts)
-            { Bpm0 = comp.Bpm0; Utts = fUtts }
+            { TimeSig0 = timeSig0Str; Bpm0 = comp.Bpm0; AccomOffset = accomOffset; Utts = fUtts }
 
     let read stream =
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Read)
@@ -129,6 +137,14 @@ module FilePackage =
         let comp, getUttName = FComp.toComp fComp
 
         let zipEntryDict = zipFile.Entries.ToDictionary(fun entry -> entry.Name)
+        let comp =
+            match zipEntryDict.TryGetValue "accom.bin" |> Option.ofByRef with
+            | None -> comp
+            | Some audioEntry ->
+                use fileStream = audioEntry.Open()
+                let audioContent = AudioSamples.loadFromStream fileStream
+                comp.SetBgAudio(comp.BgAudio.SetAudio audioContent)
+
         let uttSynthCache =
             (UttSynthCache.Create comp.Bpm0, comp.Utts)
             ||> Seq.fold(fun uttSynthCache utt ->
@@ -176,6 +192,9 @@ module FilePackage =
             let fComp = FComp.ofComp getUttName comp
             let fCompStr = JsonConvert.SerializeObjectFormatted fComp
             chartWriter.Write fCompStr
+
+        do  use fileStream = zipFile.CreateEntry("accom.bin", CompressionLevel.Fastest).Open()
+            fileStream.Write(comp.BgAudio.AudioFileBytes, 0, comp.BgAudio.AudioFileBytes.Length)
 
         comp.Utts |> Seq.iter(fun utt ->
             let uttSynthResult = (uttSynthCache : UttSynthCache).GetOrDefault utt

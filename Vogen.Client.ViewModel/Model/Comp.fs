@@ -72,6 +72,22 @@ type CharGrid(pitch, phs) =
     member x.Pitch : int = pitch
     member x.Phs : PhonemeInterval [] = phs
 
+// TODO: use weak reference to avoid memory leak when saved in undo/redo
+type AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples) =
+    member x.SampleOffset : int = sampleOffset
+    member x.HasAudio : bool = hasAudio
+    member x.AudioFileBytes : byte [] = audioFileBytes
+    member x.AudioSamples : float32 [] = audioSamples
+
+    new(sampleOffset) = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
+    static member val Empty = AudioTrack(0, false, Array.empty, Array.empty)
+
+    member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples)
+    member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
+    member x.SetAudio(audioFileBytes, audioSamples) = AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
+
+    member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFileBytes, audioSamples)
+
 type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples) =
     member x.SampleOffset : int = sampleOffset
     member x.CharGrids : CharGrid [] = charGrids
@@ -112,54 +128,32 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.SetAudio(audioFileBytes, audioSamples) =
         UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
 
-type Composition(timeSig0, bpm0, utts) =
+type Composition(timeSig0, bpm0, bgAudio, utts) =
     let utts = (utts : ImmutableArray<_>).Sort Utterance.CompareByPosition
 
     member x.TimeSig0 : TimeSignature = timeSig0
     member x.Bpm0 : float = bpm0
+    member x.BgAudio : AudioTrack = bgAudio
     member x.Utts : ImmutableArray<Utterance> = utts
-    //member x.GetIsNoteSelected note = (selectedNotes : ImmutableHashSet<Note>).Contains note
-    //member x.GetUttSynthResult utt = (uttSynthResults : ImmutableDictionary<_, _>).[utt]
-
-    //new(timeSig0, bpm0, utts) =
-    //    let uttSynthResults = (utts : ImmutableArray<_>).ToImmutableDictionary(id, fun utt -> UttSynthResult.Create(bpm0, utt))
-    //    Composition(timeSig0, bpm0, utts, ImmutableHashSet.Empty, uttSynthResults)
 
     member x.AllNotes = utts |> Seq.collect(fun utt -> utt.Notes)
 
-    new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, utts)
-    static member val Empty = Composition(timeSignature 4 4, 120.0, ImmutableArray.Empty)
+    // TODO time signature
+    new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, AudioTrack.Empty, utts)
+    new(timeSig0, bpm0, utts) = Composition(timeSig0, bpm0, AudioTrack.Empty, utts)
+    static member val Empty = Composition(timeSignature 4 4, 120.0, AudioTrack.Empty, ImmutableArray.Empty)
 
-    member x.SetTimeSig timeSig0 = Composition(timeSig0, bpm0, utts)
-    member x.SetBpm bpm0 = Composition(timeSig0, bpm0, utts)
-    member x.SetUtts utts = Composition(timeSig0, bpm0, utts)
+    member x.SetTimeSig timeSig0 = Composition(timeSig0, bpm0, bgAudio, utts)
+    member x.SetBpm bpm0 = Composition(timeSig0, bpm0, bgAudio, utts)
+    member x.SetBgAudio bgAudio = Composition(timeSig0, bpm0, bgAudio, utts)
+    member x.SetBgAudioOffset bgAudioOffset = Composition(timeSig0, bpm0, bgAudio.SetSampleOffset bgAudioOffset, utts)
+    member x.SetUtts utts = Composition(timeSig0, bpm0, bgAudio, utts)
 
-    member x.UpdateUtts updateUtts = Composition(timeSig0, bpm0, updateUtts utts)
-
-    // TODO prevent adding identical notes more than once
-    //member x.SetUtts(utts : ImmutableArray<Utterance>, [<Optional; DefaultParameterValue(false)>] enforceStateConsistencies) =
-    //    let selectedNotes =
-    //        if not enforceStateConsistencies then selectedNotes else
-    //            selectedNotes.Intersect(utts |> Seq.collect(fun utt -> utt.Notes))
-    //    let uttSynthResults =
-    //        utts.ToImmutableDictionary(id, fun utt ->
-    //            uttSynthResults.TryGetValue utt
-    //            |> Option.ofByRef
-    //            |> Option.defaultWith(fun () -> UttSynthResult.Create(bpm0, utt)))
-    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
-
-    //member x.UpdateSelectedNotes updateSelectedNotes =
-    //    let selectedNotes = updateSelectedNotes selectedNotes
-    //    Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
-
-    //member x.UpdateUttSynthResult updateUttSynthResult utt =
-    //    match uttSynthResults.TryGetValue utt |> Option.ofByRef with
-    //    | None -> x
-    //    | Some uttSynthResult ->
-    //        let uttSynthResults = uttSynthResults.SetItem(utt, updateUttSynthResult uttSynthResult)
-    //        Composition(timeSig0, bpm0, utts, selectedNotes, uttSynthResults)
+    member x.UpdateBgAudioOffset updateBgAudioOffset = Composition(timeSig0, bpm0, bgAudio.UpdateSampleOffset updateBgAudioOffset, utts)
+    member x.UpdateUtts updateUtts = Composition(timeSig0, bpm0, bgAudio, updateUtts utts)
 
 type UttSynthCache(bpm0, uttSynthResultDict) =
+    // TODO: move bpm dependency to inside utterance
     member x.Bpm0 : float = bpm0
     member x.UttSynthResultDict : ImmutableDictionary<Utterance, UttSynthResult> = uttSynthResultDict
 

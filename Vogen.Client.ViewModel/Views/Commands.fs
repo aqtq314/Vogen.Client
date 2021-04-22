@@ -35,6 +35,8 @@ let EditLyrics = RoutedUICommand()
 let SetUttLanguage = RoutedUICommand()
 let SetUttSinger = RoutedUICommand()
 
+let LoadAccom = RoutedUICommand()
+let ClearAccom = RoutedUICommand()
 let Synth = RoutedUICommand()
 let Resynth = RoutedUICommand()
 let ClearSynth = RoutedUICommand()

@@ -24,6 +24,7 @@ namespace Vogen.Client.Views
         public override ChartEditorAdornerLayer ChartEditorAdornerLayer => chartEditorAdornerLayer;
         public override RulerGrid RulerGrid => rulerGrid;
         public override SideKeyboard SideKeyboard => sideKeyboard;
+        public override BgAudioDisplay BgAudioDisplay => bgAudioDisplay;
         public override ChartScrollZoomKitBase HScrollZoom => hScrollZoom;
         public override ChartScrollZoomKitBase VScrollZoom => vScrollZoom;
         public override TextBoxPopupBase LyricPopup => lyricPopup;

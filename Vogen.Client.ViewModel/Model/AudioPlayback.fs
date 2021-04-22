@@ -80,15 +80,17 @@ module AudioSamples =
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, uttSynthCache, buffer : float32 [], bufferOffset, bufferLength) =
         Array.Clear(buffer, bufferOffset, bufferLength * sizeof<float32>)
+        let inline fillBufferSamples(samples : _ []) sampleOffset =
+            let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
+            let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
+            for i in startIndex .. endIndex - 1 do
+                buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset]
         for utt in comp.Utts do
             let uttSynthResult : UttSynthResult = (uttSynthCache : UttSynthCache).GetOrDefault utt
             if uttSynthResult.HasAudio then
-                let samples = uttSynthResult.AudioSamples
-                let sampleOffset = uttSynthResult.SampleOffset
-                let startIndex = max playbackSamplePos sampleOffset - playbackSamplePos
-                let endIndex = min(playbackSamplePos + bufferLength)(sampleOffset + samples.Length) - playbackSamplePos
-                for i in startIndex .. endIndex - 1 do
-                    buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset]
+                fillBufferSamples uttSynthResult.AudioSamples uttSynthResult.SampleOffset
+        if comp.BgAudio.HasAudio then
+            fillBufferSamples comp.BgAudio.AudioSamples comp.BgAudio.SampleOffset
 
 type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0

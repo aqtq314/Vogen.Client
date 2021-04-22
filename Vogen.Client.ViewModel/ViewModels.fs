@@ -164,6 +164,30 @@ type ProgramModel() as x =
             |> Midi.ofTimeSpan((!!activeComp).Bpm0) |> round |> int64
         cursorPos |> Rp.set newCursorPos
 
+    member x.LoadAccom audioFile =
+        let audioContent = AudioSamples.loadFromFile audioFile
+        let comp = !!x.ActiveComp
+        let selection = !!x.ActiveSelection
+        x.SetComp(comp.SetBgAudio(comp.BgAudio.SetAudio(audioContent).SetSampleOffset 0), selection)
+
+        x.UndoRedoStack.PushUndo(
+            LoadBgAudio,
+            (comp, selection),
+            (!!x.ActiveComp, !!x.ActiveSelection))
+        x.CompIsSaved |> Rp.set false
+
+    member x.ClearAccom() =
+        let comp = !!x.ActiveComp
+        let selection = !!x.ActiveSelection
+        if comp.BgAudio.HasAudio then
+            x.SetComp(comp.SetBgAudio(comp.BgAudio.SetNoAudio().SetSampleOffset 0), selection)
+
+            x.UndoRedoStack.PushUndo(
+                ClearBgAudio,
+                (comp, selection),
+                (!!x.ActiveComp, !!x.ActiveSelection))
+            x.CompIsSaved |> Rp.set false
+
     member x.Play() =
         waveOut.Play()
         isPlaying |> Rp.set true

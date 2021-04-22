@@ -229,18 +229,6 @@ type RulerGrid() =
     
     override x.CanScrollV = false
 
-    //override x.MeasureOverride s =
-    //    let fontFamily = TextBlock.GetFontFamily x
-    //    let fontSize = TextBlock.GetFontSize x
-    //    let height = fontSize * fontFamily.LineSpacing + max majorTickHeight minorTickHeight
-    //    Size(zeroIfInf s.Width, height)
-
-    //override x.ArrangeOverride s =
-    //    let fontFamily = TextBlock.GetFontFamily x
-    //    let fontSize = TextBlock.GetFontSize x
-    //    let height = fontSize * fontFamily.LineSpacing + max majorTickHeight minorTickHeight
-    //    Size(s.Width, height)
-
     member x.TimeSignature
         with get() = x.GetValue RulerGrid.TimeSignatureProperty :?> TimeSignature
         and set(v : TimeSignature) = x.SetValue(RulerGrid.TimeSignatureProperty, box v)
@@ -285,6 +273,91 @@ type RulerGrid() =
                 let halfTextWidth = half ft.Width
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
                     dc.DrawText(ft, new Point(xPos - halfTextWidth, actualHeight - ft.Height - majorTickHeight))
+
+type BgAudioDisplay() =
+    inherit NoteChartEditBase()
+
+    let bgBrush = Brushes.Transparent
+    let waveBrush = SolidColorBrush(aRgb 0x80 0) |>! freeze
+
+    override x.CanScrollV = false
+
+    member x.Bpm0
+        with get() = x.GetValue BgAudioDisplay.Bpm0Property :?> float
+        and set(v : float) = x.SetValue(BgAudioDisplay.Bpm0Property, box v)
+    static member val Bpm0Property =
+        Dp.reg<float, BgAudioDisplay> "Bpm0"
+            (Dp.Meta(120.0, Dp.MetaFlags.AffectsRender, (fun (x : BgAudioDisplay) -> x.OnBpm0Changed)))
+    member x.OnBpm0Changed(prevValue, value) = ()
+
+    member x.AudioTrack
+        with get() = x.GetValue BgAudioDisplay.AudioTrackProperty :?> AudioTrack
+        and set(v : AudioTrack) = x.SetValue(BgAudioDisplay.AudioTrackProperty, box v)
+    static member val AudioTrackProperty =
+        Dp.reg<AudioTrack, BgAudioDisplay> "AudioTrack"
+            (Dp.Meta(AudioTrack.Empty, Dp.MetaFlags.AffectsRender, (fun (x : BgAudioDisplay) -> x.OnAudioTrackChanged)))
+    member x.OnAudioTrackChanged(prevValue, value) = ()
+
+    override x.OnRender dc =
+        let actualWidth = x.ActualWidth
+        let actualHeight = x.ActualHeight
+        let quarterWidth = x.QuarterWidth
+        let hOffset = x.HOffsetAnimated
+        let bpm0 = x.Bpm0
+        let audioTrack = x.AudioTrack
+
+        dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
+        dc.DrawRectangle(bgBrush, null, Rect(Size(actualWidth, actualHeight)))
+
+        let minWaveformSamplesPerFrame = 100
+        let frameRadius = half(max 1.0 (Audio.sampleToPulse bpm0 minWaveformSamplesPerFrame |> pulseToPixel quarterWidth 0.0))
+        let inline pixelToSample x = x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0
+        let inline sampleToPixel si = si |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset
+        let drawWaveformGeometry(samples : _ []) sampleOffset x0 x1 yMid yOffset yScale (sgc : StreamGeometryContext) =
+            if x0 < x1 then
+                let inline getFrameDrawPoints x =
+                    let si0 = pixelToSample(x - frameRadius) - sampleOffset |> clamp 0 (samples.Length - 1)
+                    let si1 = pixelToSample(x + frameRadius) - sampleOffset |> min samples.Length
+                    let mutable sMin : float32 = samples.[si0]
+                    let mutable sMax : float32 = samples.[si0]
+                    for si in si0 + 1 .. si1 - 1 do
+                        sMin <- min sMin samples.[si]
+                        sMax <- max sMax samples.[si]
+                    Point(x, yMid - float sMin * yScale - float(sign sMin) * yOffset + 0.5),
+                    Point(x, yMid - float sMax * yScale - float(sign sMax) * yOffset - 0.5)
+
+                let waveformLowerContourPoints = List()
+                let waveformUpperContourPoints = List()
+                for x in x0 .. frameRadius * 2.0 .. x1 do
+                    let pMin, pMax = getFrameDrawPoints x
+                    waveformLowerContourPoints.Add pMin
+                    waveformUpperContourPoints.Add pMax
+
+                if waveformLowerContourPoints.Count > 0 then
+                    let pMin, pMax = getFrameDrawPoints x1
+                    sgc.BeginFigure(pMin, true, true)
+
+                    waveformLowerContourPoints.Reverse()
+                    sgc.PolyLineTo(waveformLowerContourPoints, true, false)
+
+                    waveformUpperContourPoints.Add pMax
+                    sgc.PolyLineTo(waveformUpperContourPoints, true, false)
+
+        if audioTrack.HasAudio then
+            let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
+                let samples = audioTrack.AudioSamples
+                let sampleOffset = audioTrack.SampleOffset
+
+                let x0 = 0.0
+                let x1 = actualWidth
+                let yMid = half actualHeight
+
+                sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (0.75 * actualHeight)
+
+            dc.DrawGeometry(waveBrush, null, waveformGeometry)
+
+        else
+            dc.DrawRectangle(waveBrush, null, Rect(0.0, half actualHeight - 0.5, actualWidth, 1.0))
 
 type ChartEditor() =
     inherit NoteChartEditBase()

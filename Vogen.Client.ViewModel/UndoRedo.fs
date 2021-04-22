@@ -17,6 +17,9 @@ type UndoNodeDescription =
     | CutNote
     | PasteNote
     | KeyboardNudgeNote
+    | LoadBgAudio
+    | ClearBgAudio
+    | MoveBgAudio
     | EditUttPanelValue
     | EditCompPanelValue
 

@@ -25,31 +25,33 @@
     <vm:ProgramModel/>
   </FrameworkElement.DataContext>
   <UIElement.CommandBindings>
-    <CommandBinding Command="{x:Static vv:Commands.New}"        Executed="OnExecuteCmdNew"/>
-    <CommandBinding Command="{x:Static vv:Commands.Open}"       Executed="OnExecuteCmdOpen"/>
-    <CommandBinding Command="{x:Static vv:Commands.Save}"       Executed="OnExecuteCmdSave"/>
-    <CommandBinding Command="{x:Static vv:Commands.SaveAs}"     Executed="OnExecuteCmdSaveAs"/>
-    <CommandBinding Command="{x:Static vv:Commands.Import}"     Executed="OnExecuteCmdImport"/>
-    <CommandBinding Command="{x:Static vv:Commands.Export}"     Executed="OnExecuteCmdExport"/>
-    <CommandBinding Command="{x:Static vv:Commands.Exit}"       Executed="OnExecuteCmdExit"/>
-    <CommandBinding Command="{x:Static vv:Commands.Undo}"       Executed="OnExecuteCmdUndo"       CanExecute="CanExecuteCmdUndo"/>
-    <CommandBinding Command="{x:Static vv:Commands.Redo}"       Executed="OnExecuteCmdRedo"       CanExecute="CanExecuteCmdRedo"/>
-    <CommandBinding Command="{x:Static vv:Commands.Cut}"        Executed="OnExecuteCmdCut"        CanExecute="CanExecuteCmdHasSelection"/>
-    <CommandBinding Command="{x:Static vv:Commands.Copy}"       Executed="OnExecuteCmdCopy"       CanExecute="CanExecuteCmdHasSelection"/>
-    <CommandBinding Command="{x:Static vv:Commands.Paste}"      Executed="OnExecuteCmdPaste"/>
-    <CommandBinding Command="{x:Static vv:Commands.Delete}"     Executed="OnExecuteCmdDelete"     CanExecute="CanExecuteCmdHasSelection"/>
-    <CommandBinding Command="{x:Static vv:Commands.SelectAll}"  Executed="OnExecuteCmdSelectAll"/>
-    <CommandBinding Command="{x:Static vv:Commands.BlurUtt}"    Executed="OnExecuteCmdBlurUtt"    CanExecute="CanExecuteCmdHasActiveUtt"/>
-    <CommandBinding Command="{x:Static vv:Commands.SetGrid}"    Executed="OnExecuteCmdSetGrid"/>
-    <CommandBinding Command="{x:Static vv:Commands.EditTempo}"  Executed="OnExecuteCmdEditTempo"/>
-    <CommandBinding Command="{x:Static vv:Commands.EditTimeSig}"  Executed="OnExecuteCmdEditTimeSig"/>
-    <CommandBinding Command="{x:Static vv:Commands.EditLyrics}" Executed="OnExecuteCmdEditLyrics" CanExecute="CanExecuteCmdSelectionHasLyric"/>
-    <CommandBinding Command="{x:Static vv:Commands.Synth}"      Executed="OnExecuteCmdSynth"/>
-    <CommandBinding Command="{x:Static vv:Commands.Resynth}"    Executed="OnExecuteCmdResynth"/>
-    <CommandBinding Command="{x:Static vv:Commands.ClearSynth}" Executed="OnExecuteCmdClearSynth"/>
-    <CommandBinding Command="{x:Static vv:Commands.PlayStop}"   Executed="OnExecuteCmdPlayStop"/>
-    <CommandBinding Command="{x:Static vv:Commands.Play}"       Executed="OnExecuteCmdPlay"       CanExecute="CanExecuteCmdIsNotPlaying"/>
-    <CommandBinding Command="{x:Static vv:Commands.Stop}"       Executed="OnExecuteCmdStop"       CanExecute="CanExecuteCmdIsPlaying"/>
+    <CommandBinding Command="{x:Static vv:Commands.New}"         Executed="OnExecuteCmdNew"/>
+    <CommandBinding Command="{x:Static vv:Commands.Open}"        Executed="OnExecuteCmdOpen"/>
+    <CommandBinding Command="{x:Static vv:Commands.Save}"        Executed="OnExecuteCmdSave"/>
+    <CommandBinding Command="{x:Static vv:Commands.SaveAs}"      Executed="OnExecuteCmdSaveAs"/>
+    <CommandBinding Command="{x:Static vv:Commands.Import}"      Executed="OnExecuteCmdImport"/>
+    <CommandBinding Command="{x:Static vv:Commands.Export}"      Executed="OnExecuteCmdExport"/>
+    <CommandBinding Command="{x:Static vv:Commands.Exit}"        Executed="OnExecuteCmdExit"/>
+    <CommandBinding Command="{x:Static vv:Commands.Undo}"        Executed="OnExecuteCmdUndo"       CanExecute="CanExecuteCmdUndo"/>
+    <CommandBinding Command="{x:Static vv:Commands.Redo}"        Executed="OnExecuteCmdRedo"       CanExecute="CanExecuteCmdRedo"/>
+    <CommandBinding Command="{x:Static vv:Commands.Cut}"         Executed="OnExecuteCmdCut"        CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.Copy}"        Executed="OnExecuteCmdCopy"       CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.Paste}"       Executed="OnExecuteCmdPaste"/>
+    <CommandBinding Command="{x:Static vv:Commands.Delete}"      Executed="OnExecuteCmdDelete"     CanExecute="CanExecuteCmdHasSelection"/>
+    <CommandBinding Command="{x:Static vv:Commands.SelectAll}"   Executed="OnExecuteCmdSelectAll"/>
+    <CommandBinding Command="{x:Static vv:Commands.BlurUtt}"     Executed="OnExecuteCmdBlurUtt"    CanExecute="CanExecuteCmdHasActiveUtt"/>
+    <CommandBinding Command="{x:Static vv:Commands.SetGrid}"     Executed="OnExecuteCmdSetGrid"/>
+    <CommandBinding Command="{x:Static vv:Commands.EditTempo}"   Executed="OnExecuteCmdEditTempo"/>
+    <CommandBinding Command="{x:Static vv:Commands.EditTimeSig}" Executed="OnExecuteCmdEditTimeSig"/>
+    <CommandBinding Command="{x:Static vv:Commands.EditLyrics}"  Executed="OnExecuteCmdEditLyrics" CanExecute="CanExecuteCmdSelectionHasLyric"/>
+    <CommandBinding Command="{x:Static vv:Commands.LoadAccom}"   Executed="OnExecuteCmdLoadAccom"/>
+    <CommandBinding Command="{x:Static vv:Commands.ClearAccom}"  Executed="OnExecuteCmdClearAccom"/>
+    <CommandBinding Command="{x:Static vv:Commands.Synth}"       Executed="OnExecuteCmdSynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.Resynth}"     Executed="OnExecuteCmdResynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.ClearSynth}"  Executed="OnExecuteCmdClearSynth"/>
+    <CommandBinding Command="{x:Static vv:Commands.PlayStop}"    Executed="OnExecuteCmdPlayStop"/>
+    <CommandBinding Command="{x:Static vv:Commands.Play}"        Executed="OnExecuteCmdPlay"       CanExecute="CanExecuteCmdIsNotPlaying"/>
+    <CommandBinding Command="{x:Static vv:Commands.Stop}"        Executed="OnExecuteCmdStop"       CanExecute="CanExecuteCmdIsPlaying"/>
   </UIElement.CommandBindings>
   <UIElement.InputBindings>
     <KeyBinding Gesture="Ctrl+N"       Command="{x:Static vv:Commands.New}"/>
@@ -125,6 +127,9 @@
         <MenuItem Header="合并乐句 (_J)"/>-->
       </MenuItem>
       <MenuItem Header="音频 (_A)">
+        <MenuItem Header="加载伴奏 ... (_A)" Command="{x:Static vv:Commands.LoadAccom}"/>
+        <MenuItem Header="清除伴奏 (_Q)"     Command="{x:Static vv:Commands.ClearAccom}"/>
+        <Separator/>
         <MenuItem Header="合成 (_S)" InputGestureText="F5" Command="{x:Static vv:Commands.Synth}"/>
         <MenuItem Header="重新合成 (_R)"                   Command="{x:Static vv:Commands.Resynth}"/>
         <MenuItem Header="清除合成结果 (_C)"                Command="{x:Static vv:Commands.ClearSynth}"/>
@@ -141,7 +146,7 @@
         <MenuItem Header="编辑器：Doaz" IsEnabled="False"/>
       </MenuItem>
     </Menu>
-    <ToolBar DockPanel.Dock="Bottom" KeyboardNavigation.TabNavigation="Continue">
+    <ToolBar DockPanel.Dock="Top" KeyboardNavigation.TabNavigation="Continue">
       <Button x:Name="tempoButton" Command="{x:Static vv:Commands.EditTempo}">
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="BPM "/>
