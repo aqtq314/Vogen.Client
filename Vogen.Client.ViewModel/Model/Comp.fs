@@ -159,6 +159,8 @@ type Composition(timeSig0, bpm0, bgAudio, utts) =
 type UttSynthCache(uttSynthResultDict) =
     member x.UttSynthResultDict : ImmutableDictionary<Utterance, UttSynthResult> = uttSynthResultDict
 
+    member x.IsSynthing = uttSynthResultDict.Values |> Seq.exists(fun synthResult -> synthResult.IsSynthing)
+
     member x.GetOrDefault utt =
         match uttSynthResultDict.TryGetValue utt with
         | true, uttSynthResult -> uttSynthResult

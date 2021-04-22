@@ -8,13 +8,26 @@
                            xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
                            xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
                            xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
+                           xmlns:dr="clr-namespace:Doaz.Reactive;assembly=Doaz.Reactive.Wpf"
                            xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
                            Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}"
                            mc:Ignorable="d" 
                            d:DesignHeight="450" d:DesignWidth="800"
                            d:DataContext="{x:Static vm:DesignerModels.programModel}">
-  <Border x:Name="border" Background="White" BorderThickness="0,2,0,0">
-    <Grid>
+  <FrameworkElement.Resources>
+    <SolidColorBrush x:Key="focusedBrush" Color="#C0FF8040"/>
+    <DrawingBrush x:Key="synthingBrush" TileMode="Tile" ViewportUnits="Absolute" Viewport="0 0 12 12">
+      <DrawingBrush.Drawing>
+        <GeometryDrawing Brush="#40000000" Geometry="M0,1 V2 L2,0 H1 z M1,2 H2 V1 z"/>
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+  </FrameworkElement.Resources>
+  <DockPanel>
+    <dc:BasicPanel DockPanel.Dock="Top" Height="2">
+      <Rectangle Fill="{StaticResource focusedBrush}" Visibility="{Binding IsKeyboardFocused, ElementName=this, Converter={x:Static dr:Converters.BooleanToVisibility}}"/>
+      <Rectangle Fill="{StaticResource synthingBrush}" Visibility="{Binding ActiveUttSynthCache.Value.IsSynthing, Converter={x:Static dr:Converters.BooleanToVisibility}}"/>
+    </dc:BasicPanel>
+    <Grid Background="White">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition/>
@@ -37,6 +50,16 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
+      <dc:BasicPanel Grid.Row="0" Grid.Column="0" Height="30" VerticalAlignment="Top">
+        <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
+          <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </dc:TrivialPanel>
+      </dc:BasicPanel>
+      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
+        HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
+        QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
+        Bpm0="{Binding ActiveComp.Value.Bpm0}"
+        AudioTrack="{Binding ActiveComp.Value.BgAudio}"/>
       <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="20"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
@@ -47,7 +70,8 @@
         IsPlaying="{Binding IsPlaying.Value}"
         Composition="{Binding ActiveComp.Value}"
         UttSynthCache="{Binding ActiveUttSynthCache.Value}"
-        Selection="{Binding ActiveSelection.Value}">
+        Selection="{Binding ActiveSelection.Value}"
+        NoteSynthingOverlayBrush="{StaticResource synthingBrush}">
         <FrameworkElement.ContextMenu>
           <ContextMenu x:Name="chartEditorContextMenu">
             <MenuItem Header="编辑歌词 (_L)" InputGestureText="Enter" Command="{x:Static vv:Commands.EditLyrics}"/>
@@ -63,16 +87,6 @@
           </ContextMenu>
         </FrameworkElement.ContextMenu>
       </vc:ChartEditor>
-      <dc:BasicPanel Grid.Row="0" Grid.Column="0" Height="30" VerticalAlignment="Top">
-        <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
-          <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-        </dc:TrivialPanel>
-      </dc:BasicPanel>
-      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
-        HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
-        QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
-        Bpm0="{Binding ActiveComp.Value.Bpm0}"
-        AudioTrack="{Binding ActiveComp.Value.BgAudio}"/>
       <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
@@ -97,5 +111,5 @@
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
       <v:TextBoxPopup x:Name="lyricPopup" Grid.Row="1" Grid.Column="1" PlacementTarget="{x:Reference chartEditor}" TextBlock.FontSize="24"/>
     </Grid>
-  </Border>
+  </DockPanel>
 </vv:NoteChartEditPanelBase>

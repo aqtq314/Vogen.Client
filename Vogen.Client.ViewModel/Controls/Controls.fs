@@ -408,18 +408,6 @@ type ChartEditor() =
         RestPen = Pen(SolidColorBrush(lerpColor inactiveNoteBaseColor (rgb -1) 0.2), 1.0, DashStyle = DashStyle([| 2.0; 4.0 |], 0.0)) |>! freeze
         TextBrush = SolidColorBrush(aRgb 0xA0 0) |>! freeze |}
 
-    let noteSynthingOverlayGeometryBrush = SolidColorBrush(aRgb 0x40 0) |>! freeze
-    let noteSynthingOverlayBrushTransform = TranslateTransform()
-    let noteSynthingOverlayBrush =
-        DrawingBrush(
-            GeometryDrawing(noteSynthingOverlayGeometryBrush, null, StreamGeometry.Parse "M0,1 V2 L2,0 H1 z M1,2 H2 V1 z"),
-            TileMode = TileMode.Tile,
-            ViewportUnits = BrushMappingMode.Absolute,
-            Viewport = Rect(Size(12.0, 12.0)),
-            Transform = noteSynthingOverlayBrushTransform)
-    do  noteSynthingOverlayBrushTransform.BeginAnimation(TranslateTransform.XProperty,
-            DoubleAnimation(0.0, -12.0, Duration(TimeSpan.FromSeconds 1.0), RepeatBehavior = RepeatBehavior.Forever))
-
     let selNoteBrush = SolidColorBrush(aRgb 0x20 0x000080) |>! freeze
     let selNotePen = Pen(SolidColorBrush(aRgb 0x80 0x000080), 2.0) |>! freeze
 
@@ -427,6 +415,8 @@ type ChartEditor() =
     let cursorActiveNotePen = Pen(SolidColorBrush(aRgb 0x80 0xFF0000), 2.0) |>! freeze
 
     let f0Pen = Pen(SolidColorBrush(aRgb 0x40 0x800000), 1.0) |>! freeze
+
+    member val NoteSynthingOverlayBrush : Brush = null with get, set
 
     member val private UttToCharsDict = ImmutableDictionary.Empty with get, set
     member private x.UpdateUttToCharsDict comp =
@@ -758,7 +748,7 @@ type ChartEditor() =
 
                     // synth in progress overlay
                     if uttSynthResult.IsSynthing then
-                        dc.DrawRectangle(noteSynthingOverlayBrush, null, noteValidRect)
+                        dc.DrawRectangle(x.NoteSynthingOverlayBrush, null, noteValidRect)
 
                     // selection
                     if selection.GetIsNoteSelected note then

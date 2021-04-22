@@ -213,6 +213,13 @@ type ValueConverter =
             member x.ConvertBack(v, targetTypes, p, culture) = backward.Invoke(unbox v, unbox p) }
 
 
+type Converters =
+    static member BooleanToVisibility =
+        ValueConverter.Create(
+            (function | true -> Visibility.Visible | false -> Visibility.Collapsed),
+            ((=) Visibility.Visible))
+
+
 [<Extension>]
 type ExtensionMethods =
     [<Extension>]
