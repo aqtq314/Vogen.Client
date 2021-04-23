@@ -37,8 +37,9 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition/>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="54.5"
+      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="24.5"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
@@ -50,12 +51,12 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
-      <dc:BasicPanel Grid.Row="0" Grid.Column="0" Height="30" VerticalAlignment="Top">
+      <dc:BasicPanel Grid.Row="2" Grid.Column="0" Height="30" VerticalAlignment="Top">
         <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
           <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         </dc:TrivialPanel>
       </dc:BasicPanel>
-      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
+      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         Bpm0="{Binding ActiveComp.Value.Bpm0}"
@@ -95,13 +96,13 @@
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
         Cursor="{Binding Path=Cursor, ElementName=chartEditor, Mode=TwoWay}"/>
-      <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
+      <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="3" Grid.Column="1"
         ScrollMaximum="{Binding ActiveComp.Value, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
         ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
         Log2ZoomMinimum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
-      <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
+      <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2" Grid.RowSpan="2"
         ScrollMinimum="{Binding Path=MinKey, ElementName=chartEditor}"
         ScrollMaximum="{Binding Path=MaxKey, ElementName=chartEditor}"
         ScrollValue="60"
