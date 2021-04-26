@@ -57,6 +57,6 @@ module External =
             else
                 None)
 
-        Composition(bpm0, ImmutableArray.CreateRange utts)
+        Composition(timeSignature 4 4, bpm0, ImmutableArray.CreateRange utts)
 
 

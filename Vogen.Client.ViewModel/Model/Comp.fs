@@ -142,8 +142,6 @@ type Composition(timeSig0, bpm0, bgAudio, utts) =
 
     member x.AllNotes = utts |> Seq.collect(fun utt -> utt.Notes)
 
-    // TODO time signature
-    new(bpm0, utts) = Composition(timeSignature 4 4, bpm0, AudioTrack.Empty, utts)
     new(timeSig0, bpm0, utts) = Composition(timeSig0, bpm0, AudioTrack.Empty, utts)
     static member val Empty = Composition(timeSignature 4 4, 120.0, AudioTrack.Empty, ImmutableArray.Empty)
 
