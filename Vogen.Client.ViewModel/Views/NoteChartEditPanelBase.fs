@@ -537,7 +537,7 @@ type NoteChartEditPanelBase() =
                         let mouseDownNoteOp = findMouseOverNote mousePos chart.ActiveUtt chart.Comp.Utts edit
                         match mouseDownNoteOp with
                         | None ->
-                            if e.ClickCount = 2 && chart.ActiveUtt = None then
+                            if e.ClickCount = 2 && chart.ActiveUtt <> None then
                                 x.ProgramModel.ActiveChart |> Rp.modify(fun chart ->
                                     chart.SetActiveUtt(chart.Comp, None))
 
