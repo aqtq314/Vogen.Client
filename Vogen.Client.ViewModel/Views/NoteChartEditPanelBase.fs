@@ -1046,6 +1046,22 @@ type NoteChartEditPanelBase() =
 
         // key events
         x.KeyDown.Add <| fun e ->
+            if not e.IsRepeat then
+                match e.Key with
+                | Key.System ->
+                    match e.SystemKey with
+                    | Key.LeftAlt | Key.RightAlt ->
+                        hintSetGhostNote(Mouse.GetPosition x.ChartEditor)
+                        e.Handled <- true
+
+                    | _ -> ()
+
+                | _ -> ()
+
+                x.ChartEditorAdornerLayer.InvalidateVisual()
+
+        x.KeyUp.Add <| fun e ->
+            hintSetMouseOverNote(Mouse.GetPosition x.ChartEditor)
             x.ChartEditorAdornerLayer.InvalidateVisual()
 
 
