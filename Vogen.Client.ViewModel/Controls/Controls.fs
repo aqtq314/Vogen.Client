@@ -419,9 +419,9 @@ type ChartEditor() =
     member val NoteSynthingOverlayBrush : Brush = null with get, set
 
     member val private UttToCharsDict = ImmutableDictionary.Empty with get, set
-    member private x.UpdateUttToCharsDict comp =
+    member private x.UpdateUttToCharsDict chart =
         x.UttToCharsDict <-
-            (comp : Composition).Utts
+            (chart : ChartState).Comp.Utts
             |> Seq.map(fun utt ->
                 let chars =
                     utt.Notes
@@ -432,10 +432,10 @@ type ChartEditor() =
             |> ImmutableDictionary.CreateRange
 
     member val private CursorActiveNotes = ImmutableHashSet.Empty with get, set
-    member private x.UpdateCursorActiveNotes playbackPos isPlaying comp =
+    member private x.UpdateCursorActiveNotes playbackPos isPlaying chart =
         let newActiveNotes =
             if not isPlaying then ImmutableHashSet.Empty else
-                (comp : Composition).AllNotes
+                (chart : ChartState).Comp.AllNotes
                 |> Seq.filter(fun note -> note.On <= playbackPos && note.Off > playbackPos)
                 |> ImmutableHashSet.CreateRange
         if not(x.CursorActiveNotes.SetEquals newActiveNotes) then
@@ -443,23 +443,23 @@ type ChartEditor() =
             x.InvalidateVisual()
 
     override x.OnCursorPositionChanged(oldValue, (newValue as playbackPos)) =
-        x.UpdateCursorActiveNotes playbackPos x.IsPlaying x.Composition
+        x.UpdateCursorActiveNotes playbackPos x.IsPlaying x.ChartState
         base.OnCursorPositionChanged(oldValue, newValue)
 
     override x.OnIsPlayingChanged(oldValue, (newValue as isPlaying)) =
-        x.UpdateCursorActiveNotes x.CursorPosition isPlaying x.Composition
+        x.UpdateCursorActiveNotes x.CursorPosition isPlaying x.ChartState
         base.OnIsPlayingChanged(oldValue, newValue)
 
-    member x.Composition
-        with get() = x.GetValue ChartEditor.CompositionProperty :?> Composition
-        and set(v : Composition) = x.SetValue(ChartEditor.CompositionProperty, box v)
-    static member val CompositionProperty =
-        Dp.reg<Composition, ChartEditor> "Composition"
-            (Dp.Meta(Composition.Empty, Dp.MetaFlags.AffectsRender,
-                (fun (x : ChartEditor)(oldValue, newValue) -> x.OnCompositionChanged(oldValue, newValue))))
-    member private x.OnCompositionChanged(oldValue, (newValue as comp)) =
-        x.UpdateUttToCharsDict comp
-        x.UpdateCursorActiveNotes x.CursorPosition x.IsPlaying comp
+    member x.ChartState
+        with get() = x.GetValue ChartEditor.ChartStateProperty :?> ChartState
+        and set(v : ChartState) = x.SetValue(ChartEditor.ChartStateProperty, box v)
+    static member val ChartStateProperty =
+        Dp.reg<ChartState, ChartEditor> "ChartState"
+            (Dp.Meta(ChartState.Empty, Dp.MetaFlags.AffectsRender,
+                (fun (x : ChartEditor)(oldValue, newValue) -> x.OnChartStateChanged(oldValue, newValue))))
+    member private x.OnChartStateChanged(oldValue, (newValue as chart)) =
+        x.UpdateUttToCharsDict chart
+        x.UpdateCursorActiveNotes x.CursorPosition x.IsPlaying chart
 
     member x.UttSynthCache
         with get() = x.GetValue ChartEditor.UttSynthCacheProperty :?> UttSynthCache
@@ -467,13 +467,6 @@ type ChartEditor() =
     static member val UttSynthCacheProperty =
         Dp.reg<UttSynthCache, ChartEditor> "UttSynthCache"
             (Dp.Meta(UttSynthCache.Empty, Dp.MetaFlags.AffectsRender))
-
-    member x.Selection
-        with get() = x.GetValue ChartEditor.SelectionProperty :?> CompSelection
-        and set(v : CompSelection) = x.SetValue(ChartEditor.SelectionProperty, box v)
-    static member val SelectionProperty =
-        Dp.reg<CompSelection, ChartEditor> "Selection"
-            (Dp.Meta(CompSelection.Empty, Dp.MetaFlags.AffectsRender))
 
     override x.OnRender dc =
         let actualWidth = x.ActualWidth
@@ -487,9 +480,9 @@ type ChartEditor() =
         let vOffset = x.VOffsetAnimated
         let playbackPos = x.CursorPosition
         let isPlaying = x.IsPlaying
-        let comp = x.Composition
+        let chart = x.ChartState
+        let comp = chart.Comp
         let uttSynthCache = x.UttSynthCache
-        let selection = x.Selection
 
         let minPulse = int64(pixelToPulse quarterWidth hOffset 0.0)
         let maxPulse = int64(pixelToPulse quarterWidth hOffset actualWidth |> ceil)
@@ -500,7 +493,7 @@ type ChartEditor() =
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
 
         // validate active utt
-        match selection.ActiveUtt with
+        match chart.ActiveUtt with
         | Some utt when not(comp.Utts.Contains utt) -> raise(ArgumentException("Active utt not part of composition."))
         | _ -> ()
 
@@ -510,7 +503,7 @@ type ChartEditor() =
 
         else
             // active utt background
-            match selection.ActiveUtt with
+            match chart.ActiveUtt with
             | None ->
                 dc.DrawRectangle(activeBackgroundBrush, null, Rect(Size(actualWidth, actualHeight)))
 
@@ -588,7 +581,7 @@ type ChartEditor() =
 
         // utt start decor
         let uttsReordered =
-            match selection.ActiveUtt with
+            match chart.ActiveUtt with
             | None -> comp.Utts :> seq<_>
             | Some utt -> seq {
                 yield! comp.Utts |> Seq.filter((<>) utt)
@@ -597,7 +590,7 @@ type ChartEditor() =
         for utt in uttsReordered do
             let uttStyle =
                 if isPlaying then activeUttStyle
-                elif selection.ActiveUtt = Some utt then activeUttStyle
+                elif chart.ActiveUtt = Some utt then activeUttStyle
                 else inactiveUttStyle
 
             if utt.On >= minPulse && utt.On <= maxPulse then
@@ -694,7 +687,7 @@ type ChartEditor() =
         for utt in uttsReordered do
             let uttStyle =
                 if isPlaying then activeUttStyle
-                elif selection.ActiveUtt = Some utt then activeUttStyle
+                elif chart.ActiveUtt = Some utt then activeUttStyle
                 else inactiveUttStyle
             let uttSynthResult = uttSynthCache.GetOrDefault utt
             let chars = x.UttToCharsDict.[utt]
@@ -751,7 +744,7 @@ type ChartEditor() =
                         dc.DrawRectangle(x.NoteSynthingOverlayBrush, null, noteValidRect)
 
                     // selection
-                    if selection.GetIsNoteSelected note then
+                    if chart.GetIsNoteSelected note then
                         dc.DrawRectangle(selNoteBrush, selNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
 
                     // playback active notes

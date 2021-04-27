@@ -17,16 +17,14 @@ open Vogen.Client.Romanization
 
 
 type ProgramModel() as x =
-    let activeComp = rp Composition.Empty
-    let activeSelection = rp CompSelection.Empty
+    let activeChart = rp ChartState.Empty
     let activeUttSynthCache = rp UttSynthCache.Empty
     let undoRedoStack = UndoRedoStack()
 
     let mutable suspendUttPanelSync = false
     let uttPanelSingerId = rp Singer.defaultId
     let uttPanelRomScheme = rp Romanizer.defaultId
-    do  (activeComp, activeSelection) |> Rpo.map2(fun comp selection -> comp, selection) |> Rpo.leaf(fun (comp, selection) ->
-            x.UpdateUttPanelValues(comp, selection))
+    do  activeChart |> Rpo.leaf(fun chart -> x.UpdateUttPanelValues chart)
         uttPanelSingerId |> Rpo.leaf(fun singerId ->
             x.SyncUttPanelEdits(singerId, !!uttPanelRomScheme))
         uttPanelRomScheme |> Rpo.leaf(fun romScheme ->
@@ -47,13 +45,12 @@ type ProgramModel() as x =
     let audioEngine = AudioPlaybackEngine()
     let waveOut = new DirectSoundOut(latency)
     do  waveOut.Init audioEngine
-    do  activeComp |> Rpo.leaf(fun comp ->
-            audioEngine.Comp <- comp)
+    do  activeChart |> Rpo.leaf(fun chart ->
+            audioEngine.Comp <- chart.Comp)
     do  activeUttSynthCache |> Rpo.leaf(fun uttSynthCache ->
             audioEngine.UttSynthCache <- uttSynthCache)
 
-    member x.ActiveComp = activeComp :> ReactiveProperty<_>
-    member x.ActiveSelection = activeSelection
+    member x.ActiveChart = activeChart
     member x.ActiveUttSynthCache = activeUttSynthCache
     member x.UndoRedoStack = undoRedoStack
 
@@ -69,11 +66,6 @@ type ProgramModel() as x =
     member val IsPlaying = isPlaying |> Rpo.map id
     member val CursorPosition = cursorPos |> Rpo.map id
 
-    member x.SetComp(comp, selection) =
-        use bulk = Rp.bulkSetter()
-        activeComp |> bulk.LockSetProp comp
-        activeSelection |> bulk.LockSetProp selection
-
     member x.OpenOrNew filePathOp =
         if isPlaying.Value then x.Stop()
         let fileName, comp, uttSynthCache =
@@ -83,7 +75,7 @@ type ProgramModel() as x =
                 use fileStream = File.OpenRead filePath
                 let comp, uttSynthCache = FilePackage.read fileStream
                 Path.GetFileName filePath, comp, uttSynthCache
-        x.SetComp(comp, CompSelection.Empty)
+        x.ActiveChart |> Rp.set(ChartState(comp))
         activeUttSynthCache |> Rp.set uttSynthCache
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set filePathOp
@@ -97,8 +89,7 @@ type ProgramModel() as x =
         x.OpenOrNew(Some filePath)
 
     member x.Import filePath =
-        let prevComp = !!activeComp
-        let prevSelection = !!activeSelection
+        let prevChart = !!activeChart
         if isPlaying.Value then x.Stop()
 
         let comp, uttSynthCache =
@@ -114,10 +105,10 @@ type ProgramModel() as x =
                 comp, UttSynthCache.Create comp.Bpm0
             | ext ->
                 raise(KeyNotFoundException($"Unknwon file extension {ext}"))
-        let selection =
-            CompSelection(None, ImmutableHashSet.CreateRange comp.AllNotes)
+        let chart =
+            ChartState(comp, None, ImmutableHashSet.CreateRange comp.AllNotes)
 
-        x.SetComp(comp, selection)
+        x.ActiveChart |> Rp.set chart
         activeUttSynthCache |> Rp.set uttSynthCache
         undoRedoStack.Clear()
         compFilePathOp |> Rp.set None
@@ -126,32 +117,32 @@ type ProgramModel() as x =
 
     member x.Save outFilePath =
         use outFileStream = File.Open(outFilePath, FileMode.Create)
-        (!!x.ActiveComp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream
+        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream
         compFilePathOp |> Rp.set(Some outFilePath)
         compFileName |> Rp.set(Path.GetFileName outFilePath)
         compIsSaved |> Rp.set true
 
     member x.Export outFilePath =
-        (!!x.ActiveComp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
+        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
 
     member x.Undo() =
         match undoRedoStack.TryPopUndo() with
         | None -> ()
-        | Some(comp, selection) ->
-            x.SetComp(comp, selection)
+        | Some chart ->
+            x.ActiveChart |> Rp.set chart
             compIsSaved |> Rp.set false
 
     member x.Redo() =
         match undoRedoStack.TryPopRedo() with
         | None -> ()
-        | Some(comp, selection) ->
-            x.SetComp(comp, selection)
+        | Some chart ->
+            x.ActiveChart |> Rp.set chart
             compIsSaved |> Rp.set false
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
             float newCursorPos
-            |> Midi.toTimeSpan (!!activeComp).Bpm0
+            |> Midi.toTimeSpan (!!activeChart).Comp.Bpm0
             |> Audio.timeToSample)
         cursorPos |> Rp.set newCursorPos
 
@@ -161,31 +152,25 @@ type ProgramModel() as x =
             |> Audio.sampleToTime
             |> (+)(TimeSpan.FromTicks(Stopwatch.GetTimestamp() - audioEngine.PlaybackPositionRefTicks))
             |> (+)(if isPlaying.Value then -latencyTimeSpan else TimeSpan.Zero)
-            |> Midi.ofTimeSpan((!!activeComp).Bpm0) |> round |> int64
+            |> Midi.ofTimeSpan((!!activeChart).Comp.Bpm0) |> round |> int64
         cursorPos |> Rp.set newCursorPos
 
     member x.LoadAccom audioFile =
-        let audioContent = AudioSamples.loadFromFile audioFile
-        let comp = !!x.ActiveComp
-        let selection = !!x.ActiveSelection
-        x.SetComp(comp.SetBgAudio(comp.BgAudio.SetAudio(audioContent).SetSampleOffset 0), selection)
+        let audioFileBytes, audioSamples = AudioSamples.loadFromFile audioFile
+        let chart = !!x.ActiveChart
+        x.ActiveChart |> Rp.set(
+            let comp = chart.Comp
+            chart.SetComp(comp.SetBgAudio(AudioTrack(0, audioFileBytes, audioSamples))))
 
-        x.UndoRedoStack.PushUndo(
-            LoadBgAudio,
-            (comp, selection),
-            (!!x.ActiveComp, !!x.ActiveSelection))
+        x.UndoRedoStack.PushUndo(LoadBgAudio, chart, !!x.ActiveChart)
         x.CompIsSaved |> Rp.set false
 
     member x.ClearAccom() =
-        let comp = !!x.ActiveComp
-        let selection = !!x.ActiveSelection
-        if comp.BgAudio.HasAudio then
-            x.SetComp(comp.SetBgAudio(comp.BgAudio.SetNoAudio().SetSampleOffset 0), selection)
+        let chart = !!x.ActiveChart
+        if chart.Comp.BgAudio.HasAudio then
+            x.ActiveChart |> Rp.set(chart.SetComp(chart.Comp.SetBgAudio(AudioTrack(0))))
 
-            x.UndoRedoStack.PushUndo(
-                ClearBgAudio,
-                (comp, selection),
-                (!!x.ActiveComp, !!x.ActiveSelection))
+            x.UndoRedoStack.PushUndo(ClearBgAudio, chart, !!x.ActiveChart)
             x.CompIsSaved |> Rp.set false
 
     member x.Play() =
@@ -253,11 +238,11 @@ type ProgramModel() as x =
 
     // TODO: cancellation and multiple worker prevention
     member x.Synth(dispatcher : Dispatcher) =
-        let comp = !!x.ActiveComp
-        let uttSynthCache = (!!x.ActiveUttSynthCache).SlimWith comp
+        let chart = !!x.ActiveChart
+        let uttSynthCache = (!!x.ActiveUttSynthCache).SlimWith chart.Comp
         x.ActiveUttSynthCache |> Rp.set uttSynthCache
 
-        List.ofSeq comp.Utts
+        List.ofSeq chart.Comp.Utts
         |> fix(fun synthNext uttList -> async {
             match uttList with
             | [] -> ()
@@ -281,7 +266,7 @@ type ProgramModel() as x =
     // TODO: ugly two-way data sync
     member val private PrevNonNullSingerId = !!uttPanelSingerId with get, set
     member val private PrevNonNullRomScheme = !!uttPanelRomScheme with get, set
-    member x.UpdateUttPanelValues(comp, selection) =
+    member x.UpdateUttPanelValues chart =
         if not suspendUttPanelSync then
             suspendUttPanelSync <- true
 
@@ -293,12 +278,8 @@ type ProgramModel() as x =
                     if not(iter.MoveNext()) then head   // 1 value
                     else null                           // 2+ values
 
-            let selectedUtts =
-                if selection.SelectedNotes.IsEmpty then Seq.empty else
-                    comp.Utts |> Seq.filter(fun utt -> Seq.exists selection.GetIsNoteSelected utt.Notes) |> Seq.cache
-            let editingUtts =
-                if not(Seq.isEmpty selectedUtts) then selectedUtts else
-                    selection.ActiveUtt |> Option.toArray :> _
+            let selectedUtts = if chart.SelectedNotes.IsEmpty then Seq.empty else chart.UttsWithSelection :> _
+            let editingUtts = if not(Seq.isEmpty selectedUtts) then selectedUtts else chart.ActiveUtt |> Option.toArray :> _
 
             do  use bulk = Rp.bulkSetter()
                 let newSingerId = editingUtts |> Seq.map(fun utt -> utt.SingerId) |> Seq.distinct |> getDisplayValue x.PrevNonNullSingerId
@@ -314,14 +295,9 @@ type ProgramModel() as x =
         if not suspendUttPanelSync then
             suspendUttPanelSync <- true
 
-            let comp = !!activeComp
-            let selection = !!activeSelection
-            let selectedUtts =
-                if selection.SelectedNotes.IsEmpty then Seq.empty else
-                    comp.Utts |> Seq.filter(fun utt -> Seq.exists selection.GetIsNoteSelected utt.Notes) |> Seq.cache
-            let editingUtts =
-                if not(Seq.isEmpty selectedUtts) then selectedUtts else
-                    selection.ActiveUtt |> Option.toArray :> _
+            let chart = !!activeChart
+            let selectedUtts = if chart.SelectedNotes.IsEmpty then Seq.empty else chart.UttsWithSelection :> _
+            let editingUtts = if not(Seq.isEmpty selectedUtts) then selectedUtts else chart.ActiveUtt |> Option.toArray :> _
 
             let uttDiffDict =
                 ImmutableDictionary.CreateRange(
@@ -335,18 +311,15 @@ type ProgramModel() as x =
                     |> Seq.filter(fun (KeyValue(utt, newUtt)) -> utt <> newUtt))
 
             if uttDiffDict.Count > 0 then
-                let newComp = comp.SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt))
-                let newSelection =
-                    let activeUtt = selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
-                    selection.SetActiveUtt activeUtt
-                x.SetComp(newComp, newSelection)
+                let newChart =
+                    let newComp = chart.Comp.SetUtts(ImmutableArray.CreateRange(chart.Comp.Utts, fun utt -> uttDiffDict.GetOrDefault utt utt))
+                    let activeUtt = chart.ActiveUtt |> Option.map(fun utt -> uttDiffDict.GetOrDefault utt utt)
+                    chart.SetActiveUtt(newComp, activeUtt)
+                x.ActiveChart |> Rp.set newChart
 
-                x.UndoRedoStack.PushUndo(
-                    EditUttPanelValue,
-                    (comp, selection),
-                    (!!x.ActiveComp, !!x.ActiveSelection))
+                x.UndoRedoStack.PushUndo(EditUttPanelValue, chart, !!x.ActiveChart)
                 x.CompIsSaved |> Rp.set false
-        
+
             suspendUttPanelSync <- false
 
 

@@ -45,7 +45,7 @@
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
-        TimeSignature="{Binding ActiveComp.Value.TimeSig0}"/>
+        TimeSignature="{Binding ActiveChart.Value.Comp.TimeSig0}"/>
       <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
@@ -59,8 +59,8 @@
       <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
-        Bpm0="{Binding ActiveComp.Value.Bpm0}"
-        AudioTrack="{Binding ActiveComp.Value.BgAudio}"/>
+        Bpm0="{Binding ActiveChart.Value.Comp.Bpm0}"
+        AudioTrack="{Binding ActiveChart.Value.Comp.BgAudio}"/>
       <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="20"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
@@ -69,9 +69,8 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
-        Composition="{Binding ActiveComp.Value}"
+        ChartState="{Binding ActiveChart.Value}"
         UttSynthCache="{Binding ActiveUttSynthCache.Value}"
-        Selection="{Binding ActiveSelection.Value}"
         NoteSynthingOverlayBrush="{StaticResource synthingBrush}">
         <FrameworkElement.ContextMenu>
           <ContextMenu x:Name="chartEditorContextMenu">
@@ -97,7 +96,7 @@
         IsPlaying="{Binding IsPlaying.Value}"
         Cursor="{Binding Path=Cursor, ElementName=chartEditor, Mode=TwoWay}"/>
       <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="3" Grid.Column="1"
-        ScrollMaximum="{Binding ActiveComp.Value, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
+        ScrollMaximum="{Binding ActiveChart.Value.Comp, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
         ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
         Log2ZoomMinimum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"

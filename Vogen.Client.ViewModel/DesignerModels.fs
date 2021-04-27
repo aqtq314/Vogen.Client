@@ -17,11 +17,11 @@ let comp, uttSynthCache =
     FilePackage.read stream
 
 let programModel = ProgramModel()
-do  programModel.SetComp(comp, CompSelection(Some comp.Utts.[0], ImmutableHashSet.CreateRange [|
+do  programModel.ActiveChart |> Rp.set(ChartState(comp, Some comp.Utts.[0], ImmutableHashSet.CreateRange [|
         yield! Seq.take 3 comp.Utts.[0].Notes
         yield! Seq.take 1 comp.Utts.[1].Notes |]))
     programModel.ActiveUttSynthCache |> Rp.set uttSynthCache
     programModel.CompIsSaved |> Rp.set false
     programModel.ManualSetCursorPos 1920L
-//do  programModel.LoadFromFile(Some @"D:\Misc\vocaloid\隔岸C-aca.vog")
+
 

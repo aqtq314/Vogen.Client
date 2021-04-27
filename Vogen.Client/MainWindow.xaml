@@ -150,14 +150,14 @@
       <Button x:Name="tempoButton" Command="{x:Static vv:Commands.EditTempo}">
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="BPM "/>
-          <TextBlock Text="{Binding ActiveComp.Value.Bpm0}"/>
+          <TextBlock Text="{Binding ActiveChart.Value.Comp.Bpm0}"/>
         </StackPanel>
       </Button>
       <v:TextBoxPopup x:Name="tempoPopup" PlacementTarget="{x:Reference tempoButton}" MinWidth="50" TextBlock.FontSize="16"/>
       <Button x:Name="timeSigButton" Command="{x:Static vv:Commands.EditTimeSig}">
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="拍号 "/>
-          <TextBlock Text="{Binding ActiveComp.Value.TimeSig0}"/>
+          <TextBlock Text="{Binding ActiveChart.Value.Comp.TimeSig0}"/>
         </StackPanel>
       </Button>
       <v:TextBoxPopup x:Name="timeSigPopup" PlacementTarget="{x:Reference timeSigButton}" MinWidth="50" TextBlock.FontSize="16"/>
@@ -165,7 +165,7 @@
       <TextBlock Width="80" Margin="3 0" VerticalAlignment="Center">
         <TextBlock.Text>
           <MultiBinding Converter="{x:Static vc:TextResources.pulseToStringFormatter}">
-            <Binding Path="ActiveComp.Value.TimeSig0"/>
+            <Binding Path="ActiveChart.Value.Comp.TimeSig0"/>
             <Binding Path="CursorPosition.Value"/>
           </MultiBinding>
         </TextBlock.Text>

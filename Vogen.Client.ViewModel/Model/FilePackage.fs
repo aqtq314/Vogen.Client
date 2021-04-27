@@ -142,8 +142,8 @@ module FilePackage =
             | None -> comp
             | Some audioEntry ->
                 use fileStream = audioEntry.Open()
-                let audioContent = AudioSamples.loadFromStream fileStream
-                comp.SetBgAudio(comp.BgAudio.SetAudio audioContent)
+                let audioFileBytes, audioSamples = AudioSamples.loadFromStream fileStream
+                comp.SetBgAudio(AudioTrack(comp.BgAudio.SampleOffset, audioFileBytes, audioSamples))
 
         let uttSynthCache =
             (UttSynthCache.Create comp.Bpm0, comp.Utts)

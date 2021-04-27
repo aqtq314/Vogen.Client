@@ -36,11 +36,11 @@ namespace Vogen.Client
         private void CanExecuteCmdRedo(object sender, CanExecuteRoutedEventArgs e) =>
             e.CanExecute = ProgramModel.UndoRedoStack.CanRedo.Value;
         private void CanExecuteCmdSelectionHasLyric(object sender, CanExecuteRoutedEventArgs e) =>
-            e.CanExecute = ProgramModel.ActiveSelection.Value.SelectedNotes.Any(note => !note.IsHyphen);
+            e.CanExecute = ProgramModel.ActiveChart.Value.SelectedNotes.Any(note => !note.IsHyphen);
         private void CanExecuteCmdHasSelection(object sender, CanExecuteRoutedEventArgs e) =>
-            e.CanExecute = ProgramModel.ActiveSelection.Value.SelectedNotes.Count > 0;
+            e.CanExecute = ProgramModel.ActiveChart.Value.SelectedNotes.Count > 0;
         private void CanExecuteCmdHasActiveUtt(object sender, CanExecuteRoutedEventArgs e) =>
-            e.CanExecute = OptionModule.IsSome(ProgramModel.ActiveSelection.Value.ActiveUtt);
+            e.CanExecute = OptionModule.IsSome(ProgramModel.ActiveChart.Value.ActiveUtt);
         private void CanExecuteCmdIsPlaying(object sender, CanExecuteRoutedEventArgs e) =>
             e.CanExecute = ProgramModel.IsPlaying.Value;
         private void CanExecuteCmdIsNotPlaying(object sender, CanExecuteRoutedEventArgs e) =>

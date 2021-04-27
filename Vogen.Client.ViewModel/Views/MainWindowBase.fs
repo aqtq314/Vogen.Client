@@ -140,16 +140,13 @@ type MainWindowBase() =
             x.ProgramModel.Export filePath }
 
     member x.EditTempo() =
-        let comp = !!x.ProgramModel.ActiveComp
-        let selection = !!x.ProgramModel.ActiveSelection
-        let initTempo = comp.Bpm0
+        let chart = !!x.ProgramModel.ActiveChart
+        let initTempo = chart.Comp.Bpm0
 
-        let undoWriter =
-            x.ProgramModel.UndoRedoStack.BeginPushUndo(
-                EditCompPanelValue, (comp, selection))
+        let undoWriter = x.ProgramModel.UndoRedoStack.BeginPushUndo(EditCompPanelValue, chart)
 
         let revertChanges() =
-            x.ProgramModel.SetComp(comp, selection)
+            x.ProgramModel.ActiveChart |> Rp.set chart
             undoWriter.UnpushUndo()
 
         x.TempoPopup.Open(initTempo.ToString()) revertChanges <| fun tempoText ->
@@ -160,12 +157,12 @@ type MainWindowBase() =
                 if newTempo = initTempo then
                     revertChanges()
                 else
-                    let uttDiffDict = comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.SetBpm0 newTempo)
-                    let newComp = comp.SetBpm(newTempo).SetUtts(ImmutableArray.CreateRange(comp.Utts, fun utt -> uttDiffDict.[utt]))
-                    let newSelection = selection.SetActiveUtt(selection.ActiveUtt |> Option.map(fun utt -> uttDiffDict.[utt]))
+                    let uttDiffDict = chart.Comp.Utts.ToImmutableDictionary(id, fun (utt : Utterance) -> utt.SetBpm0 newTempo)
+                    let newComp = chart.Comp.SetBpm(newTempo).SetUtts(ImmutableArray.CreateRange(chart.Comp.Utts, fun utt -> uttDiffDict.[utt]))
+                    let newChart = chart.SetActiveUtt(newComp, chart.ActiveUtt |> Option.map(fun utt -> uttDiffDict.[utt]))
 
-                    x.ProgramModel.SetComp(newComp, newSelection)
-                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.ActiveChart |> Rp.set newChart
+                    undoWriter.PutRedo(!!x.ProgramModel.ActiveChart)
                     x.ProgramModel.CompIsSaved |> Rp.set false
 
                 Ok()
@@ -174,16 +171,13 @@ type MainWindowBase() =
                 Error()
 
     member x.EditTimeSig() =
-        let comp = !!x.ProgramModel.ActiveComp
-        let selection = !!x.ProgramModel.ActiveSelection
-        let initTimeSig = comp.TimeSig0
+        let chart = !!x.ProgramModel.ActiveChart
+        let initTimeSig = chart.Comp.TimeSig0
 
-        let undoWriter =
-            x.ProgramModel.UndoRedoStack.BeginPushUndo(
-                EditCompPanelValue, (comp, selection))
+        let undoWriter = x.ProgramModel.UndoRedoStack.BeginPushUndo(EditCompPanelValue, chart)
 
         let revertChanges() =
-            x.ProgramModel.SetComp(comp, selection)
+            x.ProgramModel.ActiveChart |> Rp.set chart
             undoWriter.UnpushUndo()
 
         x.TimeSigPopup.Open(initTimeSig.ToString()) revertChanges <| fun timeSigText ->
@@ -194,8 +188,8 @@ type MainWindowBase() =
                 if newTimeSig = initTimeSig then
                     revertChanges()
                 else
-                    x.ProgramModel.SetComp(comp.SetTimeSig(newTimeSig), selection)
-                    undoWriter.PutRedo((!!x.ProgramModel.ActiveComp, !!x.ProgramModel.ActiveSelection))
+                    x.ProgramModel.ActiveChart |> Rp.set(chart.SetComp(chart.Comp.SetTimeSig newTimeSig))
+                    undoWriter.PutRedo(!!x.ProgramModel.ActiveChart)
                     x.ProgramModel.CompIsSaved |> Rp.set false
 
                 Ok()

@@ -81,14 +81,18 @@ type AudioTrack private(sampleOffset, hasAudio, audioFileBytes, audioSamples) =
     member x.AudioSamples : float32 [] = audioSamples
 
     new(sampleOffset) = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
-    static member val Empty = AudioTrack(0, false, Array.empty, Array.empty)
-
-    member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples)
-    member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
-    member x.SetAudio(audioFileBytes, audioSamples : _ []) =
+    new(sampleOffset, audioFileBytes, audioSamples : _ []) =
         for i in 0 .. audioSamples.Length - 1 do
             audioSamples.[i] <- audioSamples.[i] * 0.25f
         AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
+    static member val Empty = AudioTrack(0, false, Array.empty, Array.empty)
+
+    member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFileBytes, audioSamples)
+    //member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
+    //member x.SetAudio(audioFileBytes, audioSamples : _ []) =
+    //    for i in 0 .. audioSamples.Length - 1 do
+    //        audioSamples.[i] <- audioSamples.[i] * 0.25f
+    //    AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
 
     member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFileBytes, audioSamples)
 
@@ -186,23 +190,35 @@ type UttSynthCache(uttSynthResultDict) =
                 | true, uttSynthResult -> Some(KeyValuePair(utt, uttSynthResult))))
         UttSynthCache(uttSynthResultDict)
 
-type CompSelection(activeUtt, selectedNotes) =
-    member x.ActiveUtt : Utterance option = activeUtt
-    member x.SelectedNotes : ImmutableHashSet<Note> = selectedNotes
+type ChartState(comp : Composition, activeUtt, selectedNotes : ImmutableHashSet<_>) =
+    do  match activeUtt with
+        | Some activeUtt when not(comp.Utts.Contains activeUtt) ->
+            raise(ArgumentException($"ActiveUtt not part of composition."))
+        | _ -> ()
+
+    do  if not (selectedNotes.Except comp.AllNotes).IsEmpty then
+            raise(ArgumentException($"One or more notes in selectedNotes are not part of composition."))
+
+    let uttsWithSelection =
+        ImmutableHashSet.CreateRange(
+            comp.Utts |> Seq.filter(fun utt -> utt.Notes |> Seq.exists selectedNotes.Contains))
+
+    member x.Comp = comp
+    member x.ActiveUtt = activeUtt
+    member x.SelectedNotes = selectedNotes
+    member x.UttsWithSelection = uttsWithSelection
 
     member x.GetIsNoteSelected note = selectedNotes.Contains note
 
-    static member val Empty = CompSelection(None, ImmutableHashSet.Empty)
+    new(comp) = ChartState(comp, None, ImmutableHashSet.Empty)
+    static member val Empty = ChartState(Composition.Empty, None, ImmutableHashSet.Empty)
 
-    member x.SetActiveUtt activeUtt = CompSelection(activeUtt, selectedNotes)
-    member x.SetSelectedNotes selectedNotes = CompSelection(activeUtt, selectedNotes)
+    member x.SetComp comp = ChartState(comp, activeUtt, selectedNotes)
+    member x.SetActiveUtt(comp, activeUtt) = ChartState(comp, activeUtt, selectedNotes)
+    member x.SetSelectedNotes(comp, selectedNotes) = ChartState(comp, activeUtt, selectedNotes)
 
-    member x.UpdateActiveUtt updateActiveUtt = CompSelection(updateActiveUtt activeUtt, selectedNotes)
-    member x.UpdateSelectedNotes updateSelectedNotes = CompSelection(activeUtt, updateSelectedNotes selectedNotes)
-
-    member x.EnsureIntersectionWith(comp : Composition) =
-        let activeUtt = activeUtt |> Option.filter comp.Utts.Contains
-        let selectedNotes = selectedNotes.Intersect comp.AllNotes
-        CompSelection(activeUtt, selectedNotes)
+    member x.UpdateComp updateComp = ChartState(updateComp comp, activeUtt, selectedNotes)
+    member x.UpdateActiveUtt(comp, updateActiveUtt) = ChartState(comp, updateActiveUtt activeUtt, selectedNotes)
+    member x.UpdateSelectedNotes(comp, updateSelectedNotes) = ChartState(comp, activeUtt, updateSelectedNotes selectedNotes)
 
 
