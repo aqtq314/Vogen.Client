@@ -690,14 +690,6 @@ type ChartEditor() =
                 elif chart.ActiveUtt = Some utt then activeUttStyle
                 else inactiveUttStyle
             let uttSynthResult = uttSynthCache.GetOrDefault utt
-            let chars = x.UttToCharsDict.[utt]
-
-            //let charActiveNotes = HashSet()
-            //for charIndex in 0 .. chars.Length - 1 do
-            //    let ch = chars.[charIndex]
-            //    let charActive = ch.Notes.[0].On <= playbackPos && ch.Notes.[^0].Off > playbackPos
-            //    if charActive then
-            //        charActiveNotes.UnionWith ch.Notes
 
             for noteIndex in 0 .. utt.Notes.Length - 1 do
                 let note = utt.Notes.[noteIndex]
@@ -721,7 +713,7 @@ type ChartEditor() =
                             let currNotePen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
                             let yMidMin = min yMid n1yMid
                             let yMidMax = max yMid n1yMid
-                            dc.DrawLine(currNotePen, Point(n1x0, yMidMin - half keyHeight - 8.0), Point(n1x0, yMidMax + half keyHeight + 8.0))
+                            dc.DrawLine(currNotePen, Point(n1x0, yMidMin), Point(n1x0, yMidMax))
 
                     // note
                     let currNoteBrush = if note.IsHyphen then uttStyle.HyphBrush else uttStyle.NoteBrush
@@ -729,7 +721,8 @@ type ChartEditor() =
                     if hasNextNote then
                         let nextNote = utt.Notes.[noteIndex + 1]
                         if x1 > n1x0 then
-                            dc.DrawRectangle(uttStyle.NoteBrushInvalid, currNotePen, Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight))
+                            let noteExcessRect = Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight)
+                            dc.DrawRoundedRectangle(uttStyle.NoteBrushInvalid, currNotePen, noteExcessRect, 3.0, 3.0)
                         elif x1 < n1x0 then
                             let noteConnectPen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.RestPen
                             dc.DrawLine(noteConnectPen, Point(x1, yMid), Point(n1x0, yMid))
@@ -737,19 +730,19 @@ type ChartEditor() =
                     let noteRectHeight = keyHeight 
                     let noteRect      = Rect(x0, yMid - half noteRectHeight, x1 - x0, noteRectHeight)
                     let noteValidRect = Rect(x0, yMid - half noteRectHeight, min x1 n1x0 - x0, noteRectHeight)
-                    dc.DrawRectangle(currNoteBrush, currNotePen, noteValidRect)
+                    dc.DrawRoundedRectangle(currNoteBrush, currNotePen, noteValidRect, 3.0, 3.0)
 
                     // synth in progress overlay
                     if uttSynthResult.IsSynthing then
-                        dc.DrawRectangle(x.NoteSynthingOverlayBrush, null, noteValidRect)
+                        dc.DrawRoundedRectangle(x.NoteSynthingOverlayBrush, null, noteValidRect, 3.0, 3.0)
 
                     // selection
                     if chart.GetIsNoteSelected note then
-                        dc.DrawRectangle(selNoteBrush, selNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
+                        dc.DrawRoundedRectangle(selNoteBrush, selNotePen, Rect.Inflate(noteRect, 0.0, 1.5), 3.0, 3.0)
 
                     // playback active notes
                     if x.CursorActiveNotes.Contains note then
-                        dc.DrawRectangle(null, cursorActiveNotePen, Rect.Inflate(noteRect, 0.0, 1.5))
+                        dc.DrawRoundedRectangle(null, cursorActiveNotePen, Rect.Inflate(noteRect, 0.0, 1.5), 3.0, 3.0)
 
                     // text
                     if not note.IsHyphen then
