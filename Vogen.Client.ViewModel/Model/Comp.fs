@@ -108,14 +108,16 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
     member x.HasCharGrids = x.CharGrids.Length > 0
     member x.HasF0Samples = x.F0Samples.Length > 0
 
+    static member GetSampleOffset(utt : Utterance) =
+        float utt.On
+        |> Midi.toTimeSpan utt.Bpm0
+        |> (+) -headSil
+        |> Audio.timeToSample
+
     static member Create sampleOffset = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
 
-    static member Create(utt : Utterance) =
-        let sampleOffset =
-            float utt.On
-            |> Midi.toTimeSpan utt.Bpm0
-            |> (+) -headSil
-            |> Audio.timeToSample
+    static member Create utt =
+        let sampleOffset = UttSynthResult.GetSampleOffset utt
         UttSynthResult.Create sampleOffset
 
     member x.Clear() =

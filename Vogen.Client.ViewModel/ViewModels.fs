@@ -221,7 +221,8 @@ type ProgramModel() as x =
                 let! f0Samples = Synth.requestF0 tUtt tChars
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
 
-                let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId
+                let sampleOffset = UttSynthResult.GetSampleOffset utt
+                let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId sampleOffset
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
                 return true
 

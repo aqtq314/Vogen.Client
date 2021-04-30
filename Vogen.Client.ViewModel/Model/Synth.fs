@@ -134,26 +134,27 @@ module Synth =
     let requestPO(tUtt : TimeTable.TUtt) = async {
         use httpClient = new HttpClient()
         let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
-            "chars", box tUtt.Chars
+            "romScheme", box tUtt.RomScheme
             "uttDur", box tUtt.UttDur
-            "romScheme", box tUtt.RomScheme |])
+            "chars", box tUtt.Chars |])
         let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
         return JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr }
 
     let requestF0(tUtt : TimeTable.TUtt)(tChars : ImmutableList<TimeTable.TChar>) = async {
         use httpClient = new HttpClient()
         let! synthResult = httpClient.PostJsonAsync(f0SynthUrl, dict [|
-            "chars", box tChars
-            "romScheme", box tUtt.RomScheme |])
+            "romScheme", box tUtt.RomScheme
+            "chars", box tChars |])
         let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
         return JsonConvert.DeserializeObject<float32 []> resultBodyStr }
 
-    let requestAc(tChars : ImmutableList<TimeTable.TChar>)(f0 : float32 [])(singerName : string) = async {
+    let requestAc(tChars : ImmutableList<TimeTable.TChar>)(f0 : float32 [])(singerName : string)(sampleOffset : int) = async {
         use httpClient = new HttpClient()
         let! synthResult = httpClient.PostJsonAsync(acSynthUrl, dict [|
-            "chars", box tChars
+            "singerName", box singerName
+            "sampleOffset", box sampleOffset
             "f0", box f0
-            "singerName", box singerName |])
+            "chars", box tChars |])
         let! resultBodyByteStream = synthResult.Content.ReadAsStreamAsync() |> Async.AwaitTask
         return AudioSamples.loadFromStream resultBodyByteStream }
 
