@@ -17,6 +17,7 @@ module Singer =
         "chao"
         "rgb"
         "aquachord"
+        "doaz"
         "kiritan"
         "kurumi" |]
 

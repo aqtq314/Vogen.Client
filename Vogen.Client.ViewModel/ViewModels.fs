@@ -292,7 +292,7 @@ type ProgramModel() as x =
 
             suspendUttPanelSync <- false
 
-    member x.SyncUttPanelEdits(singerId, romScheme) =
+    member x.SyncUttPanelEdits(newSingerId, newRomScheme) =
         if not suspendUttPanelSync then
             suspendUttPanelSync <- true
 
@@ -306,8 +306,8 @@ type ProgramModel() as x =
                     |> Seq.map(fun utt ->
                         let newUtt =
                             utt
-                            |> fun utt -> if singerId = null || utt.SingerId = singerId then utt else utt.SetSingerId singerId
-                            |> fun utt -> if romScheme = null || utt.RomScheme = romScheme then utt else utt.SetRomScheme romScheme
+                            |> fun utt -> if newSingerId = null || utt.SingerId = newSingerId then utt else utt.SetSingerId newSingerId
+                            |> fun utt -> if newRomScheme = null || utt.RomScheme = newRomScheme then utt else utt.SetRomScheme newRomScheme
                         KeyValuePair(utt, newUtt))
                     |> Seq.filter(fun (KeyValue(utt, newUtt)) -> utt <> newUtt))
 
@@ -320,6 +320,9 @@ type ProgramModel() as x =
 
                 x.UndoRedoStack.PushUndo(EditUttPanelValue, chart, !!x.ActiveChart)
                 x.CompIsSaved |> Rp.set false
+
+                if newSingerId <> null then x.PrevNonNullSingerId <- newSingerId
+                if newRomScheme <> null then x.PrevNonNullRomScheme <- newRomScheme
 
             suspendUttPanelSync <- false
 

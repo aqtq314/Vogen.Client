@@ -22,12 +22,12 @@ type Note(pitch, lyric, rom, moreRoms, on, dur) =
     member x.Pitch : int = pitch
     member x.Lyric : string = lyric
     member x.Rom : string = rom
-    member x.MoreRoms : ImmutableArray<string> = moreRoms
+    member x.MoreRoms : ImmutableArray<string> = moreRoms   // TODO: remove
     member x.On : int64 = on
     member x.Dur : int64 = dur
 
     member x.Off = x.On + x.Dur
-    member x.IsHyphen = x.Lyric = "-"
+    member x.IsHyphen = x.Lyric = "-"   // TODO: make value
 
     new(pitch, lyric, rom, on, dur) = Note(pitch, lyric, rom, ImmutableArray.Empty, on, dur)
 
