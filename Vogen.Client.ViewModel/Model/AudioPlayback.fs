@@ -67,7 +67,7 @@ module AudioSamples =
         for synthResult in uttSynthResults do
             let samples = synthResult.AudioSamples
             let sampleOffset = synthResult.SampleOffset
-            for i in sampleOffset .. sampleOffset + samples.Length - 1 do
+            for i in max 0 sampleOffset .. sampleOffset + samples.Length - 1 do
                 outSamples.[i] <- outSamples.[i] + samples.[i - sampleOffset]
         outSamples
 
