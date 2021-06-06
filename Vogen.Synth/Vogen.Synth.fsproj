@@ -4,13 +4,23 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <WarnOn>3390;$(WarnOn)</WarnOn>
-    <UseWPF>true</UseWPF>
+    <UseWPF>false</UseWPF>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <LangVersion>preview</LangVersion>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="orderedAlphabet.json" />
+    <Content Include="models\g2p\man.v20210604-221933.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="models\g2p\yue-wz.v20210605-000658.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="models\g2p\yue.v20210605-000325.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Program.fs" />
   </ItemGroup>
 
