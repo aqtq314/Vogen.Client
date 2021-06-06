@@ -21,12 +21,17 @@
     <Content Include="models\g2p\yue.v20210605-000325.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Compile Include="G2p.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
