@@ -15,22 +15,18 @@
 
   <ItemGroup>
     <EmbeddedResource Include="testComp.vog" />
-    <ContentWithTargetPath Include="Romanization\rime-luna-pinyin.json">
+    <Content Include="romDicts\rime-luna-pinyin.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dict-rom\rime-luna-pinyin.json</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Romanization\rime-cantonese.json">
+    </Content>
+    <Content Include="romDicts\rime-cantonese.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dict-rom\rime-cantonese.json</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Romanization\ngli-wugniu-zaonhe.json">
+    </Content>
+    <Content Include="romDicts\ngli-wugniu-zaonhe.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dict-rom\ngli-wugniu-zaonhe.json</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Romanization\ngli-wugniu-soutseu.json">
+    </Content>
+    <Content Include="romDicts\ngli-wugniu-soutseu.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dict-rom\ngli-wugniu-soutseu.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
     <Compile Include="Romanization\Trie.fs" />
     <Compile Include="Romanization\Scheme.fs" />
     <Compile Include="Model\Utils.fs" />

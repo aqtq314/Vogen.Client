@@ -24,7 +24,7 @@ module Romanizer =
             member x.Convert chs romHints = Array.create chs.Length [| fallbackRom |] }
 
     let createRomanizer fallbackRom jsonDictFileName =
-        let jsonDictFilePath = Path.Combine(Directory.GetCurrentDirectory(), "dict-rom", jsonDictFileName)
+        let jsonDictFilePath = Path.Combine(Directory.GetCurrentDirectory(), "romDicts", jsonDictFileName)
         let trie =
             let jsonDictStr = File.ReadAllText(jsonDictFilePath, Encoding.UTF8)
             let jsonDictObj = JsonConvert.DeserializeObject<JsonRomDict> jsonDictStr
