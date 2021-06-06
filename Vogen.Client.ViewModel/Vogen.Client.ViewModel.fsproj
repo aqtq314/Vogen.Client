@@ -2,9 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
     <UseWPF>true</UseWPF>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <LangVersion>preview</LangVersion>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,6 +62,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Doaz.Reactive.Wpf\Doaz.Reactive.Wpf.fsproj" />
     <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+    <ProjectReference Include="..\Vogen.Synth\Vogen.Synth.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

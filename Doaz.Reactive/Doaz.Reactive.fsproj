@@ -3,9 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
