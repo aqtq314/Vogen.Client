@@ -49,7 +49,33 @@ let run romScheme uttDur (chars : seq<TChar>) =
     let model = models.[romScheme].Value
     use ys = model.Run xs
     let ys = ys.ToArray()
-    let phBoundsSec = ys.[0].Value :?> Tensor<float32>
+    let phBoundsSec = (ys.[0].Value :?> Tensor<float32>).ToArray()
+
+    // fix phs with duration <= 0
+    let minPhDurSec = float32 (frameToTime 1.01).TotalSeconds
+    for nt0, nt1 in Array.pairwise noteBoundsSec |> Array.rev do
+        let phStartIndex = phBoundsSec |> Array.findIndex(fun phTime -> phTime >= nt0)
+        let phEndIndex = phBoundsSec |> Array.findIndexBack(fun phTime -> phTime < nt1)
+        if phStartIndex <= phEndIndex then
+            let notePhCount = phEndIndex - phStartIndex + 2
+            let minNoteDurSec = float32 notePhCount * minPhDurSec
+            let nt0 =
+                if phStartIndex = 0 || phBoundsSec.[phStartIndex] - nt0 < nt0 - phBoundsSec.[phStartIndex - 1] then
+                    nt0 - minPhDurSec  // if first ph has more duration in note from previous char than in current char then
+                else nt0               // modify nt0 by -1 frames so that the first ph can have min duration 0 in current char
+            let nt0 = min nt0 (nt1 - minNoteDurSec)
+
+            let notePhBoundsSec = [| yield nt0; yield! phBoundsSec.[phStartIndex .. phEndIndex]; yield nt1 |]
+            let notePhDursSec = Array.pairwise notePhBoundsSec |> Array.map(fun (phOn, phOff) -> phOff - phOn)
+            if notePhDursSec |> Array.exists(fun phDur -> phDur < minPhDurSec) then
+                let notePhExDursSec = notePhDursSec |> Array.map(fun phDur -> phDur - minPhDurSec |> max 0.0f)
+                let noteExDurSec = notePhExDursSec |> Array.sum
+                let outNotePhDursSec = notePhExDursSec |> Array.map(fun phDur ->
+                    phDur / noteExDurSec * (nt1 - nt0 - minNoteDurSec) + minPhDurSec)
+                let outNotePhBoundsSec = outNotePhDursSec |> Array.scan(+) nt0
+                for phIndex in phStartIndex .. phEndIndex do
+                    phBoundsSec.[phIndex] <- outNotePhBoundsSec.[phIndex - phStartIndex + 1]
+                GC.KeepAlive(obj())
 
     // decode
     let phBounds = Array.init(int phBoundsSec.Length)(fun i ->

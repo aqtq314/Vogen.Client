@@ -65,8 +65,8 @@ module TimeTable =
             charNotes
             |> Array.map(fun notes ->
                 let outNotes = ImmutableList.CreateRange(notes |> Seq.map(fun note ->
-                    let on = (float note.On |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> int
-                    let off = (float note.Off |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> int
+                    let on  = (float note.On  |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> round |> int
+                    let off = (float note.Off |> Midi.toTimeSpan utt.Bpm0) - uttStart |> timeToFrame |> round |> int
                     { Pitch = note.Pitch; On = on; Off = off }))
                 let ch = notes.[0].Lyric
                 let rom = notes.[0].Rom
