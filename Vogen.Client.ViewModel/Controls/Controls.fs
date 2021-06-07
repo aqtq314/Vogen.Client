@@ -891,8 +891,8 @@ type ChartEditorAdornerLayer() =
         | None -> ()
         | Some(selMinPulse, selMaxPulse, selMinPitch, selMaxPitch) ->
             let selBoxPenThicknessRadius = half selBoxPen.Thickness
-            let x0 = pulseToPixel quarterWidth hOffset (float selMinPulse) |> max(0.0 - selBoxPenThicknessRadius)
-            let x1 = pulseToPixel quarterWidth hOffset (float(selMaxPulse + 1L)) |> min(actualWidth + selBoxPenThicknessRadius)
+            let x0 = pulseToPixel quarterWidth hOffset (float selMinPulse)       |> clamp(0.0 - selBoxPenThicknessRadius)(actualWidth - selBoxPenThicknessRadius)
+            let x1 = pulseToPixel quarterWidth hOffset (float(selMaxPulse + 1L)) |> clamp(0.0 + selBoxPenThicknessRadius)(actualWidth + selBoxPenThicknessRadius)
             let y0 = pitchToPixel keyHeight actualHeight vOffset (float selMaxPitch) - half keyHeight |> max(0.0 - selBoxPenThicknessRadius)
             let y1 = pitchToPixel keyHeight actualHeight vOffset (float selMinPitch) + half keyHeight |> min(actualHeight + selBoxPenThicknessRadius)
             dc.DrawRectangle(selBoxBrush, selBoxPen, Rect(x0, y0, x1 - x0, y1 - y0))
