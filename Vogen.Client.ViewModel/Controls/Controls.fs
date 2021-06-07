@@ -14,6 +14,7 @@ open System.Windows.Input
 open System.Windows.Media
 open System.Windows.Media.Animation
 open Vogen.Client.Model
+open Vogen.Synth
 open type Doaz.Reactive.ColorConv
 
 

@@ -13,6 +13,7 @@ open System.Linq
 open System.Runtime.InteropServices
 open System.Text
 open System.Text.Encodings
+open Vogen.Synth
 
 
 type Note(pitch, lyric, rom, moreRoms, on, dur) =

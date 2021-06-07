@@ -16,10 +16,6 @@ open System.Text.RegularExpressions
 
 [<AutoOpen>]
 module Utils =
-    let hopSize = TimeSpan.FromMilliseconds 10.0
-    let headSil = TimeSpan.FromSeconds 0.5
-    let tailSil = TimeSpan.FromSeconds 0.5
-
     type ImmutableDictionary<'k, 'v> with
         member x.GetOrDefault defaultValue key =
             match x.TryGetValue key with

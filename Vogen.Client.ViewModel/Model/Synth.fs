@@ -14,37 +14,11 @@ open System.Net.Http
 open System.Text
 open System.Text.Encodings
 open System.Web
+open Vogen.Synth
 
 
 module TimeTable =
-    let timeToFrame(timeSpan : TimeSpan) = timeSpan / hopSize
-    let frameToTime(frames : float) = frames * hopSize
-
-    [<NoComparison; ReferenceEquality>]
-    type TPhoneme = {
-        [<JsonProperty("ph", Required=Required.AllowNull)>] Ph : string
-        [<JsonProperty("on", Required=Required.Always)>]    On : int
-        [<JsonProperty("off", Required=Required.Always)>]   Off : int }
-
-    [<NoComparison; ReferenceEquality>]
-    type TNote = {
-        [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
-        [<JsonProperty("on", Required=Required.Always)>]    On : int
-        [<JsonProperty("off", Required=Required.Always)>]   Off : int }
-
-    [<NoComparison; ReferenceEquality>]
-    type TChar = {
-        [<JsonProperty("ch", Required=Required.AllowNull)>]                   Ch : string
-        [<JsonProperty("rom", Required=Required.AllowNull)>]                  Rom : string
-        [<JsonProperty("notes", NullValueHandling=NullValueHandling.Ignore)>] Notes : ImmutableList<TNote>
-        [<JsonProperty("ipa", NullValueHandling=NullValueHandling.Ignore)>]   Ipa : ImmutableList<TPhoneme> }
-
-    [<NoComparison; ReferenceEquality>]
-    type TUtt = {
-        [<JsonProperty("uttStartSec", Required=Required.Always)>] UttStartSec : float
-        [<JsonProperty("uttDur", Required=Required.Always)>]      UttDur : int
-        [<JsonProperty("romScheme", Required=Required.Always)>]   RomScheme : string
-        [<JsonProperty("chars", Required=Required.Always)>]       Chars : ImmutableList<TChar> }
+    open Vogen.Synth.TimeTable
 
     let toCharGrids tChars =
         tChars
@@ -61,6 +35,10 @@ module TimeTable =
         let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan utt.Bpm0) - headSil
         let uttEnd = (float allNotes.[^0].Off |> Midi.toTimeSpan utt.Bpm0) + tailSil
         let uttDur = uttEnd - uttStart
+
+        // check leading hyphen note
+        if allNotes.Count > 0 && allNotes.[0].IsHyphen then
+            raise(ArgumentException("First note cannot be hyphen note"))
 
         // remove note with same onset-time
         for i in allNotes.Count - 1 .. -1 .. 1 do
