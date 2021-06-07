@@ -385,6 +385,8 @@ type ChartEditor() =
     let majorGridPen = Pen(SolidColorBrush(aRgb 0x80 0), 0.5) |>! freeze
     let minorGridPen = Pen(SolidColorBrush(aRgb 0x40 0), 0.5) |>! freeze
 
+    let phPen = Pen(SolidColorBrush(argb 0xC08040FF), 0.5)
+
     let waveBrush = SolidColorBrush(aRgb 0x10 0) |>! freeze
 
     let noteBaseColor = rgb 0xFF8040
@@ -758,17 +760,18 @@ type ChartEditor() =
         //    for charGrid in uttSynthResult.CharGrids do
         //        let pitch = charGrid.Pitch
         //        let y = pitchToPixel keyHeight actualHeight vOffset (float pitch)
+        //        let yBot = y + half keyHeight
         //        charGrid.Phs |> Array.iteri(fun i ph ->
         //            let x0 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.On)))
         //            let x1 = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float ph.Off)))
         //            if x1 >= 0.0 && x0 <= actualWidth then
         //                let ft = x |> makeFormattedText ph.Ph
         //                ft.SetForegroundBrush phPen.Brush
-        //                ft.SetFontSize(0.75 * TextBlock.GetFontSize x)
-        //                dc.DrawLine(phPen, Point(x0, y), Point(x1, y))
+        //                ft.SetFontSize(0.5 * TextBlock.GetFontSize x)
+        //                dc.DrawLine(phPen, Point(x0, yBot), Point(x1, yBot))
         //                let fillBrush = if i = 0 then phPen.Brush else Brushes.White :> _
-        //                dc.DrawEllipse(fillBrush, phPen, Point(x0, y), 2.0, 2.0)
-        //                dc.DrawText(ft, Point(x0, y)))
+        //                dc.DrawEllipse(fillBrush, phPen, Point(x0, yBot), 2.0, 2.0)
+        //                dc.DrawText(ft, Point(x0, yBot)))
 
         // utt f0 samples
         let f0Geometry = drawGeometry FillRule.EvenOdd <| fun sgc ->

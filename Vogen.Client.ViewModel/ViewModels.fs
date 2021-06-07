@@ -14,12 +14,28 @@ open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.Romanization
+open Vogen.Synth
+
+#nowarn "40"
 
 
 type ProgramModel() as x =
     let activeChart = rp ChartState.Empty
     let activeUttSynthCache = rp UttSynthCache.Empty
     let undoRedoStack = UndoRedoStack()
+
+    let rec synthActorOpRef = ref None
+    and getSynthActor(dispatcher : Dispatcher) =
+        match !synthActorOpRef with
+        | None ->
+            let synthActor = SynthActor.create()
+            synthActor.Error.Add(fun ex ->
+                dispatcher.BeginInvoke(fun () ->
+                    MessageBox.Show($"{ex.Message}\r\n{ex.StackTrace}", "SynthActor Error", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
+                    synthActorOpRef := None) |> ignore)
+            synthActorOpRef := Some synthActor
+            synthActor
+        | Some synthActor -> synthActor
 
     let mutable suspendUttPanelSync = false
     let uttPanelSingerId = rp Singer.defaultId
@@ -209,12 +225,15 @@ type ProgramModel() as x =
                             compIsSaved |> Rp.set false
                             activeUttSynthCache |> Rp.set(
                                 utt |> uttSynthCache.UpdateUttSynthResult updateUttSynthResult)
-                        uttSynthResult.IsSynthing)
+                            true
+                        else
+                            false)
                     if not success then
                         raise(OperationCanceledException("Utt requested for synth has already be changed."))
 
+                let synthActor = getSynthActor dispatcher
                 let tUtt = TimeTable.ofUtt utt
-                let! tChars = Synth.requestPO tUtt
+                let! tChars = Synth.requestPO synthActor tUtt
                 let charGrids = TimeTable.toCharGrids tChars
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
 

@@ -31,6 +31,7 @@
     <Compile Include="TimeTable.fs" />
     <Compile Include="G2p.fs" />
     <Compile Include="Prosody.fs" />
+    <Compile Include="SynthActor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

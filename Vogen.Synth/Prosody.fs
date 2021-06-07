@@ -19,7 +19,8 @@ let rec models = dict [|
     "yue", lazy new InferenceSession(@"models\po\yue.v20210606-040514.po.onnx")
     "yue-wz", lazy models.["yue"].Value |]
 
-let run romScheme uttDur (chars : TChar []) =
+let run romScheme uttDur (chars : seq<TChar>) =
+    let chars = Array.ofSeq chars
     let roms = chars |> Array.map(fun ch -> ch.Rom)
     let chPhs = G2p.run romScheme roms
 

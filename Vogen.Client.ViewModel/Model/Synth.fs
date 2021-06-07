@@ -109,14 +109,23 @@ module Synth =
             GC.KeepAlive content
             return result.EnsureSuccessStatusCode() }
 
-    let requestPO(tUtt : TimeTable.TUtt) = async {
-        use httpClient = new HttpClient()
-        let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
-            "romScheme", box tUtt.RomScheme
-            "uttDur", box tUtt.UttDur
-            "chars", box tUtt.Chars |])
-        let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
-        return JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr }
+    //let requestPO(tUtt : TimeTable.TUtt) = async {
+    //    use httpClient = new HttpClient()
+    //    let! synthResult = httpClient.PostJsonAsync(poSynthUrl, dict [|
+    //        "romScheme", box tUtt.RomScheme
+    //        "uttDur", box tUtt.UttDur
+    //        "chars", box tUtt.Chars |])
+    //    let! resultBodyStr = synthResult.Content.ReadAsStringAsync() |> Async.AwaitTask
+    //    return JsonConvert.DeserializeObject<ImmutableList<TimeTable.TChar>> resultBodyStr }
+
+    let requestPO(synthActor : MailboxProcessor<_>)(tUtt : TimeTable.TUtt) = async {
+        let romScheme, uttDur, chars = tUtt.RomScheme, tUtt.UttDur, tUtt.Chars
+        let! synthResult = synthActor.PostAndAsyncReply(fun reply -> (romScheme, uttDur, chars), reply)
+        let outChars =
+            match synthResult with
+            | Ok outChars -> outChars
+            | Error ex -> raise ex
+        return outChars }
 
     let requestF0(tUtt : TimeTable.TUtt)(tChars : ImmutableList<TimeTable.TChar>) = async {
         use httpClient = new HttpClient()
