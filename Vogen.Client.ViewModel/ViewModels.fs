@@ -211,7 +211,7 @@ type ProgramModel() as x =
         compIsSaved |> Rp.set false
 
     member x.SynthUtt(dispatcher : Dispatcher) utt = async {
-        try try dispatcher.BeginInvoke(fun () ->
+        try try dispatcher.Invoke(fun () ->
                     activeUttSynthCache |> Rp.modify(fun uttSynthCache ->
                         utt |> uttSynthCache.UpdateUttSynthResult(fun uttSynthResult ->
                             uttSynthResult.SetIsSynthing true))
