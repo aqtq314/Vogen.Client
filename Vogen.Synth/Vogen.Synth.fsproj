@@ -11,20 +11,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="orderedAlphabet.json" />
-    <Content Include="models\g2p\man.v20210604-221933.g2p.onnx">
+    <Content Include="models\g2p\man.v20210617-144543.g2p.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="models\g2p\yue.v20210605-000325.g2p.onnx">
+    <Content Include="models\g2p\yue.v20210617-144354.g2p.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="models\g2p\yue-wz.v20210605-000658.g2p.onnx">
+    <Content Include="models\g2p\yue-wz.v20210617-131737.g2p.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="models\po\man.v20210606-033513.po.onnx">
+    <Content Include="models\po\man.v20210617-152623.po.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="models\po\yue.v20210606-040514.po.onnx">
+    <Content Include="models\po\yue.v20210619-233544.po.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Utils.fs" />

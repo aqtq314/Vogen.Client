@@ -15,8 +15,8 @@ open Vogen.Synth.TimeTable
 
 
 let rec models = dict [|
-    "man", lazy new InferenceSession(@"models\po\man.v20210606-033513.po.onnx")
-    "yue", lazy new InferenceSession(@"models\po\yue.v20210606-040514.po.onnx")
+    "man", lazy new InferenceSession(@"models\po\man.v20210617-152623.po.onnx")
+    "yue", lazy new InferenceSession(@"models\po\yue.v20210619-233544.po.onnx")
     "yue-wz", lazy models.["yue"].Value |]
 
 let run romScheme uttDur (chars : seq<TChar>) =
@@ -26,8 +26,12 @@ let run romScheme uttDur (chars : seq<TChar>) =
 
     // encode
     let chPhs = chPhs |> Array.map(fun phs -> if phs <> null then phs else [| null |])
-    let phEncs = chPhs |> Array.collect(fun phs -> Array.map G2p.phToIndex phs)
+    let phs = chPhs |> Array.collect(Array.map(fun ph ->
+        if ph = null then ""
+        elif ph.Contains ':' then ph
+        else $"{romScheme}:{ph}"))
     let chPhCounts = chPhs |> Array.map(fun phs -> phs.Length)
+    let chPhCounts64 = chPhCounts |> Array.map int64
     let noteBounds = [|
         yield 0
         yield! Seq.pairwise chars
@@ -37,13 +41,13 @@ let run romScheme uttDur (chars : seq<TChar>) =
                 else
                     ch0.Notes.[^0].Off)
         yield uttDur |]
-    let noteBoundsSec = noteBounds |> Array.map(fun t ->
-        float32(frameToTime(float t).TotalSeconds))
+    let noteBoundsSec = noteBounds |> Array.map(fun t -> float32(frameToTime(float t).TotalSeconds))
+    let noteDursSec = [| for nt0, nt1 in Array.pairwise noteBoundsSec -> nt1 - nt0 |]
 
     let xs = [|
-        NamedOnnxValue.CreateFromTensor("phs", phEncs.ToTensor())
-        NamedOnnxValue.CreateFromTensor("chPhCounts", chPhCounts.ToTensor())
-        NamedOnnxValue.CreateFromTensor("noteBoundsSec", noteBoundsSec.ToTensor()) |]
+        NamedOnnxValue.CreateFromTensor("phs", phs.ToTensor())
+        NamedOnnxValue.CreateFromTensor("chPhCounts", chPhCounts64.ToTensor())
+        NamedOnnxValue.CreateFromTensor("noteDursSec", noteDursSec.ToTensor()) |]
 
     // run model
     let model = models.[romScheme].Value
