@@ -26,10 +26,17 @@
     <Content Include="models\po\yue.v20210619-233544.po.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="models\f0\man.v20210620-044257.f0.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="models\f0\yue.v20210620-044257.f0.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Utils.fs" />
     <Compile Include="TimeTable.fs" />
     <Compile Include="G2p.fs" />
     <Compile Include="Prosody.fs" />
+    <Compile Include="F0.fs" />
     <Compile Include="SynthActor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
@@ -45,6 +52,10 @@
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="models\f0\" />
   </ItemGroup>
 
 </Project>
