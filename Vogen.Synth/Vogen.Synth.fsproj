@@ -11,27 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="models\g2p\man.v20210617-144543.g2p.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\g2p\yue.v20210617-144354.g2p.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\g2p\yue-wz.v20210617-131737.g2p.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\po\man.v20210617-152623.po.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\po\yue.v20210619-233544.po.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\f0\man.v20210620-044257.f0.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="models\f0\yue.v20210620-044257.f0.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="models\g2p.man.v20210617-144543.onnx" />
+    <EmbeddedResource Include="models\g2p.yue.v20210617-144354.onnx" />
+    <EmbeddedResource Include="models\g2p.yue-wz.v20210617-131737.onnx" />
+    <EmbeddedResource Include="models\po.man.v20210617-152623.onnx" />
+    <EmbeddedResource Include="models\po.yue.v20210619-233544.onnx" />
+    <EmbeddedResource Include="models\f0.man.v20210620-044257.onnx" />
+    <EmbeddedResource Include="models\f0.yue.v20210620-044257.onnx" />
     <Compile Include="Utils.fs" />
     <Compile Include="TimeTable.fs" />
     <Compile Include="G2p.fs" />
@@ -52,10 +38,6 @@
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="models\f0\" />
   </ItemGroup>
 
 </Project>

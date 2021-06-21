@@ -27,9 +27,9 @@ let enc romsNonNull = [|
     NamedOnnxValue.CreateFromTensor("letters", encLetterIndices romsNonNull) |]
 
 let models = dict [|
-    "man", lazy new InferenceSession(@"models\g2p\man.v20210617-144543.g2p.onnx")
-    "yue", lazy new InferenceSession(@"models\g2p\yue.v20210617-144354.g2p.onnx")
-    "yue-wz", lazy new InferenceSession(@"models\g2p\yue-wz.v20210617-131737.g2p.onnx") |]
+    "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.man.v20210617-144543.onnx"
+    "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue.v20210617-144354.onnx"
+    "yue-wz", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue-wz.v20210617-131737.onnx" |]
 
 let dec(phis : Tensor<string>) = [|
     for i in 0 .. int phis.Length / yLength - 1 ->
