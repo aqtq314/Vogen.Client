@@ -11,6 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="$(SolutionDir)$(Platform)\$(Configuration)\World.dll" Link="World.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <EmbeddedResource Include="models\g2p.man.v20210617-144543.onnx" />
     <EmbeddedResource Include="models\g2p.yue.v20210617-144354.onnx" />
     <EmbeddedResource Include="models\g2p.yue-wz.v20210617-131737.onnx" />
@@ -19,6 +22,7 @@
     <EmbeddedResource Include="models\f0.man.v20210620-044257.onnx" />
     <EmbeddedResource Include="models\f0.yue.v20210620-044257.onnx" />
     <Compile Include="Utils.fs" />
+    <Compile Include="World.fs" />
     <Compile Include="TimeTable.fs" />
     <Compile Include="G2p.fs" />
     <Compile Include="Prosody.fs" />
@@ -34,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
+    <ProjectReference Include="..\World\World.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>

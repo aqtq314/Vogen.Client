@@ -11,7 +11,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Doaz.Reactive.Wpf", "Doaz.R
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Vogen.Client.ViewModel", "Vogen.Client.ViewModel\Vogen.Client.ViewModel.fsproj", "{59AF470D-0CAA-41AB-875C-2449F7E5D38B}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vogen.Synth", "Vogen.Synth\Vogen.Synth.fsproj", "{E8359FF7-D223-4A06-9A7F-F83802260487}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Vogen.Synth", "Vogen.Synth\Vogen.Synth.fsproj", "{E8359FF7-D223-4A06-9A7F-F83802260487}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "World", "World\World.vcxproj", "{E0A0F94E-1C8C-45D5-BF31-0FBD946C78EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{E8359FF7-D223-4A06-9A7F-F83802260487}.Debug|x64.Build.0 = Debug|x64
 		{E8359FF7-D223-4A06-9A7F-F83802260487}.Release|x64.ActiveCfg = Release|x64
 		{E8359FF7-D223-4A06-9A7F-F83802260487}.Release|x64.Build.0 = Release|x64
+		{E0A0F94E-1C8C-45D5-BF31-0FBD946C78EE}.Debug|x64.ActiveCfg = Debug|x64
+		{E0A0F94E-1C8C-45D5-BF31-0FBD946C78EE}.Debug|x64.Build.0 = Debug|x64
+		{E0A0F94E-1C8C-45D5-BF31-0FBD946C78EE}.Release|x64.ActiveCfg = Release|x64
+		{E0A0F94E-1C8C-45D5-BF31-0FBD946C78EE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

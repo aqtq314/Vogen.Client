@@ -1,0 +1,2 @@
+#define WORLD_API __declspec(dllexport)
+#define WORLD_API __declspec(dllimport)

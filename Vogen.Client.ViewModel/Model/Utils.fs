@@ -12,6 +12,7 @@ open System.IO.Compression
 open System.Linq
 open System.Text
 open System.Text.RegularExpressions
+open Vogen.Synth
 
 
 [<AutoOpen>]
@@ -40,8 +41,6 @@ module Utils =
             Regex.Replace(jStr, @"(?<![\}\]],)(?<!\[)\r\n *(?!.+[\[\{])", " ")
 
 module Audio =
-    let [<Literal>] fs = 44100
-    let [<Literal>] channels = 1
     let playbackWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
 
     let sampleToTime(sampleTime : int) =

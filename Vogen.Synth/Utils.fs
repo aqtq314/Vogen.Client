@@ -8,6 +8,10 @@ open System.Reflection
 
 [<AutoOpen>]
 module Params =
+    let [<Literal>] fs = 44100
+    let [<Literal>] channels = 1
+    let [<Literal>] worldFftSize = 2048
+
     let hopSize = TimeSpan.FromMilliseconds 10.0
     let headSil = TimeSpan.FromSeconds 0.5
     let tailSil = TimeSpan.FromSeconds 0.5

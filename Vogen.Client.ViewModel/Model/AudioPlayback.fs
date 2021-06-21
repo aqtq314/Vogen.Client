@@ -11,6 +11,7 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
+open Vogen.Synth
 open Audio
 
 
