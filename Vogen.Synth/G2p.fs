@@ -15,26 +15,10 @@ open System.Text
 let xLength = 8
 let yLength = 4
 
-let encLetterIndices(romsNonNull : string []) =
-    let lis = Array.create(romsNonNull.Length * xLength) ""
-    romsNonNull |> Array.iteri(fun i rom ->
-        rom |> String.iteri(fun j letter ->
-            if j < xLength then
-                lis.[i * xLength + j] <- letter.ToString()))
-    lis.ToTensor().Reshape(ReadOnlySpan([| romsNonNull.Length; xLength |]))
-
-let enc romsNonNull = [|
-    NamedOnnxValue.CreateFromTensor("letters", encLetterIndices romsNonNull) |]
-
 let models = dict [|
     "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.man.v20210617-144543.onnx"
     "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue.v20210617-144354.onnx"
     "yue-wz", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue-wz.v20210617-131737.onnx" |]
-
-let dec(phis : Tensor<string>) = [|
-    for i in 0 .. int phis.Length / yLength - 1 ->
-        [| for j in 0 .. yLength - 1 -> phis.GetValue(i * yLength + j) |]
-        |> Array.filter(fun ph -> not(String.IsNullOrEmpty ph)) |]
 
 let run romScheme (roms : string []) =
     let romsNonNullIndices = [|
@@ -44,12 +28,25 @@ let run romScheme (roms : string []) =
     let romsNonNull =
         romsNonNullIndices |> Array.map(fun i -> roms.[i])
 
-    let xs = enc romsNonNull
+    let romLetters =
+        let letters = Array.create(romsNonNull.Length * xLength) ""
+        romsNonNull |> Array.iteri(fun i rom ->
+            rom |> String.iteri(fun j letter ->
+                if j < xLength then
+                    letters.[i * xLength + j] <- letter.ToString()))
+        letters.ToTensor().Reshape(ReadOnlySpan([| romsNonNull.Length; xLength |]))
+
+    let xs = [|
+        NamedOnnxValue.CreateFromTensor("letters", romLetters) |]
+
     let model = models.[romScheme].Value
     use ys = model.Run xs
     let ys = ys.ToArray()
-    let phis = ys.[0].Value :?> Tensor<string>
-    let phsNonNull = dec phis
+    let phis = ys.[0].Value :?> DenseTensor<string>
+    let phsNonNull = [|
+        for i in 0 .. int phis.Length / yLength - 1 ->
+            [| for j in 0 .. yLength - 1 -> phis.GetValue(i * yLength + j) |]
+            |> Array.filter(fun ph -> not(String.IsNullOrEmpty ph)) |]
 
     let phs = Array.zeroCreate roms.Length
     romsNonNullIndices |> Seq.iteri(fun nonNullIndex outIndex ->

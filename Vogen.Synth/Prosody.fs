@@ -53,7 +53,7 @@ let run romScheme uttDur (chars : seq<TChar>) =
     let model = models.[romScheme].Value
     use ys = model.Run xs
     let ys = ys.ToArray()
-    let phBoundsSec = (ys.[0].Value :?> Tensor<float32>).ToArray()
+    let phBoundsSec = ys.[0].Value :?> DenseTensor<float32> |> Array.ofDenseTensor
 
     // fix phs with duration <= 0
     let minPhDurSec = float32 (frameToTime 1.01).TotalSeconds

@@ -36,7 +36,7 @@ let run romScheme (chars : IReadOnlyList<TimeTable.TChar>) =
 
     let phSyms = phs |> Array.map(fun ph ->
         if ph.Ph = null then ""
-        elif ph.Ph.Contains ":" then ph.Ph
+        elif ph.Ph.Contains ':' then ph.Ph
         else $"{romScheme}:{ph.Ph}")
     let notePitches = noteOps |> Array.map(function | None -> 0f | Some note -> float32 note.Pitch)
     let noteDurs = Array.pairwise noteBounds |> Array.map(fun (t0, t1) -> int64(t1 - t0))
@@ -54,7 +54,7 @@ let run romScheme (chars : IReadOnlyList<TimeTable.TChar>) =
     let model = models.[romScheme].Value
     use ys = model.Run xs
     let ys = ys.ToArray()
-    let f0 = (ys.[0].Value :?> Tensor<float32>).ToArray()
+    let f0 = ys.[0].Value :?> DenseTensor<float32> |> Array.ofDenseTensor
 
     f0
 
