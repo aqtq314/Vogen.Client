@@ -33,7 +33,7 @@ type Array2DIntPtrConversionBuilder() =
 
 let array2dIntptrConv = Array2DIntPtrConversionBuilder()
 
-let synthesize(f0 : float [], mgc : float [,], bap : float [,]) = array2dIntptrConv {
+let synthesize(f0 : float [])(mgc : float [,])(bap : float [,]) = array2dIntptrConv {
     let! mgcFramePtrs = mgc
     let! spFramePtrs = Array2D.zeroCreate(mgc.GetLength 0)(worldFftSize / 2 + 1)
     DecodeSpectralEnvelope(mgcFramePtrs, mgc.GetLength 0, fs, worldFftSize, mgc.GetLength 1, spFramePtrs)
@@ -46,5 +46,9 @@ let synthesize(f0 : float [], mgc : float [,], bap : float [,]) = array2dIntptrC
     let y = Array.zeroCreate yLength
     Synthesis(f0, f0.Length, spFramePtrs, apFramePtrs, worldFftSize, hopSize.TotalMilliseconds, fs, yLength, y)
     return y }
+
+let synthesize32(f0 : float32 [])(mgc : float32 [,])(bap : float32 [,]) =
+    synthesize(Array.map float f0)(Array2D.map float mgc)(Array2D.map float bap)
+    |> Array.map float32
 
 
