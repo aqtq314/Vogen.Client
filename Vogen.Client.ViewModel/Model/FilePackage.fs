@@ -213,7 +213,7 @@ module FilePackage =
                 let f0Bytes = Array.zeroCreate(f0Samples.Length * sizeof<float32>)
                 Buffer.BlockCopy(f0Samples, 0, f0Bytes, 0, f0Samples.Length * sizeof<float32>)
                 fileStream.Write(f0Bytes, 0, f0Bytes.Length)
-            if uttSynthResult.HasAudio then
+            if uttSynthResult.HasAudio && uttSynthResult.AudioFileBytes.Length > 0 then
                 use fileStream = zipFile.CreateEntry($"{uttName}.m4a", CompressionLevel.Fastest).Open()
                 fileStream.Write(uttSynthResult.AudioFileBytes, 0, uttSynthResult.AudioFileBytes.Length))
 

@@ -12,7 +12,7 @@ open System.Linq
 
 [<EntryPoint>]
 let main argv =
-    printfn "Hello world from F#"
+    printfn "%A" Acoustics.voiceLibs
 
     //printfn "%A" (G2p.run "yue-wz" [| null; "woi"; "loi"; null; "soeng"; "zoek"; "seot"; null |])
 

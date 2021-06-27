@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Doaz.Reactive.Wpf\Doaz.Reactive.Wpf.fsproj" />
     <ProjectReference Include="..\Doaz.Reactive\Doaz.Reactive.fsproj" />
     <ProjectReference Include="..\Vogen.Client.ViewModel\Vogen.Client.ViewModel.fsproj" />
+    <ProjectReference Include="..\Vogen.Synth\Vogen.Synth.fsproj" />
   </ItemGroup>
 
 </Project>

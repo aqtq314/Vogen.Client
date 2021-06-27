@@ -12,6 +12,7 @@
                    xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
                    xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
                    xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
+                   xmlns:s="clr-namespace:Vogen.Synth;assembly=Vogen.Synth"
                    mc:Ignorable="d"
                    Width="1024" Height="576"
                    d:DataContext="{x:Static vm:DesignerModels.programModel}">
@@ -186,10 +187,14 @@
       </ComboBox>
       <Separator/>
       <TextBlock Text="声库" Margin="3 0" VerticalAlignment="Center"/>
-      <ComboBox x:Name="singerIdDropDown" Width="60" SelectedItem="{Binding UttPanelSingerIdWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static vo:Singer.all}">
+      <ComboBox x:Name="singerIdDropDown" Width="60" SelectedItem="{Binding UttPanelSingerIdWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static s:Acoustics.voiceLibIds}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <TextBlock Text="{Binding Converter={x:Static vc:TextResources.singerNameConverter}}"/>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding Converter={x:Static vc:TextResources.singerNameConverter}}"/>
+              <TextBlock Text=" - "/>
+              <TextBlock Text="{Binding}"/>
+            </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ComboBox>

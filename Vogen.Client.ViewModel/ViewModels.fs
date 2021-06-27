@@ -38,7 +38,7 @@ type ProgramModel() as x =
         | Some synthActor -> synthActor
 
     let mutable suspendUttPanelSync = false
-    let uttPanelSingerId = rp Singer.defaultId
+    let uttPanelSingerId = rp(Seq.tryHead Acoustics.voiceLibIds |> Option.defaultValue "")
     let uttPanelRomScheme = rp Romanizer.defaultId
     do  activeChart |> Rpo.leaf(fun chart -> x.UpdateUttPanelValues chart)
         uttPanelSingerId |> Rpo.leaf(fun singerId ->
@@ -233,16 +233,18 @@ type ProgramModel() as x =
 
                 let synthActor = getSynthActor dispatcher
                 let tUtt = TimeTable.ofUtt utt
-                let! tChars = Synth.requestPO synthActor tUtt
+                let! tChars = synthActor |> SynthActor.post(fun reply -> Choice1Of3(reply, tUtt.RomScheme, tUtt.UttDur, tUtt.Chars))
                 let charGrids = TimeTable.toCharGrids tChars
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
 
-                let! f0Samples = Synth.requestF0 tUtt tChars
-                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetF0Samples f0Samples)
+                let! f0 = synthActor |> SynthActor.post(fun reply -> Choice2Of3(reply, tUtt.RomScheme, tChars))
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetF0Samples f0)
 
                 let sampleOffset = UttSynthResult.GetSampleOffset utt
-                let! audioContent = Synth.requestAc tChars f0Samples utt.SingerId sampleOffset
-                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio audioContent)
+                let! mgc, bap = synthActor |> SynthActor.post(fun reply -> Choice3Of3(reply, tUtt.RomScheme, utt.SingerId, f0, tChars))
+                let audioSamples = World.synthesize32 f0 mgc bap
+                let audioFileBytes = Array.empty
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio(audioFileBytes, audioSamples))
                 return true
 
             with ex ->

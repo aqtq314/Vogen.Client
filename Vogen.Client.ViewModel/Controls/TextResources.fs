@@ -13,6 +13,7 @@ open System.Linq
 open System.Text
 open System.Text.Encodings
 open Vogen.Client.Model
+open Vogen.Synth
 
 
 let getRomSchemeName romScheme =
@@ -33,9 +34,10 @@ let getRomSchemeChar romScheme =
     | "wuu-sz" -> "苏"
     | _ -> raise(KeyNotFoundException($"Unknown romScheme {romScheme}"))
 
-let getSingerName singerId =
-    let singerId : string = singerId
-    $"{singerId.[..0].ToUpper()}{singerId.[1..]}"
+let getSingerName(singerId : string) =
+    match Acoustics.voiceLibs.TryGetValue singerId with
+    | true, voiceLib -> voiceLib.Meta.Name
+    | false, _ -> singerId
 
 let getIsSynthingDescription isSynthing =
     match isSynthing with

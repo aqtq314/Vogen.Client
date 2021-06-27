@@ -43,6 +43,8 @@ let voiceLibs =
         voiceLibId, voiceLibs |> Array.maxBy(fun voiceLib -> voiceLib.Meta.Version))
     |> Dict.ofSeq
 
+let voiceLibIds = voiceLibs.Keys.ToArray()
+
 let run romScheme voiceLibId (f0 : float32 [])(chars : IReadOnlyList<TimeTable.TChar>) =
     let phs = chars |> Seq.collect(fun ch -> ch.Ipa) |> Array.ofSeq
 
