@@ -23,7 +23,7 @@ open Vogen.Client.ViewModel
 type MainWindowBase() =
     inherit Window()
 
-    static member AppName = "未来虚拟唱歌人训练营"
+    static member AppName = "未来虚拟唱鸽人训练营"
 
     static member WindowTitleConverter = ValueConverter.CreateMulti(fun vs ->
         match vs with
