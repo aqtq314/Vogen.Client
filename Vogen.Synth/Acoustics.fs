@@ -20,10 +20,11 @@ type VoiceLibMetadata = {
     [<JsonProperty("name",    Required=Required.DisallowNull)>] Name : string
     [<JsonProperty("id",      Required=Required.DisallowNull)>] Id : string
     [<JsonProperty("version", Required=Required.DisallowNull)>] Version : string
-    [<JsonProperty("by",      Required=Required.DisallowNull)>] By : string }
+    [<JsonProperty("builtBy", Required=Required.DisallowNull)>] BuiltBy : string
+    [<JsonProperty("voiceBy", Required=Required.DisallowNull)>] VoiceBy : string }
 
 let voiceLibs =
-    Directory.GetFiles(".", "*.vogeon")
+    Directory.GetFiles(".", "voicelib.*.vogeon")
     |> Array.choose(fun voiceLibPath ->
         try use zipArchive = ZipFile.OpenRead voiceLibPath
             use metaStream = (zipArchive.GetEntry "meta.json").Open()

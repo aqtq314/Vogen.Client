@@ -38,7 +38,7 @@ type ProgramModel() as x =
         | Some synthActor -> synthActor
 
     let mutable suspendUttPanelSync = false
-    let uttPanelSingerId = rp(Seq.tryHead Acoustics.voiceLibIds |> Option.defaultValue "")
+    let uttPanelSingerId = rp(if Acoustics.voiceLibs.ContainsKey "Gloria" then "Gloria" else (Seq.tryHead Acoustics.voiceLibIds |> Option.defaultValue ""))
     let uttPanelRomScheme = rp Romanizer.defaultId
     do  activeChart |> Rpo.leaf(fun chart -> x.UpdateUttPanelValues chart)
         uttPanelSingerId |> Rpo.leaf(fun singerId ->
