@@ -14,11 +14,11 @@
     <None Include="$(SolutionDir)$(Platform)\$(Configuration)\World.dll" Link="World.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <EmbeddedResource Include="models\g2p.man.v20210617-144543.onnx" />
-    <EmbeddedResource Include="models\g2p.yue.v20210617-144354.onnx" />
-    <EmbeddedResource Include="models\g2p.yue-wz.v20210617-131737.onnx" />
-    <EmbeddedResource Include="models\po.man.v20210617-152623.onnx" />
-    <EmbeddedResource Include="models\po.yue.v20210619-233544.onnx" />
+    <EmbeddedResource Include="models\g2p.man.onnx" />
+    <EmbeddedResource Include="models\g2p.yue.onnx" />
+    <EmbeddedResource Include="models\g2p.yue-wz.onnx" />
+    <EmbeddedResource Include="models\po.man.onnx" />
+    <EmbeddedResource Include="models\po.yue.onnx" />
     <EmbeddedResource Include="models\f0.man.onnx" />
     <EmbeddedResource Include="models\f0.yue.onnx" />
     <Compile Include="Utils.fs" />
