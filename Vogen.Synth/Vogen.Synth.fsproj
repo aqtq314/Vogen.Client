@@ -19,8 +19,8 @@
     <EmbeddedResource Include="models\g2p.yue-wz.v20210617-131737.onnx" />
     <EmbeddedResource Include="models\po.man.v20210617-152623.onnx" />
     <EmbeddedResource Include="models\po.yue.v20210619-233544.onnx" />
-    <EmbeddedResource Include="models\f0.man.v20210620-044257.onnx" />
-    <EmbeddedResource Include="models\f0.yue.v20210620-044257.onnx" />
+    <EmbeddedResource Include="models\f0.man.onnx" />
+    <EmbeddedResource Include="models\f0.yue.onnx" />
     <Compile Include="Utils.fs" />
     <Compile Include="World.fs" />
     <Compile Include="TimeTable.fs" />

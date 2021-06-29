@@ -15,8 +15,8 @@ open Vogen.Synth.TimeTable
 
 
 let rec models = dict [|
-    "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.f0.man.v20210620-044257.onnx"
-    "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.f0.yue.v20210620-044257.onnx"
+    "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.f0.man.onnx"
+    "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.f0.yue.onnx"
     "yue-wz", lazy models.["yue"].Value |]
 
 let run romScheme (chars : IReadOnlyList<TimeTable.TChar>) =
