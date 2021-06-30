@@ -34,6 +34,7 @@ module AudioSamples =
         let fileBytes = cacheStream.ToArray()
         cacheStream.Position <- 0L
 
+        MediaFoundationApi.Startup()
         use reader = new StreamMediaFoundationReader(cacheStream)
         use reader = new MediaFoundationResampler(reader, playbackWaveFormat)
         let sampleReader = reader.ToSampleProvider()
@@ -73,10 +74,13 @@ module AudioSamples =
         outSamples
 
     let renderToFile filePath comp uttSynthCache =
+        File.Create(filePath).Dispose()
         let outSamples = renderComp comp uttSynthCache
-        let sampleProvider = SampleProvider(outSamples)
-        let waveProvider = sampleProvider.ToWaveProvider()
-        MediaFoundationEncoder.EncodeToAac(waveProvider, filePath, 192000)
+        if outSamples.Length > 0 then
+            let sampleProvider = SampleProvider(outSamples)
+            let waveProvider = sampleProvider.ToWaveProvider()
+            MediaFoundationApi.Startup()
+            MediaFoundationEncoder.EncodeToAac(waveProvider, filePath, 192000)
 
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, uttSynthCache, buffer : float32 [], bufferOffset, bufferLength) =
