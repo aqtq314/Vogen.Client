@@ -14,7 +14,7 @@ open Vogen.Client.Model
 
 let comp, uttSynthCache =
     use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream @"Vogen.Client.ViewModel.testComp.vog"
-    FilePackage.read stream
+    FilePackage.read stream "."
 
 let programModel = ProgramModel()
 do  programModel.ActiveChart |> Rp.set(ChartState(comp, Some comp.Utts.[0], ImmutableHashSet.CreateRange [|

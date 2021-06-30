@@ -128,7 +128,7 @@ module FilePackage =
             let fUtts = Array.ofSeq(Seq.map2 FUtt.ofUtt uttNames comp.Utts)
             { TimeSig0 = timeSig0Str; Bpm0 = comp.Bpm0; AccomOffset = accomOffset; Utts = fUtts }
 
-    let read stream =
+    let read stream filePath =
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Read)
         use chartStream = (zipFile.GetEntry "chart.json").Open()
         use chartReader = new StreamReader(chartStream)
@@ -138,12 +138,18 @@ module FilePackage =
 
         let zipEntryDict = zipFile.Entries.ToDictionary(fun entry -> entry.Name)
         let comp =
-            match zipEntryDict.TryGetValue "accom.bin" |> Option.ofByRef with
-            | None -> comp
-            | Some audioEntry ->
-                use fileStream = audioEntry.Open()
-                let audioFileBytes, audioSamples = AudioSamples.loadFromStream fileStream
-                comp.SetBgAudio(AudioTrack(comp.BgAudio.SampleOffset, audioFileBytes, audioSamples))
+            try match zipEntryDict.TryGetValue "accom.path" |> Option.ofByRef with
+                | None -> comp
+                | Some audioPathEntry ->
+                    use fileStream = audioPathEntry.Open()
+                    use textReader = new StreamReader(fileStream, Encoding.UTF8)
+                    let audioFilePathRel = textReader.ReadToEnd()
+                    let audioFilePath = Path.GetFullPath(audioFilePathRel, Path.GetDirectoryName(filePath : string))
+                    use fileStream = File.OpenRead audioFilePath
+                    let audioFileBytes, audioSamples = AudioSamples.loadFromStream fileStream
+                    comp.SetBgAudio(AudioTrack(comp.BgAudio.SampleOffset, audioFilePath, audioSamples))
+            with ex ->
+                comp
 
         let uttSynthCache =
             (UttSynthCache.Create comp.Bpm0, comp.Utts)
@@ -181,7 +187,11 @@ module FilePackage =
 
         comp, uttSynthCache
 
-    let save stream comp uttSynthCache =
+    let readFromFile filePath =
+        use stream = File.OpenRead filePath
+        read stream filePath
+
+    let save stream filePath comp uttSynthCache =
         let getUttName =
             let uttsByNameDict = dict((comp : Composition).Utts |> Seq.mapi(fun i utt -> utt, $"utt-{i}"))
             fun utt -> uttsByNameDict.[utt]
@@ -194,8 +204,11 @@ module FilePackage =
             chartWriter.Write fCompStr
 
         if comp.BgAudio.HasAudio then
-            use fileStream = zipFile.CreateEntry("accom.bin", CompressionLevel.Fastest).Open()
-            fileStream.Write(comp.BgAudio.AudioFileBytes, 0, comp.BgAudio.AudioFileBytes.Length)
+            use fileStream = zipFile.CreateEntry("accom.path", CompressionLevel.Optimal).Open()
+            use textWriter = new StreamWriter(fileStream, Encoding.UTF8)
+            let audioFilePath = comp.BgAudio.AudioFilePath
+            let audioFilePathRel = Path.GetRelativePath(Path.GetDirectoryName(filePath : string), audioFilePath)
+            textWriter.Write audioFilePathRel
 
         comp.Utts |> Seq.iter(fun utt ->
             let uttSynthResult = (uttSynthCache : UttSynthCache).GetOrDefault utt
@@ -216,6 +229,10 @@ module FilePackage =
             if uttSynthResult.HasAudio && uttSynthResult.AudioFileBytes.Length > 0 then
                 use fileStream = zipFile.CreateEntry($"{uttName}.m4a", CompressionLevel.Fastest).Open()
                 fileStream.Write(uttSynthResult.AudioFileBytes, 0, uttSynthResult.AudioFileBytes.Length))
+
+    let saveToFile filePath comp uttSynthCache =
+        use stream = File.Open(filePath, FileMode.Create)
+        save stream filePath comp uttSynthCache
 
     let toClipboardText refNoteOn activeUttOp otherUtts =
         let fClip = FClip.ofUtts refNoteOn activeUttOp otherUtts

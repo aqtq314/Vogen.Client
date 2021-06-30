@@ -88,8 +88,7 @@ type ProgramModel() as x =
             match filePathOp with
             | None -> "Untitled.vog", Composition.Empty, UttSynthCache.Empty
             | Some filePath ->
-                use fileStream = File.OpenRead filePath
-                let comp, uttSynthCache = FilePackage.read fileStream
+                let comp, uttSynthCache = FilePackage.readFromFile filePath
                 Path.GetFileName filePath, comp, uttSynthCache
         x.ActiveChart |> Rp.set(ChartState(comp))
         activeUttSynthCache |> Rp.set uttSynthCache
@@ -111,8 +110,7 @@ type ProgramModel() as x =
         let comp, uttSynthCache =
             match Path.GetExtension(filePath : string).ToLower() with
             | ".vog" ->
-                use stream = File.OpenRead filePath
-                FilePackage.read stream
+                FilePackage.readFromFile filePath
             | ".vpr" ->
                 use stream = File.OpenRead filePath
                 let singerId = !!x.UttPanelSingerId
@@ -133,7 +131,7 @@ type ProgramModel() as x =
 
     member x.Save outFilePath =
         use outFileStream = File.Open(outFilePath, FileMode.Create)
-        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream
+        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream outFilePath
         compFilePathOp |> Rp.set(Some outFilePath)
         compFileName |> Rp.set(Path.GetFileName outFilePath)
         compIsSaved |> Rp.set true
@@ -176,7 +174,7 @@ type ProgramModel() as x =
         let chart = !!x.ActiveChart
         x.ActiveChart |> Rp.set(
             let comp = chart.Comp
-            chart.SetComp(comp.SetBgAudio(AudioTrack(0, audioFileBytes, audioSamples))))
+            chart.SetComp(comp.SetBgAudio(AudioTrack(0, audioFile, audioSamples))))
 
         x.UndoRedoStack.PushUndo(LoadBgAudio, chart, !!x.ActiveChart)
         x.CompIsSaved |> Rp.set false
