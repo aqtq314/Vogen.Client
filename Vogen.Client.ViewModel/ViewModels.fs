@@ -129,14 +129,16 @@ type ProgramModel() as x =
         compFileName |> Rp.set(Path.GetFileNameWithoutExtension filePath + ".vog")
         compIsSaved |> Rp.set false
 
+    member x.ExportSave outFilePath =
+        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> FilePackage.saveToFile outFilePath
+
     member x.Save outFilePath =
-        use outFileStream = File.Open(outFilePath, FileMode.Create)
-        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> FilePackage.save outFileStream outFilePath
+        x.ExportSave outFilePath
         compFilePathOp |> Rp.set(Some outFilePath)
         compFileName |> Rp.set(Path.GetFileName outFilePath)
         compIsSaved |> Rp.set true
 
-    member x.Export outFilePath =
+    member x.ExportAudio outFilePath =
         ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
 
     member x.Undo() =

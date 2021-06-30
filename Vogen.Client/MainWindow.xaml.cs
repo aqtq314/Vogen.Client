@@ -26,6 +26,9 @@ namespace Vogen.Client
         {
             InitializeComponent();
             noteChartEditPanel.Focus();
+
+            Loaded += (sender, e) => OnWindowLoaded();
+            Closed += (sender, e) => OnWindowClosed();
         }
 
         public override TextBoxPopupBase TempoPopup => tempoPopup;

@@ -13,6 +13,7 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Input
+open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.ViewModel
@@ -48,11 +49,51 @@ type MainWindowBase() =
         | Error() -> e.Cancel <- true
         base.OnClosing e
 
-    member x.ShowError(ex : #exn) =
+    member x.ShowError (ex : exn) =
         MessageBox.Show(
-            x, $"Error saving file: {ex.Message}\r\n\r\n{ex.StackTrace}", MainWindowBase.AppName,
+            x, $"{ex.Message}\r\n\r\n{ex.StackTrace}", MainWindowBase.AppName,
             MessageBoxButton.OK, MessageBoxImage.Error)
         |> ignore
+
+    member x.TryOrPrompt f =
+        try f()
+        with ex ->
+            x.ShowError ex
+
+    static member AutoSavePath = "__temp_autosaved.vog"
+    member val private AutoSaveTimer = LateInit<_>()
+
+    member x.DoAutoSave() =
+        x.TryOrPrompt <| fun () ->
+            if not !!x.ProgramModel.CompIsSaved then
+                x.ProgramModel.ExportSave MainWindowBase.AutoSavePath
+
+    member x.OnWindowLoaded() =
+        // Ask import previous autosave file
+        if File.Exists MainWindowBase.AutoSavePath then
+            let msgboxResult =
+                MessageBox.Show("检测到自动保存文件，是否加载？", MainWindowBase.AppName, MessageBoxButton.YesNo, MessageBoxImage.Question)
+            match msgboxResult with
+            | MessageBoxResult.Yes ->
+                x.TryOrPrompt <| fun () ->
+                    x.ProgramModel.Import MainWindowBase.AutoSavePath
+            | _ -> ()
+
+        // setup timer
+        let autoSaveTimer =
+            DispatcherTimer(
+                TimeSpan.FromMinutes 5.0,
+                DispatcherPriority.Background,
+                (fun sender e -> x.DoAutoSave()),
+                x.Dispatcher)
+        autoSaveTimer.Start()
+        x.AutoSaveTimer.Set autoSaveTimer
+
+    member x.OnWindowClosed() =
+        let autoSaveTimer = x.AutoSaveTimer.Value
+        autoSaveTimer.Stop()
+
+        File.Delete MainWindowBase.AutoSavePath
 
     member x.SaveAs() = result {
         try let saveFileDialog =
@@ -137,7 +178,7 @@ type MainWindowBase() =
         let dialogResult = saveFileDialog.ShowDialog x
         if dialogResult ?= true then
             let filePath = saveFileDialog.FileName
-            x.ProgramModel.Export filePath }
+            x.ProgramModel.ExportAudio filePath }
 
     member x.EditTempo() =
         let chart = !!x.ProgramModel.ActiveChart
@@ -198,13 +239,12 @@ type MainWindowBase() =
                 Error()
 
     member x.LoadAccom() =
-        try let openFileDialog =
+        x.TryOrPrompt <| fun () ->
+            let openFileDialog =
                 OpenFileDialog(
                     Filter = "Audio Files|*.*")
             let dialogResult = openFileDialog.ShowDialog x
             if dialogResult ?= true then
                 let filePath = openFileDialog.FileName
                 x.ProgramModel.LoadAccom filePath
-        with ex ->
-            x.ShowError ex
 
