@@ -49,7 +49,7 @@ type MainWindowBase() =
         | Error() -> e.Cancel <- true
         base.OnClosing e
 
-    member x.ShowError (ex : exn) =
+    member x.ShowError(ex : exn) =
         MessageBox.Show(
             x, $"{ex.Message}\r\n\r\n{ex.StackTrace}", MainWindowBase.AppName,
             MessageBoxButton.OK, MessageBoxImage.Error)
@@ -66,7 +66,7 @@ type MainWindowBase() =
     member x.DoAutoSave() =
         x.TryOrPrompt <| fun () ->
             if not !!x.ProgramModel.CompIsSaved then
-                x.ProgramModel.ExportSave MainWindowBase.AutoSavePath
+                x.ProgramModel.SaveACopy MainWindowBase.AutoSavePath
 
     member x.OnWindowLoaded() =
         // Ask import previous autosave file
@@ -95,18 +95,29 @@ type MainWindowBase() =
 
         File.Delete MainWindowBase.AutoSavePath
 
+    member x.PromptSaveLocation() = result {
+        let saveFileDialog =
+            SaveFileDialog(
+                FileName = (!!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName),
+                DefaultExt = ".vog",
+                Filter = "Vogen Package|*.vog")
+        let dialogResult = saveFileDialog.ShowDialog x
+        if dialogResult ?= true then
+            let filePath = saveFileDialog.FileName
+            return filePath
+        else
+            return! Error() }
+
+    member x.SaveACopy() = result {
+        try let! filePath = x.PromptSaveLocation()
+            x.ProgramModel.SaveACopy filePath
+        with ex ->
+            x.ShowError ex
+            return! Error() }
+
     member x.SaveAs() = result {
-        try let saveFileDialog =
-                SaveFileDialog(
-                    FileName = (!!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName),
-                    DefaultExt = ".vog",
-                    Filter = "Vogen Package|*.vog")
-            let dialogResult = saveFileDialog.ShowDialog x
-            if dialogResult ?= true then
-                let filePath = saveFileDialog.FileName
-                x.ProgramModel.Save filePath
-            else
-                return! Error()
+        try let! filePath = x.PromptSaveLocation()
+            x.ProgramModel.Save filePath
         with ex ->
             x.ShowError ex
             return! Error() }
