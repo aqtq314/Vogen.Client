@@ -187,15 +187,15 @@ type NoteChartEditPanelBase() =
                         let noteRoms = matches |> Seq.map(fun m -> m.Groups.["rom"].Value) |> Array.ofSeq
                         let noteRoms =
                             (Romanizer.get utt.RomScheme).Convert noteLyrics noteRoms
-                            |> Array.map(fun roms -> roms.[0], ImmutableArray.CreateRange roms.[1..])
+                            |> Array.map(fun roms -> roms.[0])
 
                         // DiffDict: no existance -> no modification
                         let noteDiffDict =
                             Seq.zip3 candidateLyricNotes noteLyrics noteRoms
-                            |> Seq.filter(fun (note, newLyric, (newRom, newMoreRoms)) ->
+                            |> Seq.filter(fun (note, newLyric, newRom) ->
                                 note.Lyric <> newLyric.ToString() || note.Rom <> newRom)
-                            |> Seq.map(fun (note, newLyric, (newRom, newMoreRoms)) ->
-                                KeyValuePair(note, note.SetText(newLyric.ToString(), newRom, newMoreRoms)))
+                            |> Seq.map(fun (note, newLyric, newRom) ->
+                                KeyValuePair(note, note.SetText(newLyric.ToString(), newRom)))
                             |> ImmutableDictionary.CreateRange
 
                         if noteDiffDict.Count = 0 then
@@ -634,12 +634,15 @@ type NoteChartEditPanelBase() =
 
                             if not note.IsHyphen then
                                 let romMenuItems = List()
-                                do for i in 0 .. note.MoreRoms.Length - 1 do
-                                    let rom = note.MoreRoms.[i]
+                                let moreRoms =
+                                    (Romanizer.get utt.RomScheme).Convert [| note.Lyric |] [| "" |]
+                                    |> Array.exactlyOne
+                                    |> Array.filter((<>) note.Rom)
+                                do for i in 0 .. moreRoms.Length - 1 do
+                                    let rom = moreRoms.[i]
                                     let romMenuItem = MenuItem(Header = TextResources.getContextMenuSetRom note.Lyric rom)
                                     romMenuItem.Click.Add(fun e ->
-                                        let newMoreRoms = ImmutableArray.CreateRange(Seq.prependItem note.Rom (note.MoreRoms.Remove rom))
-                                        let newNote = note.SetText(note.Lyric, rom, newMoreRoms)
+                                        let newNote = note.SetText(note.Lyric, rom)
                                         let newUtt = utt.SetNotes(utt.Notes.Replace(note, newNote))
 
                                         let undoWriter =
