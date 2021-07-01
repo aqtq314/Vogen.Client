@@ -233,6 +233,15 @@ type ProgramModel() as x =
 
                 let synthActor = getSynthActor dispatcher
                 let tUtt = TimeTable.ofUtt utt
+                let uttDurTimeSpan = TimeTable.frameToTime(float tUtt.UttDur)
+                if uttDurTimeSpan >= TimeSpan.FromSeconds 30.0 then
+                    let msgboxResult = dispatcher.Invoke(fun () ->
+                        MessageBox.Show(
+                            $"当前合成乐句过长（{uttDurTimeSpan.TotalSeconds}秒），可能会消耗大量内存。是否继续合成？",
+                            $"合成乐句过长", MessageBoxButton.YesNo, MessageBoxImage.Exclamation))
+                    if msgboxResult <> MessageBoxResult.Yes then
+                        raise(OperationCanceledException("Utt synth request has been cancelled by user."))
+
                 let! tChars = synthActor |> SynthActor.post(fun reply -> Choice1Of3(reply, tUtt.RomScheme, tUtt.UttDur, tUtt.Chars))
                 let charGrids = TimeTable.toCharGrids tChars
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
