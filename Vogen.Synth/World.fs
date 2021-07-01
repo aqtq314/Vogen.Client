@@ -2,6 +2,7 @@
 
 open Microsoft.FSharp.NativeInterop
 open System
+open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
 
@@ -29,7 +30,9 @@ type Array2DIntPtrConversionBuilder() =
         let arrRowPtrs = Array.zeroCreate(arr.GetLength 0)
         for i in 0 .. arr.GetLength 0 - 1 do
             arrRowPtrs.[i] <- NativePtr.toNativeInt(NativePtr.add arrPtr (i * arr.GetLength 1))
-        cont arrRowPtrs
+        let contResult = cont arrRowPtrs
+        GC.KeepAlive arrRowPtrs     // prevent tail call
+        contResult
 
 let array2dIntptrConv = Array2DIntPtrConversionBuilder()
 
