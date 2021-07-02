@@ -9,6 +9,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
+open System.Reflection
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
@@ -32,7 +33,8 @@ type MainWindowBase() =
             let fileName = fileName.ToString()
             let isSaved = Convert.ToBoolean isSaved
             let notSavedStar = if isSaved then "" else "*"
-            $"{notSavedStar}{fileName} - {MainWindowBase.AppName}"
+            let version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
+            $"{notSavedStar}{fileName} - {MainWindowBase.AppName} v{version}"
         | _ ->
             raise(ArgumentException()))
 

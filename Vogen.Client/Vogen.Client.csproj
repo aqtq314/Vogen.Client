@@ -7,6 +7,7 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Platforms>x64</Platforms>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Version>0.1.0-alpha</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,5 +26,9 @@
     <ProjectReference Include="..\Vogen.Client.ViewModel\Vogen.Client.ViewModel.fsproj" />
     <ProjectReference Include="..\Vogen.Synth\Vogen.Synth.fsproj" />
   </ItemGroup>
+
+  <Target Condition="'$(Configuration)'=='Release'" Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="powershell Compress-Archive -Force -Path &quot;$(OutDir)*.dll&quot;, &quot;$(OutDir)*.exe&quot;, &quot;$(OutDir)*.json&quot;, &quot;$(OutDir)ref&quot;, &quot;$(OutDir)romDicts&quot; -DestinationPath &quot;$(OutDir)$(TargetName).v$(Version).zip&quot; -CompressionLevel Optimal" />
+  </Target>
 
 </Project>
