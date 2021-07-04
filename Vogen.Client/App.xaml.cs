@@ -13,6 +13,13 @@ namespace Vogen.Client
 {
     public partial class App : Application
     {
+        Task<Task> updateTask = null;
+
+        public App()
+        {
+            DispatcherUnhandledException += OnApplicationDispatcherUnhandledException;
+        }
+
         private void OnApplicationDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             var ex = e.Exception;
@@ -27,6 +34,25 @@ namespace Vogen.Client
             {
                 var mainWindow = MainWindow as MainWindow;
                 mainWindow?.SaveACopy();
+            }
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            updateTask = AutoUpdater.checkUpdates();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            base.OnExit(e);
+
+            if (updateTask?.IsCompleted == true)
+            {
+                var update = updateTask.Result;
+                update.Start();
+                update.Wait();
             }
         }
     }

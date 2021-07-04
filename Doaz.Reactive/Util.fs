@@ -97,6 +97,16 @@ module Option =
     let ofBool value =
         if value then Some () else None
 
+type MaybeBuilder() =
+    member x.Bind(m, f) = Option.bind f m
+    member x.Return m = Some m
+    member x.ReturnFrom m = m : _ option
+    member x.Zero() = Some()
+
+[<AutoOpen>]
+module MaybeUtils =
+    let maybe = MaybeBuilder()
+
 
 type Counter () =
     let mutable value = 0UL

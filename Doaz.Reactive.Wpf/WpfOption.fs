@@ -112,7 +112,7 @@ type WpfOptionBuilder () =
         m : WpfOption<_>
 
     member x.Zero () =
-        WpfNone
+        WpfSome ()
 
 
 type WpfOptionIterBuilder () =

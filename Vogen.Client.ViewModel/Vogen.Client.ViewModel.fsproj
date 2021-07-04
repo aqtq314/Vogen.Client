@@ -46,10 +46,12 @@
     <Compile Include="Views\TextBoxPopupBase.fs" />
     <Compile Include="Views\NoteChartEditPanelBase.fs" />
     <Compile Include="Views\MainWindowBase.fs" />
+    <Compile Include="AutoUpdater.fs" />
     <Compile Include="DesignerModels.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Data" Version="4.1.1" />
     <PackageReference Include="NAudio" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>

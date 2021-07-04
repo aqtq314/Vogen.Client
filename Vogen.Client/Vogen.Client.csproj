@@ -7,7 +7,7 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Platforms>x64</Platforms>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Version>0.1.0-alpha</Version>
+    <Version>0.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="5.0.1" />
+    <PackageReference Include="FSharp.Data" Version="4.1.1" />
     <PackageReference Include="NAudio" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
