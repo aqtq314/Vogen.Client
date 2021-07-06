@@ -19,7 +19,8 @@ open System.Text.Encodings
 module External =
     let loadVpr singerId romScheme stream =
         use zipFile = new ZipArchive(stream, ZipArchiveMode.Read)
-        use seqStream = (zipFile.GetEntry @"Project\sequence.json").Open()
+        let zipEntryDict = zipFile.Entries.ToImmutableDictionary(fun entry -> entry.FullName.Replace('\\', '/'))
+        use seqStream = zipEntryDict.[@"Project/sequence.json"].Open()
         use seqReader = new StreamReader(seqStream)
         let seqStr = seqReader.ReadToEnd()
         let vpr = JsonConvert.DeserializeObject seqStr :?> JToken
