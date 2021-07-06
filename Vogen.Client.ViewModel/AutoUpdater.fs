@@ -94,7 +94,7 @@ let checkUpdates() =
                 Process.Start(@"powershell", String.Join("; ", [|
                     $@"Write-Host '正在等待解压缩{newRelease.FileName}...'"
                     $@"wait-process vogen.client -erroraction silentlycontinue"
-                    $@"expand-archive -literalpath {cacheFilePath} {Path.GetDirectoryName(entryAssembly.Location)} -force"
+                    $@"expand-archive -literalpath {cacheFilePath} {appDir} -force"
                     $@"Write-Host '已成功更新至{newRelease.TagName}，按任意键退出。'"
                     $@"$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')" |])) |> ignore) }
     |> Async.StartAsTask

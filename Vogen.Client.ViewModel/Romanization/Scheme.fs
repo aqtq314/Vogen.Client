@@ -7,6 +7,7 @@ open System.Collections.Immutable
 open System.IO
 open System.Text
 open System.Text.RegularExpressions
+open Vogen.Client.ViewModel
 
 #nowarn "40"
 
@@ -24,7 +25,7 @@ module Romanizer =
             member x.Convert chs romHints = Array.create chs.Length [| fallbackRom |] }
 
     let createRomanizer fallbackRom jsonDictFileName =
-        let jsonDictFilePath = Path.Combine(Directory.GetCurrentDirectory(), "romDicts", jsonDictFileName)
+        let jsonDictFilePath = Path.Combine(appDir, "romDicts", jsonDictFileName)
         let trie =
             let jsonDictStr = File.ReadAllText(jsonDictFilePath, Encoding.UTF8)
             let jsonDictObj = JsonConvert.DeserializeObject<JsonRomDict> jsonDictStr

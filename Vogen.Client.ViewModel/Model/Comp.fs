@@ -13,6 +13,7 @@ open System.Linq
 open System.Runtime.InteropServices
 open System.Text
 open System.Text.Encodings
+open Vogen.Client.ViewModel
 open Vogen.Synth
 
 

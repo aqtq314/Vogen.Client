@@ -14,6 +14,7 @@ open System.Linq
 open System.Text
 open System.Text.Encodings
 open System.Text.RegularExpressions
+open Vogen.Client.ViewModel
 
 
 module FilePackage =
