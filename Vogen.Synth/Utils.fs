@@ -21,6 +21,10 @@ module Params =
     let headSil = TimeSpan.FromSeconds 0.5
     let tailSil = TimeSpan.FromSeconds 0.5
 
+    let appDir =
+        let entryAssembly = Assembly.GetEntryAssembly()
+        Path.GetDirectoryName entryAssembly.Location
+
 module InferenceSession =
     let ofStream(stream : Stream) =
         let modelBytes =
