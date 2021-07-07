@@ -62,7 +62,7 @@ type MainWindowBase() =
         with ex ->
             x.ShowError ex
 
-    static member AutoSavePath = "__temp_autosaved.vog"
+    static member AutoSavePath = Path.Join(appDir, "__temp_autosaved.vog")
     member val private AutoSaveTimer = LateInit<_>()
 
     member x.DoAutoSave() =

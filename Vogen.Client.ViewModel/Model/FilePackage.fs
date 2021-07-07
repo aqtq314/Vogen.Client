@@ -208,7 +208,7 @@ module FilePackage =
             use fileStream = zipFile.CreateEntry("accom.path", CompressionLevel.Optimal).Open()
             use textWriter = new StreamWriter(fileStream, Encoding.UTF8)
             let audioFilePath = comp.BgAudio.AudioFilePath
-            let audioFilePathRel = Path.GetRelativePath(Path.GetDirectoryName(filePath : string), audioFilePath)
+            let audioFilePathRel = Path.GetRelativePath(Path.GetDirectoryName(Path.GetFullPath(filePath : string)), audioFilePath)
             textWriter.Write audioFilePathRel
 
         comp.Utts |> Seq.iter(fun utt ->
