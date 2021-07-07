@@ -85,21 +85,31 @@
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cheaptrick.h" />
     <ClInclude Include="codec.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="constantnumbers.h" />
+    <ClInclude Include="d4c.h" />
+    <ClInclude Include="dio.h" />
     <ClInclude Include="fft.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="harvest.h" />
     <ClInclude Include="matlabfunctions.h" />
+    <ClInclude Include="stonemask.h" />
     <ClInclude Include="synthesis.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cheaptrick.cpp" />
     <ClCompile Include="codec.cpp" />
     <ClCompile Include="common.cpp" />
+    <ClCompile Include="d4c.cpp" />
+    <ClCompile Include="dio.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="fft.cpp" />
+    <ClCompile Include="harvest.cpp" />
     <ClCompile Include="matlabfunctions.cpp" />
+    <ClCompile Include="stonemask.cpp" />
     <ClCompile Include="synthesis.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

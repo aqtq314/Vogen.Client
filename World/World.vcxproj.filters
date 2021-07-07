@@ -38,6 +38,21 @@
     <ClInclude Include="codec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cheaptrick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="d4c.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="harvest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stonemask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -56,6 +71,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="codec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cheaptrick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="d4c.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="harvest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stonemask.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
