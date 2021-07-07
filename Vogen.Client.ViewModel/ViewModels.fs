@@ -258,6 +258,10 @@ type ProgramModel() as x =
 
             with ex ->
                 Trace.WriteLine ex
+                dispatcher.BeginInvoke(fun () ->
+                    MessageBox.Show(
+                        $"合成失败: {ex.Message}\r\n\r\n{ex.StackTrace}", "合成失败",
+                        MessageBoxButton.OK, MessageBoxImage.Error) |> ignore) |> ignore
                 return false
 
         finally
