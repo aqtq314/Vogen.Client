@@ -118,13 +118,13 @@
         <MenuItem Header="显示非当前乐句 (_U)" IsChecked="True" IsEnabled="False"/>-->
       </MenuItem>
       <MenuItem Header="乐谱 (_C)">
-        <MenuItem Header="编辑节拍 (_B)"/>
+        <!--<MenuItem Header="编辑节拍 (_B)"/>
         <MenuItem Header="编辑速度 (_T)"/>
-        <Separator/>
+        <Separator/>-->
         <MenuItem Header="编辑音符歌词 (_L)" InputGestureText="Enter" Command="{x:Static vv:Commands.EditLyrics}"/>
-        <Separator/>
+        <!--<Separator/>
         <MenuItem Header="设置乐句发音表 (_P)"/>
-        <MenuItem Header="设置乐句声库 (_V)"/>
+        <MenuItem Header="设置乐句声库 (_V)"/>-->
         <!--<Separator/>
         <MenuItem Header="拆分乐句 (_S)"/>
         <MenuItem Header="合并乐句 (_J)"/>-->
