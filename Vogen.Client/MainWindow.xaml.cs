@@ -54,7 +54,8 @@ namespace Vogen.Client
         private void OnExecuteCmdSave(object sender, ExecutedRoutedEventArgs e) => Save();
         private void OnExecuteCmdSaveAs(object sender, ExecutedRoutedEventArgs e) => SaveAs();
         private void OnExecuteCmdImport(object sender, ExecutedRoutedEventArgs e) => Import();
-        private void OnExecuteCmdExport(object sender, ExecutedRoutedEventArgs e) => Export();
+        private void OnExecuteCmdExportWav(object sender, ExecutedRoutedEventArgs e) => ExportWav();
+        private void OnExecuteCmdExportM4a(object sender, ExecutedRoutedEventArgs e) => ExportM4a();
         private void OnExecuteCmdExit(object sender, ExecutedRoutedEventArgs e) => Close();
 
         private void OnExecuteCmdUndo(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Undo();

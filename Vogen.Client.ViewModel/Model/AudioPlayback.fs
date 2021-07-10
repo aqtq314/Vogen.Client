@@ -79,9 +79,14 @@ module AudioSamples =
         let outSamples = renderComp comp uttSynthCache
         if outSamples.Length > 0 then
             let sampleProvider = SampleProvider(outSamples)
-            let waveProvider = sampleProvider.ToWaveProvider()
-            MediaFoundationApi.Startup()
-            MediaFoundationEncoder.EncodeToAac(waveProvider, filePath, 192000)
+            match (Path.GetExtension filePath).ToLower() with
+            | ".wav" ->
+                WaveFileWriter.CreateWaveFile16(filePath, sampleProvider)
+            | ".m4a" ->
+                MediaFoundationApi.Startup()
+                MediaFoundationEncoder.EncodeToAac(sampleProvider.ToWaveProvider(), filePath, 192000)
+            | fileExt ->
+                raise(ArgumentException($"Unknown output file extension ({fileExt}) for rendering"))
 
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, uttSynthCache, buffer : float32 [], bufferOffset, bufferLength) =

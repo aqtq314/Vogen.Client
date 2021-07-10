@@ -31,7 +31,8 @@
     <CommandBinding Command="{x:Static vv:Commands.Save}"        Executed="OnExecuteCmdSave"/>
     <CommandBinding Command="{x:Static vv:Commands.SaveAs}"      Executed="OnExecuteCmdSaveAs"/>
     <CommandBinding Command="{x:Static vv:Commands.Import}"      Executed="OnExecuteCmdImport"/>
-    <CommandBinding Command="{x:Static vv:Commands.Export}"      Executed="OnExecuteCmdExport"/>
+    <CommandBinding Command="{x:Static vv:Commands.ExportWav}"   Executed="OnExecuteCmdExportWav"/>
+    <CommandBinding Command="{x:Static vv:Commands.ExportM4a}"   Executed="OnExecuteCmdExportM4a"/>
     <CommandBinding Command="{x:Static vv:Commands.Exit}"        Executed="OnExecuteCmdExit"/>
     <CommandBinding Command="{x:Static vv:Commands.Undo}"        Executed="OnExecuteCmdUndo"       CanExecute="CanExecuteCmdUndo"/>
     <CommandBinding Command="{x:Static vv:Commands.Redo}"        Executed="OnExecuteCmdRedo"       CanExecute="CanExecuteCmdRedo"/>
@@ -61,7 +62,7 @@
     <KeyBinding Gesture="Ctrl+Shift+S" Command="{x:Static vv:Commands.SaveAs}"/>
     <KeyBinding Gesture="F12"          Command="{x:Static vv:Commands.SaveAs}"/>
     <KeyBinding Gesture="Ctrl+I"       Command="{x:Static vv:Commands.Import}"/>
-    <KeyBinding Gesture="Ctrl+Shift+E" Command="{x:Static vv:Commands.Export}"/>
+    <KeyBinding Gesture="Ctrl+Shift+E" Command="{x:Static vv:Commands.ExportWav}"/>
     <KeyBinding Gesture="Ctrl+Z"       Command="{x:Static vv:Commands.Undo}"/>
     <KeyBinding Gesture="Ctrl+Shift+Z" Command="{x:Static vv:Commands.Redo}"/>
     <KeyBinding Gesture="Ctrl+Y"       Command="{x:Static vv:Commands.Redo}"/>
@@ -83,8 +84,9 @@
         <MenuItem Header="保存 (_O)"       InputGestureText="Ctrl+S"             Command="{x:Static vv:Commands.Save}"/>
         <MenuItem Header="另存为 ... (_A)" InputGestureText="Ctrl+Shift+S / F12" Command="{x:Static vv:Commands.SaveAs}"/>
         <Separator/>
-        <MenuItem Header="导入曲谱 ... (_I)" InputGestureText="Ctrl+I"       Command="{x:Static vv:Commands.Import}"/>
-        <MenuItem Header="导出音频 ... (_E)" InputGestureText="Ctrl+Shift+E" Command="{x:Static vv:Commands.Export}"/>
+        <MenuItem Header="导入曲谱 ... (_I)"      InputGestureText="Ctrl+I"       Command="{x:Static vv:Commands.Import}"/>
+        <MenuItem Header="导出 wav 音频 ... (_E)" InputGestureText="Ctrl+Shift+E" Command="{x:Static vv:Commands.ExportWav}"/>
+        <MenuItem Header="导出 m4a 音频 ... (_M)"                                 Command="{x:Static vv:Commands.ExportM4a}"/>
         <Separator/>
         <MenuItem Header="退出 (_X)" InputGestureText="Alt+F4" Command="{x:Static vv:Commands.Exit}"/>
       </MenuItem>

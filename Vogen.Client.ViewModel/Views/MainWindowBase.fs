@@ -180,7 +180,20 @@ type MainWindowBase() =
             x.ShowError ex
             return! Error() }
 
-    member x.Export() : Result<unit, unit> = result {
+    member x.ExportWav() : Result<unit, unit> = result {
+        let saveFileDialog =
+            let defaultFileName = !!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName
+            let defaultFileName = Path.GetFileNameWithoutExtension defaultFileName + ".wav"
+            SaveFileDialog(
+                FileName = defaultFileName,
+                DefaultExt = ".wav",
+                Filter = "Wave PCM Audio|*.wav")
+        let dialogResult = saveFileDialog.ShowDialog x
+        if dialogResult ?= true then
+            let filePath = saveFileDialog.FileName
+            x.ProgramModel.ExportAudio filePath }
+
+    member x.ExportM4a() : Result<unit, unit> = result {
         let saveFileDialog =
             let defaultFileName = !!x.ProgramModel.CompFilePathOp |> Option.defaultValue !!x.ProgramModel.CompFileName
             let defaultFileName = Path.GetFileNameWithoutExtension defaultFileName + ".m4a"
