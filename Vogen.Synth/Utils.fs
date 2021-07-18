@@ -58,4 +58,20 @@ module Array2D =
         tensor.Buffer.Span.CopyTo(Span<'a>(NativePtr.toVoidPtr x, outArr.Length))
         outArr
 
+type Array2DIntPtrConversionBuilder() =
+    member x.Zero() = ()
+    member x.Return m = m
+    member x.Bind(arr : float [,], cont) =
+        use arrPtr = fixed &arr.[0, 0]
+        let arrRowPtrs = Array.zeroCreate(arr.GetLength 0)
+        for i in 0 .. arr.GetLength 0 - 1 do
+            arrRowPtrs.[i] <- NativePtr.toNativeInt(NativePtr.add arrPtr (i * arr.GetLength 1))
+        let contResult = cont arrRowPtrs
+        GC.KeepAlive arrRowPtrs     // prevent tail call
+        contResult
+
+[<AutoOpen>]
+module Array2DIntPtrConversionBuilderUtil =
+    let array2dIntptrConv = Array2DIntPtrConversionBuilder()
+
 

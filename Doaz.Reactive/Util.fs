@@ -356,6 +356,14 @@ module Lazy =
         v.IsValueCreated
 
 
+module Nullable =
+    let defaultValue value (v : Nullable<_>) =
+        if v.HasValue then v.Value else value
+
+    let defaultWith defThunk (v : Nullable<_>) =
+        if v.HasValue then v.Value else defThunk()
+
+
 [<Struct>]
 type Diff<'a> (oldValue : 'a, newValue : 'a) =
     member x.OldValue = oldValue
