@@ -21,6 +21,7 @@
     <EmbeddedResource Include="models\po.yue.onnx" />
     <EmbeddedResource Include="models\f0.man.onnx" />
     <EmbeddedResource Include="models\f0.yue.onnx" />
+    <EmbeddedResource Include="models\rfft.onnx" />
     <Compile Include="Utils.fs" />
     <Compile Include="World.fs" />
     <Compile Include="TimeTable.fs" />
@@ -28,6 +29,7 @@
     <Compile Include="Prosody.fs" />
     <Compile Include="F0.fs" />
     <Compile Include="Acoustics.fs" />
+    <Compile Include="Rfft.fs" />
     <Compile Include="SynthActor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
