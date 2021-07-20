@@ -1,6 +1,7 @@
 ﻿module Vogen.Synth.Rfft
 
 open Doaz.Reactive
+open Doaz.Reactive.Math
 open Microsoft.ML.OnnxRuntime
 open Microsoft.ML.OnnxRuntime.Tensors
 open Newtonsoft.Json
@@ -19,9 +20,11 @@ let run fftSize (audioSamples : _ [])(indices : _ []) =
     let audioSlices = DenseTensor<float32>(ReadOnlySpan([| indices.Length; fftSize |]))
     let audioSamplesMemory = audioSamples.AsMemory()
     for i in 0 .. indices.Length - 1 do
-        let audioStartIndex = indices.[i] |> min audioSamples.Length
-        let audioSliceLength = fftSize |> min(audioSamples.Length - audioStartIndex)
-        audioSamplesMemory.Slice(audioStartIndex, audioSliceLength).CopyTo(audioSlices.Buffer.Slice(i * fftSize, audioSliceLength))
+        let sliceStart = indices.[i] |> clamp 0 audioSamples.Length
+        let sliceEnd = indices.[i] + fftSize |> clamp 0 audioSamples.Length
+        let slice = audioSamplesMemory.Slice(sliceStart, sliceEnd - sliceStart)
+        let outSliceStart = -indices.[i] |> clamp 0 fftSize
+        slice.CopyTo(audioSlices.Buffer.Slice(i * fftSize + outSliceStart, sliceEnd - sliceStart))
 
     let xs = [|
         NamedOnnxValue.CreateFromTensor("xs", audioSlices) |]

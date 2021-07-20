@@ -51,12 +51,13 @@
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
-      <dc:BasicPanel Grid.Row="2" Grid.Column="0" Height="30" VerticalAlignment="Top">
+      <dc:BasicPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Stretch">
         <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
           <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         </dc:TrivialPanel>
       </dc:BasicPanel>
-      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="1" Height="30" VerticalAlignment="Top" Cursor="SizeWE"
+      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="1" Height="90" VerticalAlignment="Top" Cursor="SizeWE"
+        RenderOptions.BitmapScalingMode="HighQuality"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         Bpm0="{Binding ActiveChart.Value.Comp.Bpm0}"

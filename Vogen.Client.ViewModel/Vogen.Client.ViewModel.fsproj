@@ -27,6 +27,7 @@
     <Content Include="romDicts\ngli-wugniu-soutseu.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="cmaps\afmhot.cmap" />
     <Compile Include="Utils.fs" />
     <Compile Include="Romanization\Trie.fs" />
     <Compile Include="Romanization\Scheme.fs" />
@@ -64,6 +65,10 @@
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="cmaps\" />
   </ItemGroup>
 
 </Project>

@@ -81,16 +81,12 @@ type AudioTrack private(sampleOffset, hasAudio, audioFilePath, audioSamples) =
 
     new(sampleOffset) = AudioTrack(sampleOffset, false, "", Array.empty)
     new(sampleOffset, audioFilePath, audioSamples : _ []) =
-        for i in 0 .. audioSamples.Length - 1 do
-            audioSamples.[i] <- audioSamples.[i] * 0.25f
         AudioTrack(sampleOffset, true, audioFilePath, audioSamples)
     static member val Empty = AudioTrack(0, false, "", Array.empty)
 
     member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFilePath, audioSamples)
     //member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
     //member x.SetAudio(audioFileBytes, audioSamples : _ []) =
-    //    for i in 0 .. audioSamples.Length - 1 do
-    //        audioSamples.[i] <- audioSamples.[i] * 0.25f
     //    AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
 
     member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFilePath, audioSamples)

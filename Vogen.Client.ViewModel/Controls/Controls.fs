@@ -3,16 +3,19 @@
 open Doaz.Reactive
 open Doaz.Reactive.Controls
 open Doaz.Reactive.Math
+open FSharp.NativeInterop
 open Newtonsoft.Json
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Runtime.InteropServices
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Controls.Primitives
 open System.Windows.Input
 open System.Windows.Media
 open System.Windows.Media.Animation
+open System.Windows.Media.Imaging
 open Vogen.Client.Model
 open Vogen.Client.ViewModel
 open Vogen.Synth
@@ -276,11 +279,26 @@ type RulerGrid() =
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
                     dc.DrawText(ft, new Point(xPos - halfTextWidth, actualHeight - ft.Height - majorTickHeight))
 
+module BitmapPalettes =
+    open System.IO
+    open System.Reflection
+
+    let ofEmbedded uri =
+        use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream uri
+        use reader = new BinaryReader(stream)
+        let colors = Array.init 256 (fun _ -> reader.ReadInt32() |> ColorConv.argb)
+        BitmapPalette(colors)
+
+    let afmhot = ofEmbedded @"Vogen.Client.ViewModel.cmaps.afmhot.cmap"
+
 type BgAudioDisplay() =
     inherit NoteChartEditBase()
 
+    static let fftSize = 512
+
     let bgBrush = Brushes.Transparent
-    let waveBrush = SolidColorBrush(aRgb 0x80 0) |>! freeze
+    let waveBrush = SolidColorBrush(aRgb 0x60 -1) |>! freeze
+    let mutable spImage : WriteableBitmap = null
 
     override x.CanScrollV = false
 
@@ -310,6 +328,23 @@ type BgAudioDisplay() =
 
         dc.PushClip(RectangleGeometry(Rect(Size(actualWidth, actualHeight))))
         dc.DrawRectangle(bgBrush, null, Rect(Size(actualWidth, actualHeight)))
+
+        if audioTrack.HasAudio then
+            let samples = audioTrack.AudioSamples
+            let sampleOffset = audioTrack.SampleOffset
+            let fftSampleIndices = [|
+                for x in 0.0 .. floor actualWidth - 1.0 ->
+                    (x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0) - sampleOffset |]
+            try let cis = Rfft.run fftSize samples fftSampleIndices
+                if spImage = null || spImage.PixelHeight <> cis.GetLength 0 || spImage.PixelWidth <> cis.GetLength 1 then
+                    let dpi = VisualTreeHelper.GetDpi x
+                    spImage <- WriteableBitmap(
+                        cis.GetLength 1, cis.GetLength 0, dpi.PixelsPerInchX, 96.0, PixelFormats.Indexed8, BitmapPalettes.afmhot)
+                spImage.WritePixels(
+                    Int32Rect(0, 0, spImage.PixelWidth, spImage.PixelHeight),
+                    cis, cis.GetLength 1, 0)
+                dc.DrawImage(spImage, Rect(Size(floor actualWidth, actualHeight)))
+            with ex -> ()
 
         let minWaveformSamplesPerFrame = 100
         let frameRadius = half(max 1.0 (Audio.sampleToPulse bpm0 minWaveformSamplesPerFrame |> pulseToPixel quarterWidth 0.0))
@@ -354,7 +389,7 @@ type BgAudioDisplay() =
                 let x1 = actualWidth
                 let yMid = half actualHeight
 
-                sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (3.0 * actualHeight)
+                sgc |> drawWaveformGeometry samples sampleOffset x0 x1 yMid 0.0 (0.75 * actualHeight)
 
             dc.DrawGeometry(waveBrush, null, waveformGeometry)
 
