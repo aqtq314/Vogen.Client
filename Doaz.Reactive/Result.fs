@@ -16,7 +16,7 @@ module Result =
 
 type ResultBuilder() =
     member x.Bind(m, f) = Result.bind f m
-    member x.Bind((m, error), f) = m |> Result.ofOption error |> Result.bind f
+    //member x.Bind((m, error), f) = m |> Result.ofOption error |> Result.bind f
 
     member x.Zero() = Ok()
     member x.Return v = Ok v

@@ -227,30 +227,37 @@ type NoteChartEditPanelBase() =
 
                         Ok()
 
-    member x.CutSelectedNotes() =
-        x.CopySelectedNotes()
-        x.DeleteSelectedNotes CutNote
+    member x.CutSelectedNotes() = result {
+        do! x.CopySelectedNotes()
+        x.DeleteSelectedNotes CutNote }
 
-    member x.CopySelectedNotes() =
+    member x.CopySelectedNotes() = result {
         let chart = !!x.ProgramModel.ActiveChart
         if chart.SelectedNotes.Count > 0 then
-            let minNoteOn = chart.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
+            try let minNoteOn = chart.SelectedNotes |> Seq.map(fun note -> note.On) |> Seq.min
 
-            let getClipUtt(utt : Utterance) =
-                let selectedNotes = utt.Notes |> Seq.filter chart.GetIsNoteSelected |> ImmutableArray.CreateRange
-                if selectedNotes.Length = 0 then None
-                else Some(utt.SetNotes selectedNotes)
+                let getClipUtt(utt : Utterance) =
+                    let selectedNotes = utt.Notes |> Seq.filter chart.GetIsNoteSelected |> ImmutableArray.CreateRange
+                    if selectedNotes.Length = 0 then None
+                    else Some(utt.SetNotes selectedNotes)
 
-            let activeClipUttOp = chart.ActiveUtt |> Option.bind getClipUtt
+                let activeClipUttOp = chart.ActiveUtt |> Option.bind getClipUtt
 
-            let otherClipUtts =
-                match chart.ActiveUtt with
-                | None -> chart.Comp.Utts
-                | Some activeUtt -> chart.Comp.Utts.Remove activeUtt
-                |> Seq.choose getClipUtt
+                let otherClipUtts =
+                    match chart.ActiveUtt with
+                    | None -> chart.Comp.Utts
+                    | Some activeUtt -> chart.Comp.Utts.Remove activeUtt
+                    |> Seq.choose getClipUtt
 
-            FilePackage.toClipboardText minNoteOn activeClipUttOp otherClipUtts
-            |> Clipboard.SetText
+                FilePackage.toClipboardText minNoteOn activeClipUttOp otherClipUtts
+                |> Clipboard.SetText
+
+            with ex ->
+                MessageBox.Show(
+                    $"{ex.Message}\r\n\r\n{ex.StackTrace}", "复制失败",
+                    MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
+
+                return! Error() }
 
     member x.Paste() =
         try let hScrollValue = x.HScrollZoom.ScrollValue
