@@ -730,6 +730,28 @@ type ChartEditor() =
                 else inactiveUttStyle
             let uttSynthResult = uttSynthCache.GetOrDefault utt
 
+            for note, nextNote in Seq.pairwise(utt.Notes) do
+                if nextNote.On >= minPulse && note.Off <= maxPulse && note.Pitch |> betweenInc botPitch topPitch then
+                    let x0 = pulseToPixel quarterWidth hOffset (float note.On)
+                    let x1 = pulseToPixel quarterWidth hOffset (float note.Off)
+                    let yMid = pitchToPixel keyHeight actualHeight vOffset (float note.Pitch)
+
+                    // note connection
+                    let n1x0 = pulseToPixel quarterWidth hOffset (float nextNote.On)
+                    let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float nextNote.Pitch)
+                    let currNotePen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
+                    let yMidMin = min yMid n1yMid
+                    let yMidMax = max yMid n1yMid
+                    dc.DrawLine(currNotePen, Point(n1x0, yMidMin), Point(n1x0, yMidMax))
+
+                    // rest
+                    if x1 > n1x0 then
+                        let noteExcessRect = Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight)
+                        dc.DrawRoundedRectangle(uttStyle.NoteBrushInvalid, currNotePen, noteExcessRect, 3.0, 3.0)
+                    elif x1 < n1x0 then
+                        let noteConnectPen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.RestPen
+                        dc.DrawLine(noteConnectPen, Point(x1, yMid), Point(n1x0, yMid))
+
             for noteIndex in 0 .. utt.Notes.Length - 1 do
                 let note = utt.Notes.[noteIndex]
                 if note.Off >= minPulse && note.On <= maxPulse && note.Pitch |> betweenInc botPitch topPitch then
@@ -743,28 +765,9 @@ type ChartEditor() =
                             let nextNote = utt.Notes.[noteIndex + 1]
                             pulseToPixel quarterWidth hOffset (float nextNote.On)
 
-                    // note connection
-                    if hasNextNote then
-                        let nextNote = utt.Notes.[noteIndex + 1]
-                        if nextNote.On <= maxPulse then
-                            let n1x0 = pulseToPixel quarterWidth hOffset (float nextNote.On)
-                            let n1yMid = pitchToPixel keyHeight actualHeight vOffset (float nextNote.Pitch)
-                            let currNotePen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
-                            let yMidMin = min yMid n1yMid
-                            let yMidMax = max yMid n1yMid
-                            dc.DrawLine(currNotePen, Point(n1x0, yMidMin), Point(n1x0, yMidMax))
-
                     // note
                     let currNoteBrush = if note.IsHyphen then uttStyle.HyphBrush else uttStyle.NoteBrush
                     let currNotePen = if note.IsHyphen then uttStyle.HyphPen else uttStyle.NotePen
-                    if hasNextNote then
-                        let nextNote = utt.Notes.[noteIndex + 1]
-                        if x1 > n1x0 then
-                            let noteExcessRect = Rect(n1x0, yMid - half keyHeight, x1 - n1x0, keyHeight)
-                            dc.DrawRoundedRectangle(uttStyle.NoteBrushInvalid, currNotePen, noteExcessRect, 3.0, 3.0)
-                        elif x1 < n1x0 then
-                            let noteConnectPen = if nextNote.IsHyphen then uttStyle.HyphPen else uttStyle.RestPen
-                            dc.DrawLine(noteConnectPen, Point(x1, yMid), Point(n1x0, yMid))
 
                     let noteRectHeight = keyHeight 
                     let noteRect      = Rect(x0, yMid - half noteRectHeight, x1 - x0, noteRectHeight)
