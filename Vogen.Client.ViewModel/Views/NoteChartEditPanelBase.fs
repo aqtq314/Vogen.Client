@@ -170,8 +170,8 @@ type NoteChartEditPanelBase() =
                     let lyricText = lyricText.Trim()
 
                     let pChar = @"[\u3400-\u4DBF\u4E00-\u9FFF]"
-                    let pAlphaNum = @"[A-Za-z0-9]"
-                    let pattern = Regex($@"\G\s*(?<ch>{pChar})(?<rom>{pAlphaNum}*)|\G\s*(?<ch>)(?<rom>{pAlphaNum}+)")
+                    let pRom = @"([a-z\-]+:)?[A-Za-z0-9]+"
+                    let pattern = Regex($@"\G\s*(?<ch>{pChar})(?<rom>({pRom})?)|\G\s*(?<ch>)(?<rom>{pRom})")
                     let matches = pattern.Matches lyricText
 
                     let matchedCharCount =

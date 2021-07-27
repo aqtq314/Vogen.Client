@@ -1,5 +1,6 @@
 ﻿module Vogen.Synth.G2p
 
+open Doaz.Reactive
 open Microsoft.ML.OnnxRuntime
 open Microsoft.ML.OnnxRuntime.Tensors
 open Newtonsoft.Json
@@ -20,21 +21,14 @@ let models = dict [|
     "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue.onnx"
     "yue-wz", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue-wz.onnx" |]
 
-let run romScheme (roms : string []) =
-    let romsNonNullIndices = [|
-        for i in 0 .. roms.Length - 1 do
-            if roms.[i] <> null then
-                yield i |]
-    let romsNonNull =
-        romsNonNullIndices |> Array.map(fun i -> roms.[i])
-
+let runForScheme romScheme (roms : string []) =
     let romLetters =
-        let letters = Array.create(romsNonNull.Length * xLength) ""
-        romsNonNull |> Array.iteri(fun i rom ->
+        let letters = Array.create(roms.Length * xLength) ""
+        roms |> Array.iteri(fun i rom ->
             rom |> String.iteri(fun j letter ->
                 if j < xLength then
                     letters.[i * xLength + j] <- letter.ToString()))
-        letters.ToTensor().Reshape(ReadOnlySpan([| romsNonNull.Length; xLength |]))
+        letters.ToTensor().Reshape(ReadOnlySpan([| roms.Length; xLength |]))
 
     let xs = [|
         NamedOnnxValue.CreateFromTensor("letters", romLetters) |]
@@ -43,14 +37,41 @@ let run romScheme (roms : string []) =
     use ys = model.Run xs
     let ys = ys.ToArray()
     let phis = ys.[0].Value :?> DenseTensor<string>
-    let phsNonNull = [|
+    let phs = [|
         for i in 0 .. int phis.Length / yLength - 1 ->
             [| for j in 0 .. yLength - 1 -> phis.GetValue(i * yLength + j) |]
             |> Array.filter(fun ph -> not(String.IsNullOrEmpty ph)) |]
 
+    phs
+
+let run romScheme (roms : string []) =
+    let schemeToRomIndices =
+        roms
+        |> Seq.mapi(fun romIndex rom ->
+            let currRomScheme =
+                if isNotNull rom && rom.Contains ':' then rom.[.. rom.IndexOf ':' - 1]
+                else romScheme
+            currRomScheme, romIndex)
+        |> Seq.filter(fun (currRomScheme, romIndex) -> isNotNull roms.[romIndex])
+        |> Seq.groupBy(fun (currRomScheme, romIndex) -> currRomScheme)
+        |> Dict.ofSeq
+        |> Dict.mapValue(fun entries ->
+            entries |> Seq.map(fun (currRomScheme, romIndex) -> romIndex) |> Array.ofSeq)
+
+    let romsNoPrefix = roms |> Array.map(fun rom ->
+        if isNotNull rom && rom.Contains ':' then rom.[rom.IndexOf ':' + 1 ..]
+        else rom)
+
     let phs = Array.zeroCreate roms.Length
-    romsNonNullIndices |> Seq.iteri(fun nonNullIndex outIndex ->
-        phs.[outIndex] <- phsNonNull.[nonNullIndex])
+    for KeyValue(currRomScheme, romIndices) in schemeToRomIndices do
+        let schemeRoms = romIndices |> Array.map(fun romIndex -> romsNoPrefix.[romIndex])
+        let schemePhs = runForScheme currRomScheme schemeRoms
+        for romIndex, schemePh in Array.zip romIndices schemePhs do
+            phs.[romIndex] <-
+                if currRomScheme = romScheme then schemePh else
+                    schemePh |> Array.map(fun ph ->
+                        if String.IsNullOrEmpty ph then ph else $"{currRomScheme}:{ph}")
+
     phs
 
 

@@ -304,6 +304,9 @@ module Dict =
     let tryFind key (table : Dictionary<_, _>) =
         table.TryGetValue key |> Option.ofByRef
 
+    let mapValue mapper (table : Dictionary<_, _>) =
+        Dictionary (table |> Seq.map (fun (KeyValue (key, value)) -> KeyValuePair (key, mapper value)))
+
 
 type 'a list1 =
     | List1 of v : 'a * vs : 'a list
