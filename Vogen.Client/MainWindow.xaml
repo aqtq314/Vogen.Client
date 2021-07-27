@@ -194,8 +194,9 @@
           <DataTemplate>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="{Binding Converter={x:Static vc:TextResources.singerNameConverter}}"/>
-              <TextBlock Text=" - "/>
+              <TextBlock Text=" ("/>
               <TextBlock Text="{Binding}"/>
+              <TextBlock Text=")"/>
             </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -204,7 +205,12 @@
       <ComboBox x:Name="romSchemeDropDown" Width="80" SelectedItem="{Binding UttPanelRomSchemeWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static vr:Romanizer.allIds}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <TextBlock Text="{Binding Converter={x:Static vc:TextResources.romSchemeNameConverter}}"/>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding Converter={x:Static vc:TextResources.romSchemeNameConverter}}"/>
+              <TextBlock Text=" ("/>
+              <TextBlock Text="{Binding}"/>
+              <TextBlock Text=")"/>
+            </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ComboBox>
