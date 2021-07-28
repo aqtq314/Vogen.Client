@@ -1,6 +1,25 @@
 # 界面基础操作
 
-## 1. 选择音符
+## 1. Alt 键写入音符
+
+- 按住 Alt 键写入音符，也可以拆分音符连音
+
+  ![ ](gif/writenote.gif)
+  ![ ](gif/writenote.split.gif)
+
+## 2. 输入歌词
+
+- 按 Enter 键或右键菜单选择输入歌词
+
+  ![ ](gif/typelyrics.enter.gif)
+  ![ ](gif/typelyrics.rightclick.gif)
+
+- 右键菜单替换多音字，也可以手动修改发音
+
+  ![ ](gif/subrom.rightclick.gif)
+  ![ ](gif/subrom.manual.gif)
+
+## 3. 选择音符
 
 - 拉选框 / Ctrl + 拉选框
 
@@ -12,7 +31,7 @@
   ![ ](gif/selnote.doubleclick.gif)
   ![ ](gif/selnote.tripleclick.gif)
 
-## 2. 移动音符
+## 4. 移动音符
 
 - 移动音符
 
@@ -22,25 +41,6 @@
 
   ![ ](gif/movenote.resizeright.gif)
   ![ ](gif/movenote.resizeleft.gif)
-
-## 3. Alt 键写入音符
-
-- 按住 Alt 键写入音符，也可以拆分音符连音
-
-  ![ ](gif/writenote.gif)
-  ![ ](gif/writenote.split.gif)
-
-## 4. 输入歌词
-
-- 按 Enter 键或右键菜单选择输入歌词
-
-  ![ ](gif/typelyrics.enter.gif)
-  ![ ](gif/typelyrics.rightclick.gif)
-
-- 右键菜单替换多音字，也可以手动修改发音
-
-  ![ ](gif/subrom.rightclick.gif)
-  ![ ](gif/subrom.manual.gif)
 
 ## 5. 乐句相关
 
