@@ -83,18 +83,14 @@ module FilePackage =
 
     type FComp with
         static member toComp x =
-            let { TimeSig0 = timeSig0Str; Bpm0 = bpm0; AccomOffset = accomOffset; Utts = fUtts } = x
-            let timeSig0 =
-                match timeSig0Str with
-                | null | "" -> timeSignature 4 4
-                | _ -> TimeSignature.Parse timeSig0Str
+            let { TimeSig0 = timeSig0; Bpm0 = bpm0; AccomOffset = accomOffset; Utts = fUtts } = x
             let uttsByNameDict = dict(Seq.map(FUtt.toUtt bpm0)fUtts)
             let utts = ImmutableArray.CreateRange uttsByNameDict.Keys
             let getUttName utt = uttsByNameDict.[utt]
             Composition(timeSig0, bpm0, utts).SetBgAudioOffset accomOffset, getUttName
 
         static member ofComp getUttName (comp : Composition) =
-            let timeSig0Str = comp.TimeSig0.ToString()
+            let timeSig0Str = comp.TimeSig0
             let accomOffset = comp.BgAudio.SampleOffset
             let uttNames = Seq.map getUttName comp.Utts
             let fUtts = Array.ofSeq(Seq.map2 FUtt.ofUtt uttNames comp.Utts)

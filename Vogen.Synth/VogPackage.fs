@@ -17,6 +17,22 @@ open System.Text.RegularExpressions
 
 
 module VogPackage =
+    type TimeSignatureConverter() =
+        inherit JsonConverter()
+
+        override x.CanConvert objectType = typeof<TimeSignature>.IsAssignableFrom objectType
+
+        override x.ReadJson(reader, objectType, existingValue, serializer) =
+            let timeSigStr = reader.Value :?> string
+            match timeSigStr with
+            | null | "" -> timeSignature 4 4
+            | _ -> TimeSignature.Parse timeSigStr
+            |> box
+
+        override x.WriteJson(writer, value, serializer) =
+            let timeSigStr = (value :?> TimeSignature).ToString()
+            writer.WriteValue timeSigStr
+
     [<NoComparison; ReferenceEquality>]
     type FNote = {
         [<JsonProperty("pitch", Required=Required.Always)>] Pitch : int
@@ -52,7 +68,8 @@ module VogPackage =
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
-        [<JsonProperty("timeSig0", Required=Required.Default)>]    TimeSig0 : string
+        [<JsonProperty("timeSig0", Required=Required.Default)>]
+        [<JsonConverter(typeof<TimeSignatureConverter>)>]          TimeSig0 : TimeSignature
         [<JsonProperty("bpm0", Required=Required.Always)>]         Bpm0 : float
         [<JsonProperty("accomOffset", Required=Required.Default)>] AccomOffset : int
         [<JsonProperty("utts", Required=Required.Always)>]         Utts : FUtt [] }
