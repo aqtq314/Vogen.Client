@@ -24,6 +24,9 @@ module VogPackage =
         [<JsonProperty("rom", Required=Required.Always)>]   Rom : string
         [<JsonProperty("on", Required=Required.Always)>]    On : int64
         [<JsonProperty("dur", Required=Required.Always)>]   Dur : int64 }
+        with
+        [<JsonIgnore>] member x.Off = x.On + x.Dur
+        [<JsonIgnore>] member x.IsHyphen = x.Lyric = "-"
 
     [<NoComparison; ReferenceEquality>]
     type FUtt = {

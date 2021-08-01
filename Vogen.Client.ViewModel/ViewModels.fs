@@ -15,6 +15,7 @@ open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Synth
 open Vogen.Synth.Romanization
+open FilePackage
 
 #nowarn "40"
 
@@ -242,7 +243,8 @@ type ProgramModel() as x =
                         raise(OperationCanceledException("Utt requested for synth has already be changed."))
 
                 let synthActor = getSynthActor dispatcher
-                let tUtt = TimeTable.ofUtt utt
+                let fUtt = VogPackage.FUtt.ofUtt "" utt
+                let tUtt = TimeTable.ofUtt utt.Bpm0 fUtt
                 let uttDurTimeSpan = TimeTable.frameToTime(float tUtt.UttDur)
                 if uttDurTimeSpan >= TimeSpan.FromSeconds 30.0 then
                     let msgboxResult = dispatcher.Invoke(fun () ->
@@ -253,7 +255,8 @@ type ProgramModel() as x =
                         raise(OperationCanceledException("Utt synth request has been cancelled by user."))
 
                 let! tChars = synthActor |> SynthActor.post(fun reply -> Choice1Of3(reply, tUtt.RomScheme, tUtt.UttDur, tUtt.Chars))
-                let charGrids = TimeTable.toCharGrids tChars
+                let fCharGrids = TimeTable.toCharGrids tChars
+                let charGrids = Array.map VogPackage.FChGrid.toCharGrid fCharGrids
                 utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetCharGrids charGrids)
 
                 let! f0 = synthActor |> SynthActor.post(fun reply -> Choice2Of3(reply, tUtt.RomScheme, tChars))
