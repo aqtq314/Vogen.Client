@@ -73,35 +73,35 @@ type CharGrid(pitch, phs) =
     member x.Phs : PhonemeInterval [] = phs
 
 // TODO: use weak reference to avoid memory leak when saved in undo/redo
-type AudioTrack private(sampleOffset, hasAudio, audioFilePath, audioSamples) =
+type AudioTrack private(sampleOffset, hasAudio, audioFilePath, audio) =
     member x.SampleOffset : int = sampleOffset
     member x.HasAudio : bool = hasAudio
     member x.AudioFilePath : string = audioFilePath
-    member x.AudioSamples : float32 [] = audioSamples
+    member x.Audio : AudioSamples = audio
 
-    new(sampleOffset) = AudioTrack(sampleOffset, false, "", Array.empty)
-    new(sampleOffset, audioFilePath, audioSamples : _ []) =
-        AudioTrack(sampleOffset, true, audioFilePath, audioSamples)
-    static member val Empty = AudioTrack(0, false, "", Array.empty)
+    new(sampleOffset) = AudioTrack(sampleOffset, false, "", AudioSamples.empty)
+    new(sampleOffset, audioFilePath, audio) =
+        AudioTrack(sampleOffset, true, audioFilePath, audio)
+    static member val Empty = AudioTrack(0, false, "", AudioSamples.empty)
 
-    member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFilePath, audioSamples)
-    //member x.SetNoAudio() = AudioTrack(sampleOffset, false, Array.empty, Array.empty)
-    //member x.SetAudio(audioFileBytes, audioSamples : _ []) =
-    //    AudioTrack(sampleOffset, true, audioFileBytes, audioSamples)
+    member x.SetSampleOffset sampleOffset = AudioTrack(sampleOffset, hasAudio, audioFilePath, audio)
+    //member x.SetNoAudio() = AudioTrack(sampleOffset, false, "", AudioSamples.empty)
+    //member x.SetAudio audio =
+    //    AudioTrack(sampleOffset, true, audioFilePath, audio)
 
-    member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFilePath, audioSamples)
+    member x.UpdateSampleOffset updateSampleOffset = AudioTrack(updateSampleOffset sampleOffset, hasAudio, audioFilePath, audio)
 
-type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples) =
+type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, audio) =
     member x.SampleOffset : int = sampleOffset
     member x.CharGrids : CharGrid [] = charGrids
     member x.F0Samples : float32 [] = f0Samples
-    member x.AudioFileBytes : byte [] = audioFileBytes
-    member x.AudioSamples : float32 [] = audioSamples
-    member x.HasAudio : bool = hasAudio
+    member x.Audio : AudioSamples option = audio
     member x.IsSynthing : bool = isSynthing
 
     member x.HasCharGrids = x.CharGrids.Length > 0
     member x.HasF0Samples = x.F0Samples.Length > 0
+    member x.HasAudio = Option.isSome audio
+    member x.AudioOrDefault = x.Audio |> Option.defaultValue AudioSamples.empty
 
     static member GetSampleOffset(utt : Utterance) =
         float utt.On
@@ -109,29 +109,29 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, au
         |> (+) -headSil
         |> Audio.timeToSample
 
-    static member Create sampleOffset = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
+    static member Create sampleOffset = UttSynthResult(sampleOffset, false, Array.empty, Array.empty, None)
 
     static member Create utt =
         let sampleOffset = UttSynthResult.GetSampleOffset utt
         UttSynthResult.Create sampleOffset
 
     member x.Clear() =
-        UttSynthResult(sampleOffset, false, Array.empty, Array.empty, false, Array.empty, Array.empty)
+        UttSynthResult(sampleOffset, false, Array.empty, Array.empty, None)
 
     member x.SetIsSynthing isSynthing =
-        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, audio)
 
     member x.SetCharGrids charGrids =
-        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, audio)
 
     member x.SetF0Samples f0Samples =
-        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, hasAudio, audioFileBytes, audioSamples)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, audio)
 
     member x.SetNoAudio() =
-        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, false, Array.empty, Array.empty)
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, None)
 
-    member x.SetAudio(audioFileBytes, audioSamples) =
-        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, true, audioFileBytes, audioSamples)
+    member x.SetAudio audio =
+        UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, Some audio)
 
 type Composition(timeSig0, bpm0, bgAudio, utts) =
     let utts = (utts : ImmutableArray<_>).Sort Utterance.CompareByPosition

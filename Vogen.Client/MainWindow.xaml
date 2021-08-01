@@ -7,12 +7,12 @@
                    xmlns:c="clr-namespace:Vogen.Client.Controls"
                    xmlns:v="clr-namespace:Vogen.Client.Views"
                    xmlns:dc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
-                   xmlns:vr="clr-namespace:Vogen.Client.Romanization;assembly=Vogen.Client.ViewModel"
                    xmlns:vo="clr-namespace:Vogen.Client.Model;assembly=Vogen.Client.ViewModel"
                    xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
                    xmlns:vm="clr-namespace:Vogen.Client.ViewModel;assembly=Vogen.Client.ViewModel"
                    xmlns:vv="clr-namespace:Vogen.Client.Views;assembly=Vogen.Client.ViewModel"
                    xmlns:s="clr-namespace:Vogen.Synth;assembly=Vogen.Synth"
+                   xmlns:sr="clr-namespace:Vogen.Synth.Romanization;assembly=Vogen.Synth"
                    mc:Ignorable="d"
                    Width="1024" Height="576"
                    d:DataContext="{x:Static vm:DesignerModels.programModel}">
@@ -202,7 +202,7 @@
         </ItemsControl.ItemTemplate>
       </ComboBox>
       <TextBlock Text="发音词典" Margin="3 0" VerticalAlignment="Center"/>
-      <ComboBox x:Name="romSchemeDropDown" Width="80" SelectedItem="{Binding UttPanelRomSchemeWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static vr:Romanizer.allIds}">
+      <ComboBox x:Name="romSchemeDropDown" Width="80" SelectedItem="{Binding UttPanelRomSchemeWpf.Value, Mode=TwoWay}" ItemsSource="{x:Static sr:Romanizer.allIds}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <StackPanel Orientation="Horizontal">

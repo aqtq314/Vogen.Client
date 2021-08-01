@@ -22,8 +22,24 @@
     <EmbeddedResource Include="models\f0.man.onnx" />
     <EmbeddedResource Include="models\f0.yue.onnx" />
     <EmbeddedResource Include="models\rfft.onnx" />
+    <Content Include="romDicts\ngli-wugniu-soutseu.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="romDicts\ngli-wugniu-zaonhe.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="romDicts\rime-cantonese.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="romDicts\rime-luna-pinyin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Utils.fs" />
+    <Compile Include="Romanization\Trie.fs" />
+    <Compile Include="Romanization\Scheme.fs" />
     <Compile Include="World.fs" />
+    <Compile Include="AudioIO.fs" />
+    <Compile Include="VogPackage.fs" />
     <Compile Include="TimeTable.fs" />
     <Compile Include="G2p.fs" />
     <Compile Include="Prosody.fs" />

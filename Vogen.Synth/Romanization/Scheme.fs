@@ -1,4 +1,4 @@
-﻿namespace Vogen.Client.Romanization
+﻿namespace Vogen.Synth.Romanization
 
 open Newtonsoft.Json
 open System
@@ -7,7 +7,7 @@ open System.Collections.Immutable
 open System.IO
 open System.Text
 open System.Text.RegularExpressions
-open Vogen.Client.ViewModel
+open Vogen.Synth
 
 #nowarn "40"
 

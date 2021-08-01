@@ -1,4 +1,4 @@
-﻿namespace Vogen.Client.Romanization
+﻿namespace Vogen.Synth.Romanization
 
 open Doaz.Reactive
 open Newtonsoft.Json

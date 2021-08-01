@@ -13,8 +13,8 @@ open System.Windows.Media
 open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
-open Vogen.Client.Romanization
 open Vogen.Synth
+open Vogen.Synth.Romanization
 
 #nowarn "40"
 
@@ -139,7 +139,16 @@ type ProgramModel() as x =
         compIsSaved |> Rp.set true
 
     member x.ExportAudio outFilePath =
-        ((!!x.ActiveChart).Comp, !!x.ActiveUttSynthCache) ||> AudioSamples.renderToFile outFilePath
+        let comp = (!!x.ActiveChart).Comp
+        let uttSynthCache = !!x.ActiveUttSynthCache
+        let uttSynthResults = [|
+            for utt in comp.Utts do
+                let synthResult = uttSynthCache.GetOrDefault utt
+                match synthResult.Audio with
+                | None -> ()
+                | Some audio -> yield synthResult.SampleOffset, audio.Samples |]
+
+        AudioSamples.renderToFile outFilePath uttSynthResults
 
     member x.Undo() =
         match undoRedoStack.TryPopUndo() with
@@ -172,7 +181,8 @@ type ProgramModel() as x =
         cursorPos |> Rp.set newCursorPos
 
     member x.LoadAccom audioFile =
-        let audioFileBytes, audioSamples = AudioSamples.loadFromFile audioFile
+        let audioSamplesLazy = AudioSamples.loadFromFile audioFile
+        let audioSamples = AudioSamples.validate audioSamplesLazy
         let chart = !!x.ActiveChart
         x.ActiveChart |> Rp.set(
             let comp = chart.Comp
@@ -253,7 +263,7 @@ type ProgramModel() as x =
                 let! mgc, bap = synthActor |> SynthActor.post(fun reply -> Choice3Of3(reply, tUtt.RomScheme, utt.SingerId, f0, tChars))
                 let audioSamples = World.synthesize32 f0 mgc bap
                 let audioFileBytes = Array.empty
-                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio(audioFileBytes, audioSamples))
+                utt |> updateSynthResultInCache(fun uttSynthResult -> uttSynthResult.SetAudio(AudioSamples.create audioFileBytes audioSamples))
                 return true
 
             with ex ->

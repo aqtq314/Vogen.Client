@@ -3,10 +3,13 @@
 open Microsoft.FSharp.NativeInterop
 open Microsoft.ML.OnnxRuntime
 open Microsoft.ML.OnnxRuntime.Tensors
+open NAudio.Wave
+open Newtonsoft.Json
 open System
 open System.Collections.Generic
 open System.IO
 open System.Reflection
+open System.Text.RegularExpressions
 
 #nowarn "9"
 
@@ -17,13 +20,33 @@ module Params =
     let [<Literal>] channels = 1
     let [<Literal>] worldFftSize = 2048
 
+    let playbackWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(fs, channels)
+
     let hopSize = TimeSpan.FromMilliseconds 10.0
     let headSil = TimeSpan.FromSeconds 0.5
     let tailSil = TimeSpan.FromSeconds 0.5
 
+[<AutoOpen>]
+module Utils =
     let appDir =
         let entryAssembly = Assembly.GetEntryAssembly()
         Path.GetDirectoryName entryAssembly.Location
+
+    type Stream with
+        member x.ReadAllBytes() =
+            use byteStream = new MemoryStream()
+            x.CopyTo byteStream
+            byteStream.ToArray()
+
+    type JsonConvert with
+        static member SerializeObjectFormatted value =
+            let jStr =
+                use stringWriter = new StringWriter()
+                use jWriter = new JsonTextWriter(stringWriter, Indentation = 2, Formatting = Formatting.Indented)
+                let jSerializer = JsonSerializer.CreateDefault()
+                jSerializer.Serialize(jWriter, value)
+                stringWriter.ToString()
+            Regex.Replace(jStr, @"(?<![\}\]],)(?<!\[)\r\n *(?!.+[\[\{])", " ")
 
 module InferenceSession =
     let ofStream(stream : Stream) =

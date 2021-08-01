@@ -15,22 +15,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="testComp.vog" />
-    <Content Include="romDicts\rime-luna-pinyin.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="romDicts\rime-cantonese.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="romDicts\ngli-wugniu-zaonhe.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="romDicts\ngli-wugniu-soutseu.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <EmbeddedResource Include="cmaps\afmhot.cmap" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Romanization\Trie.fs" />
-    <Compile Include="Romanization\Scheme.fs" />
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
     <Compile Include="Model\MidiPlayback.fs" />

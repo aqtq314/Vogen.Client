@@ -13,80 +13,7 @@ open System.IO
 open System.Runtime.InteropServices
 open Vogen.Client.ViewModel
 open Vogen.Synth
-open Audio
 
-
-type SampleProvider(samples : _ []) =
-    member val CurrOffset = 0 with get, set
-    interface ISampleProvider with
-        member x.WaveFormat = playbackWaveFormat
-        member x.Read(buffer, offset, count) =
-            let currOffset = x.CurrOffset
-            let count = count |> min(samples.Length - currOffset)
-            for i in 0 .. count - 1 do
-                buffer.[offset + i] <- samples.[currOffset + i]
-            x.CurrOffset <- currOffset + count
-            count
-
-module AudioSamples =
-    let loadFromStream(fileStream : Stream) =
-        use cacheStream = new MemoryStream()
-        fileStream.CopyTo cacheStream
-        let fileBytes = cacheStream.ToArray()
-        cacheStream.Position <- 0L
-
-        MediaFoundationApi.Startup()
-        use reader = new StreamMediaFoundationReader(cacheStream)
-        use reader = new MediaFoundationResampler(reader, playbackWaveFormat)
-        let sampleReader = reader.ToSampleProvider()
-
-        let sampleChunks = List<_>()
-        let buffer = Array.zeroCreate<float32>(fs * channels)
-        let rec readBuffer() =
-            let bytesRead = sampleReader.Read(buffer, 0, buffer.Length)
-            if bytesRead > 0 then
-                sampleChunks.Add buffer.[..bytesRead - 1]
-                readBuffer()
-        readBuffer()
-
-        fileBytes, Array.concat sampleChunks
-
-    let loadFromFile filePath =
-        use fileStream = File.OpenRead filePath
-        loadFromStream fileStream
-
-    let renderComp(comp : Composition)(uttSynthCache : UttSynthCache) =
-        let uttSynthResults =
-            comp.Utts
-            |> Seq.map(fun utt -> uttSynthCache.GetOrDefault utt)
-            |> Seq.filter(fun (synthResult : UttSynthResult) -> synthResult.HasAudio)
-            |> Array.ofSeq
-        let outSampleDur =
-            uttSynthResults
-            |> Seq.map(fun synthResult -> synthResult.SampleOffset + synthResult.AudioSamples.Length)
-            |> Seq.appendItem 0
-            |> Seq.max
-        let outSamples = Array.zeroCreate outSampleDur
-        for synthResult in uttSynthResults do
-            let samples = synthResult.AudioSamples
-            let sampleOffset = synthResult.SampleOffset
-            for i in max 0 sampleOffset .. sampleOffset + samples.Length - 1 do
-                outSamples.[i] <- outSamples.[i] + samples.[i - sampleOffset]
-        outSamples
-
-    let renderToFile filePath comp uttSynthCache =
-        File.Create(filePath).Dispose()
-        let outSamples = renderComp comp uttSynthCache
-        if outSamples.Length > 0 then
-            let sampleProvider = SampleProvider(outSamples)
-            match (Path.GetExtension filePath).ToLower() with
-            | ".wav" ->
-                WaveFileWriter.CreateWaveFile16(filePath, sampleProvider)
-            | ".m4a" ->
-                MediaFoundationApi.Startup()
-                MediaFoundationEncoder.EncodeToAac(sampleProvider.ToWaveProvider(), filePath, 192000)
-            | fileExt ->
-                raise(ArgumentException($"Unknown output file extension ({fileExt}) for rendering"))
 
 module AudioPlayback =
     let fillBuffer(playbackSamplePos, comp : Composition, uttSynthCache, buffer : float32 [], bufferOffset, bufferLength) =
@@ -98,10 +25,12 @@ module AudioPlayback =
                 buffer.[i + bufferOffset] <- buffer.[i + bufferOffset] + samples.[i + playbackSamplePos - sampleOffset] * volume
         for utt in comp.Utts do
             let uttSynthResult : UttSynthResult = (uttSynthCache : UttSynthCache).GetOrDefault utt
-            if uttSynthResult.HasAudio then
-                fillBufferSamples 1.0f uttSynthResult.AudioSamples uttSynthResult.SampleOffset
+            match uttSynthResult.Audio with
+            | None -> ()
+            | Some audio ->
+                fillBufferSamples 1.0f audio.Samples uttSynthResult.SampleOffset
         if comp.BgAudio.HasAudio then
-            fillBufferSamples 0.25f comp.BgAudio.AudioSamples comp.BgAudio.SampleOffset
+            fillBufferSamples 0.25f comp.BgAudio.Audio.Samples comp.BgAudio.SampleOffset
 
 type AudioPlaybackEngine() =
     let mutable playbackSamplePos = 0
@@ -118,7 +47,7 @@ type AudioPlaybackEngine() =
             x.PlaybackPositionRefTicks <- Stopwatch.GetTimestamp()
 
     interface ISampleProvider with
-        member x.WaveFormat = Audio.playbackWaveFormat
+        member x.WaveFormat = playbackWaveFormat
         member x.Read(buffer, offset, count) =
             lock x <| fun () ->
                 AudioPlayback.fillBuffer(playbackSamplePos, x.Comp, x.UttSynthCache, buffer, offset, count)

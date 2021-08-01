@@ -16,8 +16,9 @@ open System.Windows.Input
 open System.Runtime.InteropServices
 open Vogen.Client.Controls
 open Vogen.Client.Model
-open Vogen.Client.Romanization
 open Vogen.Client.ViewModel
+open Vogen.Synth
+open Vogen.Synth.Romanization
 
 #nowarn "40"
 

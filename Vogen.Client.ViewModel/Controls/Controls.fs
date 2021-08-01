@@ -330,7 +330,7 @@ type BgAudioDisplay() =
         dc.DrawRectangle(bgBrush, null, Rect(Size(actualWidth, actualHeight)))
 
         if audioTrack.HasAudio then
-            let samples = audioTrack.AudioSamples
+            let samples = audioTrack.Audio.Samples
             let sampleOffset = audioTrack.SampleOffset
             let fftSampleIndices = [|
                 for x in 0.0 .. floor actualWidth - 1.0 ->
@@ -381,7 +381,7 @@ type BgAudioDisplay() =
                     sgc.PolyLineTo(waveformUpperContourPoints, true, false)
 
         if audioTrack.HasAudio then
-            let samples = audioTrack.AudioSamples
+            let samples = audioTrack.Audio.Samples
             let sampleOffset = audioTrack.SampleOffset
 
             let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
@@ -659,7 +659,7 @@ type ChartEditor() =
         let inline sampleToPixel si = si |> Audio.sampleToPulse bpm0 |> pulseToPixel quarterWidth hOffset
         let drawWaveformGeometry(uttSynthResult : UttSynthResult) x0 x1 yMid yOffset yScale (sgc : StreamGeometryContext) =
             if x0 < x1 then
-                let samples = uttSynthResult.AudioSamples
+                let samples = uttSynthResult.AudioOrDefault.Samples
                 let sampleOffset = uttSynthResult.SampleOffset
                 let inline getFrameDrawPoints x =
                     let si0 = pixelToSample(x - frameRadius) - sampleOffset |> clamp 0 (samples.Length - 1)
@@ -692,8 +692,10 @@ type ChartEditor() =
         let waveformGeometry = drawGeometry FillRule.Nonzero <| fun sgc ->
             for utt in uttsReordered do
                 let uttSynthResult = uttSynthCache.GetOrDefault utt
-                if uttSynthResult.HasAudio then
-                    let samples = uttSynthResult.AudioSamples
+                match uttSynthResult.Audio with
+                | None -> ()
+                | Some audio ->
+                    let samples = audio.Samples
                     let sampleOffset = uttSynthResult.SampleOffset
 
                     for noteIndex in 0 .. utt.Notes.Length - 1 do
