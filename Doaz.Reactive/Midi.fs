@@ -75,16 +75,18 @@ type TimeSignature(numerator, denominator) =
     override x.ToString() = sprintf "%d/%d" numerator (1 <<< denominatorExp)
 
     static member TryParse timeSigStr =
-        let m = Regex.Match(timeSigStr, @"^\s*(?<num>[0-9]{1,3})\s*/\s*(?<denom>[0-9]{1,3})\s*$")
-        if m.Success then
-            let numerator = Int32.Parse m.Groups.["num"].Value
-            let denominator = Int32.Parse m.Groups.["denom"].Value
-            if isValidNumerator numerator && Array.IndexOf(allowedDenominators, denominator) >= 0 then
-                Some(TimeSignature(numerator, denominator))
+        if isNull timeSigStr then None
+        else
+            let m = Regex.Match(timeSigStr, @"^\s*(?<num>[0-9]{1,3})\s*/\s*(?<denom>[0-9]{1,3})\s*$")
+            if m.Success then
+                let numerator = Int32.Parse m.Groups.["num"].Value
+                let denominator = Int32.Parse m.Groups.["denom"].Value
+                if isValidNumerator numerator && Array.IndexOf(allowedDenominators, denominator) >= 0 then
+                    Some(TimeSignature(numerator, denominator))
+                else
+                    None
             else
                 None
-        else
-            None
 
     static member Parse timeSigStr =
         match TimeSignature.TryParse timeSigStr with

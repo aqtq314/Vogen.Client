@@ -68,8 +68,7 @@ module VogPackage =
 
     [<NoComparison; ReferenceEquality>]
     type FComp = {
-        [<JsonProperty("timeSig0", Required=Required.Default)>]
-        [<JsonConverter(typeof<TimeSignatureConverter>)>]          TimeSig0 : TimeSignature
+        [<JsonProperty("timeSig0", Required=Required.Default)>]    TimeSig0 : string
         [<JsonProperty("bpm0", Required=Required.Always)>]         Bpm0 : float
         [<JsonProperty("accomOffset", Required=Required.Default)>] AccomOffset : int
         [<JsonProperty("utts", Required=Required.Always)>]         Utts : FUtt [] }
