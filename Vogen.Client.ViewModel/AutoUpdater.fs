@@ -16,8 +16,8 @@ open System.Text
 open System.Text.RegularExpressions
 
 
-type GitHubReleases = JsonProvider<"https://api.github.com/repos/aqtq314/Vogen.Client/releases">
-type GiteeReleases = JsonProvider<"https://gitee.com/api/v5/repos/aqtq314/Vogen.Client/releases">
+type GitHubReleases = JsonProvider<"gitReleaseJsons\\github-releases.json">
+type GiteeReleases = JsonProvider<"gitReleaseJsons\\gitee-releases.json">
 let cacheDir = Path.GetFullPath "autoUpdateCache"
 
 let parseVersion versionText =

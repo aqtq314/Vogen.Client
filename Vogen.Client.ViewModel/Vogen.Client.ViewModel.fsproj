@@ -14,6 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="gitReleaseJsons\gitee-releases.json" />
+    <None Include="gitReleaseJsons\github-releases.json" />
     <EmbeddedResource Include="testComp.vog" />
     <EmbeddedResource Include="cmaps\afmhot.cmap" />
     <Compile Include="Utils.fs" />
@@ -35,6 +37,8 @@
     <Compile Include="AutoUpdater.fs" />
     <Compile Include="DesignerModels.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="FSharp.Data" Version="4.1.1" />
