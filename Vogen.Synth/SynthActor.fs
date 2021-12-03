@@ -30,6 +30,6 @@ let post buildMessage (synthActor : MailboxProcessor<_>) = async {
     let! synthResult = synthActor.PostAndAsyncReply buildMessage
     match synthResult with
     | Ok outChars -> return outChars
-    | Error ex -> return raise ex }
+    | Error(ex : exn) -> return raise(AggregateException(ex)) }
 
 

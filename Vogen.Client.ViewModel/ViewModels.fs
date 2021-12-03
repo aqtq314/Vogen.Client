@@ -272,8 +272,19 @@ type ProgramModel() as x =
             with ex ->
                 Trace.WriteLine ex
                 dispatcher.BeginInvoke(fun () ->
+                    let makeExceptionMessage(ex : exn) = $"{ex.Message}\r\n\r\n{ex.StackTrace}"
+                    let exceptionSeparator = "\r\n--------------------------------\r\n"
+                    let exceptionMessage = ex |> fix(fun makeExceptionMessageRec ex ->
+                        match ex with
+                        | :? AggregateException as ex ->
+                            ($"{makeExceptionMessage ex}{exceptionSeparator}" +
+                                String.Join(exceptionSeparator, Seq.map makeExceptionMessageRec ex.InnerExceptions))
+                        | _ when isNotNull ex.InnerException ->
+                            $"{makeExceptionMessage ex}{exceptionSeparator}{makeExceptionMessageRec ex.InnerException}"
+                        | _ ->
+                            makeExceptionMessage ex)
                     MessageBox.Show(
-                        $"合成失败: {ex.Message}\r\n\r\n{ex.StackTrace}", "合成失败",
+                        $"合成失败: {exceptionMessage}", "合成失败",
                         MessageBoxButton.OK, MessageBoxImage.Error) |> ignore) |> ignore
                 return false
 
