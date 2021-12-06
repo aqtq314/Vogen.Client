@@ -47,6 +47,7 @@
     <Compile Include="Acoustics.fs" />
     <Compile Include="Rfft.fs" />
     <Compile Include="SynthActor.fs" />
+    <Compile Include="DxVersion.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

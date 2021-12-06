@@ -18,12 +18,22 @@ open System.Windows.Threading
 open Vogen.Client.Controls
 open Vogen.Client.Model
 open Vogen.Client.ViewModel
+open Vogen.Synth
 
 #nowarn "40"
 
 
 type MainWindowBase() =
     inherit Window()
+
+    //static do
+    //    let dispatcher = Dispatcher.CurrentDispatcher
+    //    dispatcher.BeginInvoke((fun () ->
+    //        let dxVersion = DxVersion.getDxVersion()
+    //        if dxVersion.Major < 12 then
+    //            dispatcher.BeginInvoke(fun () ->
+    //                MessageBox.Show($"当前 DirectX 版本为 {dxVersion}，低于版本 12.0。音频合成可能失败。", "DirectX 版本警告", MessageBoxButton.OK, MessageBoxImage.Exclamation)
+    //                    |> ignore) |> ignore), DispatcherPriority.Background) |> ignore
 
     static member AppName = "未来虚拟唱鸽人训练营"
 
