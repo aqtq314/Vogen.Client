@@ -1,6 +1,6 @@
 # Project Vogen 未来虚拟唱鸽人
 
-- 客户端下载地址：[传送门](https://gitee.com/aqtq314/Vogen.Client/releases)
+- 客户端下载地址：[传送门](../../releases)
 - 声库下载地址：请添加QQ群[733631645](https://jq.qq.com/?_wv=1027&k=QPgAUFS6)至群文件内下载。
     - 目前已制作声库：Gloria, MEI, BOBOKO, Chao, RGB, Aquachord, Doaz
     - 声库格式仍可能大幅度变化，稳定后会公开放出。
