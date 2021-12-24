@@ -14,9 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="testComp.vog" />
     <None Include="gitReleaseJsons\gitee-releases.json" />
     <None Include="gitReleaseJsons\github-releases.json" />
-    <EmbeddedResource Include="testComp.vog" />
     <EmbeddedResource Include="cmaps\afmhot.cmap" />
     <Compile Include="Utils.fs" />
     <Compile Include="Model\Comp.fs" />

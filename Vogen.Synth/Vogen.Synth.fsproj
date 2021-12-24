@@ -22,16 +22,13 @@
     <EmbeddedResource Include="models\f0.man.onnx" />
     <EmbeddedResource Include="models\f0.yue.onnx" />
     <EmbeddedResource Include="models\rfft.onnx" />
-    <Content Include="romDicts\ngli-wugniu-soutseu.json">
+    <Content Include="romDicts\man.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="romDicts\ngli-wugniu-zaonhe.json">
+    <Content Include="romDicts\wuu.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="romDicts\rime-cantonese.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="romDicts\rime-luna-pinyin.json">
+    <Content Include="romDicts\yue.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Utils.fs" />
@@ -52,6 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Data" Version="4.1.1" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.8.0" />
     <PackageReference Include="NAudio" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />

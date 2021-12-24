@@ -13,8 +13,8 @@ type RomTrieNode =
     | RomTrieNode of romsArr : string [] * subTrie : ImmutableDictionary<string, RomTrieNode>
 
 module RomTrie =
-    let rec ofFlatJsonDict(jsonDict : ImmutableDictionary<string, string []>) =
-        jsonDict
+    let rec ofFlatCsvEntries(csvEntries : IEnumerable<KeyValuePair<string, string []>>) =
+        csvEntries
         |> Seq.groupBy(fun (KeyValue(text, romsArr)) -> text.[0])
         |> Seq.map(fun (ch, chEntries) ->
             let localDict = ImmutableDictionary.CreateRange chEntries
@@ -23,7 +23,7 @@ module RomTrie =
                 localDict.Remove(ch.ToString())
                 |> Seq.map(fun (KeyValue(chs, romsArr)) -> KeyValuePair(chs.[1..], romsArr))
                 |> ImmutableDictionary.CreateRange
-                |> ofFlatJsonDict
+                |> ofFlatCsvEntries
             KeyValuePair(ch.ToString(), RomTrieNode(romsArr, subTrie)))
         |> ImmutableDictionary.CreateRange
 
