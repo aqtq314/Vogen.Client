@@ -17,9 +17,9 @@ let xLength = 8
 let yLength = 4
 
 let models = dict [|
-    "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.man.onnx"
-    "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue.onnx"
-    "yue-wz", lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.g2p.yue-wz.onnx" |]
+    "man", lazy InferenceSession.ofEmbedded @"Vogen.Synth.Models.g2p.man.onnx"
+    "yue", lazy InferenceSession.ofEmbedded @"Vogen.Synth.Models.g2p.yue.onnx"
+    "yue-wz", lazy InferenceSession.ofEmbedded @"Vogen.Synth.Models.g2p.yue-wz.onnx" |]
 
 let runForScheme romScheme (roms : string []) =
     let romLetters =

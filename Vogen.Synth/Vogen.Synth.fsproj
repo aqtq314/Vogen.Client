@@ -14,21 +14,21 @@
     <None Include="$(SolutionDir)$(Platform)\$(Configuration)\World.dll" Link="World.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <EmbeddedResource Include="models\g2p.man.onnx" />
-    <EmbeddedResource Include="models\g2p.yue.onnx" />
-    <EmbeddedResource Include="models\g2p.yue-wz.onnx" />
-    <EmbeddedResource Include="models\po.man.onnx" />
-    <EmbeddedResource Include="models\po.yue.onnx" />
-    <EmbeddedResource Include="models\f0.man.onnx" />
-    <EmbeddedResource Include="models\f0.yue.onnx" />
-    <EmbeddedResource Include="models\rfft.onnx" />
-    <Content Include="romDicts\man.csv">
+    <EmbeddedResource Include="Models\g2p.man.onnx" />
+    <EmbeddedResource Include="Models\g2p.yue.onnx" />
+    <EmbeddedResource Include="Models\g2p.yue-wz.onnx" />
+    <EmbeddedResource Include="Models\po.man.onnx" />
+    <EmbeddedResource Include="Models\po.yue.onnx" />
+    <EmbeddedResource Include="Models\f0.man.onnx" />
+    <EmbeddedResource Include="Models\f0.yue.onnx" />
+    <EmbeddedResource Include="Models\rfft.onnx" />
+    <Content Include="RomDicts\man.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="romDicts\wuu.csv">
+    <Content Include="RomDicts\wuu.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="romDicts\yue.csv">
+    <Content Include="RomDicts\yue.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="Utils.fs" />

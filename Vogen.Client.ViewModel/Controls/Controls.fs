@@ -289,7 +289,7 @@ module BitmapPalettes =
         let colors = Array.init 256 (fun _ -> reader.ReadInt32() |> ColorConv.argb)
         BitmapPalette(colors)
 
-    let afmhot = ofEmbedded @"Vogen.Client.ViewModel.cmaps.afmhot.cmap"
+    let afmhot = ofEmbedded @"Vogen.Client.ViewModel.CMaps.afmhot.cmap"
 
 type BgAudioDisplay() =
     inherit NoteChartEditBase()

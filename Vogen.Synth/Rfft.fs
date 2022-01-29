@@ -14,7 +14,7 @@ open System.Linq
 open System.Text
 
 
-let modelLazy = lazy InferenceSession.ofEmbedded @"Vogen.Synth.models.rfft.onnx"
+let modelLazy = lazy InferenceSession.ofEmbedded @"Vogen.Synth.Models.rfft.onnx"
 
 let run fftSize (audioSamples : _ [])(indices : _ []) =
     let audioSlices = DenseTensor<float32>(ReadOnlySpan([| indices.Length; fftSize |]))

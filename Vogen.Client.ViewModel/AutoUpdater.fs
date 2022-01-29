@@ -16,9 +16,9 @@ open System.Text
 open System.Text.RegularExpressions
 
 
-type GitHubReleases = JsonProvider<"gitReleaseJsons\\github-releases.json">
-type GiteeReleases = JsonProvider<"gitReleaseJsons\\gitee-releases.json">
-let cacheDir = Path.GetFullPath "autoUpdateCache"
+type GitHubReleases = JsonProvider<"GitReleaseJsons\\github-releases.json">
+type GiteeReleases = JsonProvider<"GitReleaseJsons\\gitee-releases.json">
+let cacheDir = Path.GetFullPath "_AutoUpdateCache"
 
 let parseVersion versionText =
     let m = Regex.Match(versionText, @"^v((?<major>\d+))?(\.(?<minor>\d+))?(\.(?<build>\d+))?(\.(?<rev>\d+))?(\-(?<preRelease>[a-z]+))?$")

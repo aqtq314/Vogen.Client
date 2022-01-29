@@ -21,7 +21,7 @@ module Romanizer =
             member x.Convert chs romHints = Array.create chs.Length [| fallbackRom |] }
 
     let createRomanizer fallbackRom romScheme csvDictFileName =
-        let csvDictFilePath = Path.Combine(appDir, "romDicts", csvDictFileName)
+        let csvDictFilePath = Path.Combine(appDir, "RomDicts", csvDictFileName)
         let trie =
             use csv = CsvFile.Load(csvDictFilePath, hasHeaders = true)
             csv.Rows

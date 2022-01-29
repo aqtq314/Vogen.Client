@@ -15,9 +15,9 @@
 
   <ItemGroup>
     <EmbeddedResource Include="testComp.vog" />
-    <None Include="gitReleaseJsons\gitee-releases.json" />
-    <None Include="gitReleaseJsons\github-releases.json" />
-    <EmbeddedResource Include="cmaps\afmhot.cmap" />
+    <None Include="GitReleaseJsons\gitee-releases.json" />
+    <None Include="GitReleaseJsons\github-releases.json" />
+    <EmbeddedResource Include="CMaps\afmhot.cmap" />
     <Compile Include="Utils.fs" />
     <Compile Include="Model\Comp.fs" />
     <Compile Include="Model\AudioPlayback.fs" />
@@ -57,7 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="cmaps\" />
+    <Folder Include="CMaps\" />
   </ItemGroup>
 
 </Project>
