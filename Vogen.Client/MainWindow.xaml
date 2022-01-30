@@ -140,6 +140,9 @@
         <MenuItem Header="播放 (_P)" InputGestureText="Space" Command="{x:Static vv:Commands.Play}"/>
         <MenuItem Header="停止 (_O)" InputGestureText="Space" Command="{x:Static vv:Commands.Stop}"/>
       </MenuItem>
+      <MenuItem Header="工具 (_T)">
+        <MenuItem Header="歌词加拼音 (_A)" Click="OnAddRomanizationMenuItemClick"/>
+      </MenuItem>
       <MenuItem Header="关于 (_H)">
         <MenuItem Header="清华大学智能技术与系统国家重点实验室" IsEnabled="False"/>
         <MenuItem Header="清华大学未来动漫·游戏技术兴趣团队" IsEnabled="False"/>

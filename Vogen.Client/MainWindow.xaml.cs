@@ -81,5 +81,11 @@ namespace Vogen.Client
         private void OnExecuteCmdPlayStop(object sender, ExecutedRoutedEventArgs e) => ProgramModel.PlayOrStop();
         private void OnExecuteCmdPlay(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Play();
         private void OnExecuteCmdStop(object sender, ExecutedRoutedEventArgs e) => ProgramModel.Stop();
+
+        private void OnAddRomanizationMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            var addRomanizationWindow = new AddRomanizationWindow();
+            addRomanizationWindow.Show();
+        }
     }
 }
