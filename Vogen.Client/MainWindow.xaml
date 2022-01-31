@@ -176,8 +176,12 @@
           </MultiBinding>
         </TextBlock.Text>
       </TextBlock>
-      <Button Content="播放" Command="{x:Static vv:Commands.Play}"/>
-      <Button Content="停止" Command="{x:Static vv:Commands.Stop}"/>
+      <Button ToolTip="播放" Command="{x:Static vv:Commands.Play}">
+        <TextBlock Text="&#xe768;" FontFamily="{StaticResource SegoeFluentIcons}"/>
+      </Button>
+      <Button ToolTip="停止" Command="{x:Static vv:Commands.Stop}">
+        <TextBlock Text="&#xe71a;" FontFamily="{StaticResource SegoeFluentIcons}"/>
+      </Button>
       <Separator/>
       <Button Content="清除合成结果" Command="{x:Static vv:Commands.ClearSynth}"/>
       <Button Content="合成"        Command="{x:Static vv:Commands.Synth}"/>
@@ -218,6 +222,8 @@
         </ItemsControl.ItemTemplate>
       </ComboBox>
     </ToolBar>
+    <!--<ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding ActiveChart.Value.Comp.Utts}">
+    </ItemsControl>-->
     <v:NoteChartEditPanel x:Name="noteChartEditPanel" Quantization="240" Snap="True"/>
   </DockPanel>
 </vv:MainWindowBase>

@@ -30,6 +30,7 @@
     <Grid Background="White">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
         <ColumnDefinition/>
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
@@ -39,30 +40,30 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="1" Height="24.5"
+      <vc:RulerGrid x:Name="rulerGrid" Grid.Column="2" Height="24.5"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
         TimeSignature="{Binding ActiveChart.Value.Comp.TimeSig0}"/>
-      <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Width="36.5" TextBlock.FontSize="9"
+      <vc:SideKeyboard x:Name="sideKeyboard" Grid.Row="1" Grid.Column="1" Width="36.5" TextBlock.FontSize="9"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         KeyHeight="{Binding Path=Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"/>
-      <dc:BasicPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Stretch">
+      <dc:BasicPanel Grid.Row="2" Grid.Column="1" VerticalAlignment="Stretch">
         <dc:TrivialPanel Width="0" Height="0" HorizontalAlignment="Right">
           <TextBlock Text="伴奏" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         </dc:TrivialPanel>
       </dc:BasicPanel>
-      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="1" Height="90" VerticalAlignment="Top" Cursor="SizeWE"
+      <vc:BgAudioDisplay x:Name="bgAudioDisplay" Grid.Row="2" Grid.Column="2" Height="90" VerticalAlignment="Top" Cursor="SizeWE"
         RenderOptions.BitmapScalingMode="HighQuality"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
         Bpm0="{Binding ActiveChart.Value.Comp.Bpm0}"
         AudioTrack="{Binding ActiveChart.Value.Comp.BgAudio}"/>
-      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="20"
+      <vc:ChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="2" TextOptions.TextHintingMode="Animated" TextBlock.FontSize="20"
         Quantization="{Binding Path=Quantization, ElementName=this}"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
@@ -88,7 +89,7 @@
           </ContextMenu>
         </FrameworkElement.ContextMenu>
       </vc:ChartEditor>
-      <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="1" IsHitTestVisible="False"
+      <vc:ChartEditorAdornerLayer x:Name="chartEditorAdornerLayer" Grid.Row="1" Grid.Column="2" IsHitTestVisible="False"
         HOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=hScrollZoom}"
         VOffsetAnimated="{Binding Path=ScrollValueAnimated, ElementName=vScrollZoom}"
         QuarterWidth="{Binding Path=Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static vc:ChartConverters.exp2Converter}}"
@@ -96,13 +97,13 @@
         CursorPosition="{Binding CursorPosition.Value}"
         IsPlaying="{Binding IsPlaying.Value}"
         Cursor="{Binding Path=Cursor, ElementName=chartEditor, Mode=TwoWay}"/>
-      <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="3" Grid.Column="1"
+      <c:ChartScrollZoomH x:Name="hScrollZoom" Grid.Row="3" Grid.Column="2"
         ScrollMaximum="{Binding ActiveChart.Value.Comp, ConverterParameter=15360, Converter={x:Static vc:ChartConverters.hScrollMaxConverter}}"
         ScrollViewport="{Binding Path=ActualWidth, ElementName=chartEditor}"
         Log2ZoomMinimum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-5, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=QuarterWidth, ElementName=chartEditor, Mode=OneTime, ConverterParameter=5, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
-      <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2" Grid.RowSpan="2"
+      <c:ChartScrollZoomV x:Name="vScrollZoom" Grid.Row="1" Grid.Column="3" Grid.RowSpan="2"
         ScrollMinimum="{Binding Path=MinKey, ElementName=chartEditor}"
         ScrollMaximum="{Binding Path=MaxKey, ElementName=chartEditor}"
         ScrollValue="60"
@@ -110,7 +111,7 @@
         Log2ZoomMinimum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=-2, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomMaximum="{Binding Path=KeyHeight, ElementName=chartEditor, Mode=OneTime, ConverterParameter=2, Converter={x:Static vc:ChartConverters.log2Converter}}"
         Log2ZoomValue="{Binding Source={x:Static vc:NoteChartEditBase.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static vc:ChartConverters.log2Converter}}"/>
-      <v:TextBoxPopup x:Name="lyricPopup" Grid.Row="1" Grid.Column="1" PlacementTarget="{x:Reference chartEditor}" TextBlock.FontSize="24"/>
+      <v:TextBoxPopup x:Name="lyricPopup" Grid.Row="1" Grid.Column="2" PlacementTarget="{x:Reference chartEditor}" TextBlock.FontSize="24"/>
     </Grid>
   </DockPanel>
 </vv:NoteChartEditPanelBase>

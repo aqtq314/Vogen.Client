@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:Vogen.Client"
              StartupUri="MainWindow.xaml">
   <Application.Resources>
-
+    <FontFamily x:Key="SegoeFluentIcons">./Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons</FontFamily>
   </Application.Resources>
 </Application>
