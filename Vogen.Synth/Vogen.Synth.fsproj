@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <WarnOn>3390;$(WarnOn)</WarnOn>
     <UseWPF>false</UseWPF>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -49,10 +49,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Data" Version="4.1.1" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.8.0" />
-    <PackageReference Include="NAudio" Version="2.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="FSharp.Data" Version="4.2.7" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.10.0" />
+    <PackageReference Include="NAudio" Version="2.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -61,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.1" />
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
   </ItemGroup>
 
 </Project>

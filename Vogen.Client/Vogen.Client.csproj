@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Platforms>x64</Platforms>
@@ -12,7 +13,7 @@
 
   <ItemGroup>
     <None Remove="C:\Users\User\.nuget\packages\fsharp.core\5.0.1\contentFiles\any\netstandard2.0\FSharp.Core.xml" />
-    <None Remove="Fonts\Segoe Fluent Icons.ttf" />
+    <None Remove="C:\Users\User\.nuget\packages\fsharp.core\6.0.1\contentFiles\any\netstandard2.1\FSharp.Core.xml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,10 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="5.0.1" />
-    <PackageReference Include="FSharp.Data" Version="4.1.1" />
-    <PackageReference Include="NAudio" Version="2.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="FSharp.Core" Version="6.0.1" />
+    <PackageReference Include="FSharp.Data" Version="4.2.7" />
+    <PackageReference Include="NAudio" Version="2.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
