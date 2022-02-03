@@ -142,6 +142,7 @@
       </MenuItem>
       <MenuItem Header="工具 (_T)">
         <MenuItem Header="歌词加拼音 (_A)" Click="OnAddRomanizationMenuItemClick"/>
+        <MenuItem Header="打开测试版本 (_T)" Click="OnOpenTestVersionMenuItemClick"/>
       </MenuItem>
       <MenuItem Header="关于 (_H)">
         <MenuItem Header="清华大学智能技术与系统国家重点实验室" IsEnabled="False"/>

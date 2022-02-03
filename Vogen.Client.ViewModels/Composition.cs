@@ -11,7 +11,7 @@ namespace Vogen.Client.ViewModels
     public class Composition : ViewModelBase
     {
         TimeSignature _InitTimeSig;
-        float _InitTempo;
+        double _InitTempo;
 
         public TimeSignature InitTimeSig
         {
@@ -19,7 +19,7 @@ namespace Vogen.Client.ViewModels
             set => SetAndNotify(ref _InitTimeSig, value);
         }
 
-        public float InitTempo
+        public double InitTempo
         {
             get => _InitTempo;
             set => SetAndNotify(ref _InitTempo, value);
@@ -27,11 +27,13 @@ namespace Vogen.Client.ViewModels
 
         public ObservableCollection<NoteTrack> NoteTracks { get; init; }
 
-        public Composition(TimeSignature initTimeSig, float initTempo, IEnumerable<NoteTrack>? noteTracks = null)
+        public Composition(TimeSignature initTimeSig, double initTempo, IEnumerable<NoteTrack>? noteTracks = null)
         {
             _InitTimeSig = initTimeSig;
             _InitTempo = initTempo;
             NoteTracks = new ObservableCollection<NoteTrack>(noteTracks ?? Enumerable.Empty<NoteTrack>());
         }
+
+        public Composition() : this(new TimeSignature(4, 4), 120) { }
     }
 }

@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Data;
 
 namespace Vogen.Client.ViewModels
 {
     public class NoteTrack : ViewModelBase
     {
+        string _Name;
         string _SingerId;
         string _RomScheme;
-        long _Off;
+
+        public string Name
+        {
+            get => _Name;
+            set => SetAndNotify(ref _Name, value);
+        }
 
         public string SingerId
         {
@@ -25,20 +33,16 @@ namespace Vogen.Client.ViewModels
             set => SetAndNotify(ref _RomScheme, value);
         }
 
-        public long Off
-        {
-            get => _Off;
-            set => SetAndNotify(ref _Off, value);
-        }
-
         public ObservableCollection<Note> Notes { get; init; }
+        public ObservableCollection<Utterance> Utts { get; init; }
 
-        public NoteTrack(string singerId, string romScheme, long off, IEnumerable<Note>? notes = null)
+        public NoteTrack(string name, string singerId, string romScheme, IEnumerable<Note>? notes = null, IEnumerable<Utterance>? utts = null)
         {
+            _Name = name;
             _SingerId = singerId;
             _RomScheme = romScheme;
-            _Off = off;
-            Notes = new ObservableCollection<Note>(notes ?? Enumerable.Empty<Note>());
+            Notes = new ObservableCollection<Note>(notes ?? new[] { new Note(0) });
+            Utts = new ObservableCollection<Utterance>(utts ?? Enumerable.Empty<Utterance>());
         }
     }
 }

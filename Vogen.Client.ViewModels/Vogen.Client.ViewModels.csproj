@@ -10,6 +10,11 @@
 
   <ItemGroup>
     <None Remove="C:\Users\User\.nuget\packages\fsharp.core\6.0.1\contentFiles\any\netstandard2.1\FSharp.Core.xml" />
+    <None Remove="testComp.vog" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="testComp.vog" />
   </ItemGroup>
 
   <ItemGroup>

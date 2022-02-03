@@ -87,5 +87,11 @@ namespace Vogen.Client
             var addRomanizationWindow = new AddRomanizationWindow();
             addRomanizationWindow.Show();
         }
+
+        private void OnOpenTestVersionMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            var testVersionWindow = new V2MainWindow();
+            testVersionWindow.Show();
+        }
     }
 }

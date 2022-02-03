@@ -13,7 +13,7 @@ namespace Vogen.Client
 {
     public partial class App : Application
     {
-        Task<Task> updateTask = null;
+        Task<Task>? updateTask = null;
 
         public App()
         {
