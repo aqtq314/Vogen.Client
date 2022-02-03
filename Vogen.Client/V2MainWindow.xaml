@@ -55,10 +55,7 @@
                          c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}">
         <Control.Template>
           <ControlTemplate TargetType="{x:Type c:NoteChartEditor}">
-            <DockPanel>
-              <TextBlock DockPanel.Dock="Top" Text="{Binding (c:NoteChartEditor.KeyHeight), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteChartEditor}}}"/>
-              <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-            </DockPanel>
+            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
           </ControlTemplate>
         </Control.Template>
         <ItemsControl.ItemsPanel>
@@ -76,12 +73,7 @@
             <Setter Property="Template">
               <Setter.Value>
                 <ControlTemplate TargetType="{x:Type c:NoteItem}">
-                  <DockPanel>
-                    <c:ZeroSizeAnchorPanel DockPanel.Dock="Top">
-                      <TextBlock VerticalAlignment="Bottom" Opacity="0.5" Text="{Binding InstanceIndexString, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItem}}}"/>
-                    </c:ZeroSizeAnchorPanel>
-                    <ContentPresenter/>
-                  </DockPanel>
+                  <ContentPresenter/>
                 </ControlTemplate>
               </Setter.Value>
             </Setter>

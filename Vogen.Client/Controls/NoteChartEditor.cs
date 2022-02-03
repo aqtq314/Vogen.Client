@@ -11,8 +11,8 @@ namespace Vogen.Client.Controls
     [StyleTypedProperty(Property = "ItemContainerStyle", StyleTargetType = typeof(NoteItem))]
     public class NoteChartEditor : ItemsControl
     {
-        public const double DefaultQuarterWidth = 100;
-        public const double DefaultKeyHeight = 12;
+        public const double DefaultQuarterWidth = 128;
+        public const double DefaultKeyHeight = 16;
         public const double DefaultMinKey = 33;
         public const double DefaultMaxKey = 93;
         public const double DefaultVOffset = 60;

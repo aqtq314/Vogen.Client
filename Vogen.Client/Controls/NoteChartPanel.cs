@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using Vogen.Client.Utils;
 using Vogen.Client.ViewModels;
@@ -13,7 +14,7 @@ namespace Vogen.Client.Controls
 {
     public class NoteChartPanel : Panel
     {
-        List<(NoteItem, Rect)> measuredChildren = new List<(NoteItem, Rect)>();
+        Dictionary<NoteItem, Rect> measuredChildren = new Dictionary<NoteItem, Rect>();
 
         protected override Size MeasureOverride(Size availableSize)
         {
@@ -58,18 +59,26 @@ namespace Vogen.Client.Controls
 
                 var noteRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
                 note.Measure(noteRect.Size);
-                measuredChildren.Add((note, noteRect));
+                measuredChildren.Add(note, noteRect);
             }
+
+            foreach (NoteItem note in InternalChildren)
+                note.Visibility = measuredChildren.ContainsKey(note) ? Visibility.Visible : Visibility.Collapsed;
 
             return availableSize;
         }
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            foreach (var (note, noteRect) in measuredChildren)
-                note.Arrange(noteRect);
+            foreach (NoteItem note in InternalChildren)
+                if (measuredChildren.TryGetValue(note, out var noteRect))
+                    note.Arrange(noteRect);
 
             return finalSize;
+        }
+
+        public NoteChartPanel()
+        {
         }
     }
 }

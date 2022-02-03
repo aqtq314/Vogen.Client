@@ -16,6 +16,7 @@ namespace Vogen.Client.Controls
         NoStartingNote,
         NoEndingRest,
         ConsecutiveRests,
+        ZeroDuration,
     }
 
     public class NoteItem : ContentControl
@@ -40,7 +41,7 @@ namespace Vogen.Client.Controls
         public static DependencyProperty PitchProperty { get; } =
             DependencyProperty.Register(nameof(Pitch), typeof(double), typeof(NoteItem),
                 new FrameworkPropertyMetadata(Note.RestPitch,
-                    FrameworkPropertyMetadataOptions.AffectsParentArrange));
+                    FrameworkPropertyMetadataOptions.AffectsParentMeasure | FrameworkPropertyMetadataOptions.AffectsParentArrange));
 
         public double InternalDeltaPitch
         {
@@ -60,11 +61,8 @@ namespace Vogen.Client.Controls
             DependencyProperty.Register(nameof(ErrorType), typeof(NoteItemErrorType), typeof(NoteItem),
                 new FrameworkPropertyMetadata(NoteItemErrorType.None));
 
-        public string InstanceIndexString { get; init; }
-
         public NoteItem()
         {
-            InstanceIndexString = $"({instanceCount++})";
         }
     }
 }
