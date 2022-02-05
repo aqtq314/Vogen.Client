@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Vogen.Client.Converters;
 using Vogen.Client.Utils;
 
 namespace Vogen.Client.Controls
@@ -43,8 +44,8 @@ namespace Vogen.Client.Controls
             var blackKeyWidth = (whiteKeyWidth * BlackKeyLengthRatio).Clamp(0.0, whiteKeyWidth);
             var cornerRadius = Math.Min(2.0, Math.Min(keyHeight / 2, blackKeyWidth / 2));
 
-            var botPitch = (int)Math.Max(minKey, ChartUnitConversion.pixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
-            var topPitch = (int)Math.Min(maxKey, ChartUnitConversion.pixelToPitch(keyHeight, actualHeight, vOffset, 0.0)).Ceil();
+            var botPitch = (int)Math.Max(minKey, ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
+            var topPitch = (int)Math.Min(maxKey, ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, 0.0)).Ceil();
 
             using var _ = dc.UsingClip(new RectangleGeometry(new Rect(new Size(actualWidth, actualHeight))));
 
@@ -56,7 +57,7 @@ namespace Vogen.Client.Controls
                 if (!Midi.isBlackKey(pitch))
                 {
                     var keyOffset = keyOffsetLookup[pitch % 12] / defaultKeyHeight;
-                    var y = ChartUnitConversion.pitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5 - keyOffset);
+                    var y = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5 - keyOffset);
                     var height = keyHeightLookup[pitch % 12] / defaultKeyHeight * keyHeight;
                     var x = whiteKeyPen is null ? 0.0 : whiteKeyPen.Thickness / 2;
                     var width = Math.Max(0, whiteKeyWidth - x * 2);
@@ -67,7 +68,7 @@ namespace Vogen.Client.Controls
             for (var pitch = botPitch; pitch <= topPitch; pitch++)
                 if (Midi.isBlackKey(pitch))
                 {
-                    var y = ChartUnitConversion.pitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5);
+                    var y = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5);
                     var height = keyHeight;
                     var x = blackKeyPen is null ? 0.0 : blackKeyPen.Thickness / 2;
                     var width = Math.Max(0, blackKeyWidth - x * 2);
@@ -80,7 +81,7 @@ namespace Vogen.Client.Controls
                 {
                     var ft = this.MakeFormattedText($"C{pitch / 12 - 1}");
                     var x = whiteKeyWidth - 2.0 - ft.Width;
-                    var y = ChartUnitConversion.pitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5) + (keyHeight - ft.Height) / 2;
+                    var y = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, pitch + 0.5) + (keyHeight - ft.Height) / 2;
                     dc.DrawText(ft, new Point(x, y));
                 }
         }

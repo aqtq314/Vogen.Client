@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:c="clr-namespace:Vogen.Client.Controls"
-        xmlns:v1c="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel"
+        xmlns:k="clr-namespace:Vogen.Client.Converters"
         xmlns:vm="clr-namespace:Vogen.Client.ViewModels;assembly=Vogen.Client.ViewModels"
         mc:Ignorable="d"
         Width="1024" Height="576" FontFamily="Segoe UI, Microsoft Yahei UI"
@@ -49,17 +49,17 @@
       </Grid.ColumnDefinitions>
       <c:TimeRuler x:Name="timeRuler" Grid.Row="0" Grid.Column="1" Height="24"
                    c:NoteChartEditor.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
-                   c:NoteChartEditor.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}"
+                   c:NoteChartEditor.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"
                    TimeSignature="{Binding ActiveChart.InitTimeSig}"/>
       <c:SidePianoKeyboard x:Name="sidePianoKeyboard" Grid.Row="1" Grid.Column="0" Width="36" TextBlock.FontSize="9"
                            c:NoteChartEditor.VOffset="{Binding ScrollValueAnimated, ElementName=vScrollZoom}"
-                           c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}"/>
+                           c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
       <c:NoteChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1"
                          ItemsSource="{Binding SelectedItem.Notes, ElementName=trackList}"
                          c:NoteChartEditor.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
                          c:NoteChartEditor.VOffset="{Binding ScrollValueAnimated, ElementName=vScrollZoom}"
-                         c:NoteChartEditor.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}"
-                         c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}">
+                         c:NoteChartEditor.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"
+                         c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}">
         <Control.Template>
           <ControlTemplate TargetType="{x:Type c:NoteChartEditor}">
             <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
@@ -103,17 +103,17 @@
       <c:ChartScrollZoomH2 x:Name="hScrollZoom" Grid.Row="2" Grid.Column="1"
                            ScrollMaximum="15360"
                            ScrollViewport="{Binding ActualWidth, ElementName=chartEditor}"
-                           Log2ZoomMinimum="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=-5, Converter={x:Static v1c:ChartConverters.log2Converter}}"
-                           Log2ZoomMaximum="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=5, Converter={x:Static v1c:ChartConverters.log2Converter}}"
-                           Log2ZoomValue="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static v1c:ChartConverters.log2Converter}}"/>
+                           Log2ZoomMinimum="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=-5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+                           Log2ZoomMaximum="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+                           Log2ZoomValue="{Binding Source={x:Static c:NoteChartEditor.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static k:ChartXamlConverters.Log2}}"/>
       <c:ChartScrollZoomV2 x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
                            ScrollMinimum="{x:Static c:NoteChartEditor.DefaultMinKey}"
                            ScrollMaximum="{x:Static c:NoteChartEditor.DefaultMaxKey}"
                            ScrollValue="{x:Static c:NoteChartEditor.DefaultVOffset}"
                            ScrollViewport="{Binding ActualHeight, ElementName=chartEditor}"
-                           Log2ZoomMinimum="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=-2, Converter={x:Static v1c:ChartConverters.log2Converter}}"
-                           Log2ZoomMaximum="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=2, Converter={x:Static v1c:ChartConverters.log2Converter}}"
-                           Log2ZoomValue="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static v1c:ChartConverters.log2Converter}}"/>
+                           Log2ZoomMinimum="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=-2, Converter={x:Static k:ChartXamlConverters.Log2}}"
+                           Log2ZoomMaximum="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=2, Converter={x:Static k:ChartXamlConverters.Log2}}"
+                           Log2ZoomValue="{Binding Source={x:Static c:NoteChartEditor.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static k:ChartXamlConverters.Log2}}"/>
       <StackPanel Visibility="Collapsed">
         <TextBlock Text="{Binding Log2ZoomValue, ElementName=hScrollZoom}"/>
         <TextBlock Text="{Binding (c:NoteChartEditor.MaxKey), ElementName=chartEditor}"/>

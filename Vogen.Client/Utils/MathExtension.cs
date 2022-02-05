@@ -8,6 +8,8 @@ namespace Vogen.Client.Utils
 {
     public static class MathExtension
     {
+        public const double Log2 = 0.6931471805599453;
+
         public static double Lerp(this double amount, double a, double b) => amount * (b - a) + a;
         public static double Unlerp(this double value, double a, double b) => (value - a) / (b - a);
 

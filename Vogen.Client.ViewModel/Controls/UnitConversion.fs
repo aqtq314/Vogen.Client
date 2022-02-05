@@ -11,7 +11,7 @@ open Vogen.Client.Model
 
 
 [<AutoOpen>]
-module ChartUnitConversion =
+module ChartUnitConversionModule =
     let pulseToPixel quarterWidth hOffset pulses =
         (pulses - hOffset) / float Midi.ppqn * quarterWidth
 
@@ -71,16 +71,6 @@ module ChartConverters =
         ValueConverter.Create(
             (fun vOffset -> -Convert.ToDouble(vOffset : obj) |> box),
             (fun sliderValue -> -Convert.ToDouble(sliderValue : obj) |> box))
-
-    let hZoomToQuarterLength =
-        ValueConverter.Create(
-            (fun sliderValue -> exp(sliderValue * log 2.0) * 240.0),
-            (fun quarterWidth -> log(quarterWidth / 240.0) / log 2.0))
-
-    let vZoomToQuarterLength =
-        ValueConverter.Create(
-            (fun sliderValue -> exp(sliderValue * log 2.0) * 12.0),
-            (fun quarterWidth -> log(quarterWidth / 12.0) / log 2.0))
 
     let log2Converter =
         ValueConverter.Create(

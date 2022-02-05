@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using Vogen.Client.Converters;
 using Vogen.Client.Utils;
 using Vogen.Client.ViewModels;
 
@@ -30,10 +31,10 @@ namespace Vogen.Client.Controls
             var hOffset = NoteChartEditor.GetHOffset(this);
             var vOffset = NoteChartEditor.GetVOffset(this);
 
-            var minPulse = (long)ChartUnitConversion.pixelToPulse(quarterWidth, hOffset, 0);
-            var maxPulse = (long)Math.Ceiling(ChartUnitConversion.pixelToPulse(quarterWidth, hOffset, actualWidth));
-            var botPitch = Math.Max(minKey, (int)ChartUnitConversion.pixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
-            var topPitch = Math.Min(maxKey, (int)Math.Ceiling(ChartUnitConversion.pixelToPitch(keyHeight, actualHeight, vOffset, 0)));
+            var minPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, 0);
+            var maxPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, actualWidth).Ceil();
+            var botPitch = Math.Max(minKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
+            var topPitch = Math.Min(maxKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, 0).Ceil());
 
             measuredChildren.Clear();
 
@@ -53,9 +54,9 @@ namespace Vogen.Client.Controls
 
                 note.InternalDeltaPitch = arrangeCurrPitch - arrangePrevPitch;
 
-                var x0 = ChartUnitConversion.pulseToPixel(quarterWidth, hOffset, note.Onset);
-                var x1 = ChartUnitConversion.pulseToPixel(quarterWidth, hOffset, noteOff);
-                var yMid = ChartUnitConversion.pitchToPixel(keyHeight, actualHeight, vOffset, note.Pitch);
+                var x0 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, note.Onset);
+                var x1 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, noteOff);
+                var yMid = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, note.Pitch);
 
                 var noteRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
                 note.Measure(noteRect.Size);

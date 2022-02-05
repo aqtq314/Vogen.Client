@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Vogen.Client.Converters;
 using Vogen.Client.Utils;
 
 namespace Vogen.Client.Controls
@@ -47,7 +48,7 @@ namespace Vogen.Client.Controls
         }
 
         public static long FindTickHop(TimeSignature timeSig, double quarterWidth, double minTickHop) =>
-            ListTickHops(timeSig).First(hop => ChartUnitConversion.pulseToPixel(quarterWidth, 0, hop) >= minTickHop);
+            ListTickHops(timeSig).First(hop => ChartUnitConversion.PulseToPixel(quarterWidth, 0, hop) >= minTickHop);
 
         public TimeSignature TimeSignature
         {
@@ -66,8 +67,8 @@ namespace Vogen.Client.Controls
             var quarterWidth = NoteChartEditor.GetQuarterWidth(this);
             var hOffset = NoteChartEditor.GetHOffset(this);
 
-            var minPulse = (long)ChartUnitConversion.pixelToPulse(quarterWidth, hOffset, 0);
-            var maxPulse = (long)ChartUnitConversion.pixelToPulse(quarterWidth, hOffset, actualWidth);
+            var minPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, 0);
+            var maxPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, actualWidth);
 
             var majorHop = FindTickHop(timeSig, quarterWidth, MinMajorTickHop);
             var minorHop = FindTickHop(timeSig, quarterWidth, MinMinorTickHop);
@@ -84,7 +85,7 @@ namespace Vogen.Client.Controls
             for (var currPulse = minPulse / minorHop * minorHop; currPulse <= maxPulse; currPulse += minorHop)
             {
                 var isMajor = currPulse % majorHop == 0;
-                var xPos = ChartUnitConversion.pulseToPixel(quarterWidth, hOffset, currPulse);
+                var xPos = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, currPulse);
                 var height = isMajor ? majorTickHeight : minorTickHeight;
                 dc.DrawLine(tickPen, new Point(xPos, actualHeight - height), new Point(xPos, actualHeight));
 

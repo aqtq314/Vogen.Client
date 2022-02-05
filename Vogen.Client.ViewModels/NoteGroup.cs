@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Vogen.Client.ViewModels
 {
-    public class Utterance : ViewModelBase
+    public class NoteGroup : ViewModelBase
     {
         string _Name;
         string? _RomSchemeOverride;
@@ -26,7 +26,7 @@ namespace Vogen.Client.ViewModels
 
         public ObservableCollection<Note> Notes { get; init; }
 
-        public Utterance(string name, IEnumerable<Note> notes, string? romSchemeOverride = null)
+        public NoteGroup(string name, IEnumerable<Note> notes, string? romSchemeOverride = null)
         {
             _Name = name;
             _RomSchemeOverride = romSchemeOverride;

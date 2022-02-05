@@ -22,6 +22,6 @@ do  programModel.ActiveChart |> Rp.set(ChartState(comp, Some comp.Utts.[0], Immu
         yield! Seq.take 1 comp.Utts.[1].Notes |]))
     programModel.ActiveUttSynthCache |> Rp.set uttSynthCache
     programModel.CompIsSaved |> Rp.set false
-    programModel.ManualSetCursorPos 1920L
+    programModel.ManualSetCursorPos 1600L
 
 

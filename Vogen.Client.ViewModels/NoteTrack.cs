@@ -34,15 +34,16 @@ namespace Vogen.Client.ViewModels
         }
 
         public ObservableCollection<Note> Notes { get; init; }
-        public ObservableCollection<Utterance> Utts { get; init; }
+        public ObservableCollection<NoteGroup> NoteGroups { get; init; }
 
-        public NoteTrack(string name, string singerId, string romScheme, IEnumerable<Note>? notes = null, IEnumerable<Utterance>? utts = null)
+        public NoteTrack(string name, string singerId, string romScheme,
+            IEnumerable<Note>? notes = null, IEnumerable<NoteGroup>? noteGroups = null)
         {
             _Name = name;
             _SingerId = singerId;
             _RomScheme = romScheme;
             Notes = new ObservableCollection<Note>(notes ?? new[] { new Note(0) });
-            Utts = new ObservableCollection<Utterance>(utts ?? Enumerable.Empty<Utterance>());
+            NoteGroups = new ObservableCollection<NoteGroup>(noteGroups ?? Enumerable.Empty<NoteGroup>());
         }
     }
 }
