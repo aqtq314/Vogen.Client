@@ -4,17 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Vogen.Client.Utils;
 
 namespace Vogen.Client.Converters
 {
     public static class ChartUnitConversion
     {
-        private static long CeilDiv(long dividend, long divisor)
-        {
-            var ratio = dividend / divisor;
-            return (dividend ^ divisor) >= 0 && (dividend % divisor) != 0 ? ratio + 1 : ratio;
-        }
-
         public static double PulseToPixel(double quarterWidth, double hOffset, double pulses) =>
             (pulses - hOffset) / Midi.ppqn * quarterWidth;
 
@@ -43,7 +38,7 @@ namespace Vogen.Client.Converters
             else
             {
                 var pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure;
-                return pulsesMeasureQuantized + Math.Min(timeSig.PulsesPerMeasure, CeilDiv((pulses - pulsesMeasureQuantized), quantization) * quantization);
+                return pulsesMeasureQuantized + Math.Min(timeSig.PulsesPerMeasure, (pulses - pulsesMeasureQuantized).CeilDiv(quantization) * quantization);
             }
         }
     }

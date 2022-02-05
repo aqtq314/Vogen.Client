@@ -21,8 +21,6 @@ namespace Vogen.Client.Controls
 
     public class NoteItem : ContentControl
     {
-        private static int instanceCount = 0;
-
         public long Onset
         {
             get => (long)GetValue(OnsetProperty);

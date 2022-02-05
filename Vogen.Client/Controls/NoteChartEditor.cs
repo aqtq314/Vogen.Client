@@ -57,7 +57,9 @@ namespace Vogen.Client.Controls
         public static double CoerceHOffset(DependencyObject d, double _HOffset) => Math.Max(0, _HOffset);
         public static DependencyProperty HOffsetProperty { get; } =
             DependencyProperty.RegisterAttached("HOffset", typeof(double), typeof(NoteChartEditor),
-                new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsMeasure, (d, e) => { },
+                new FrameworkPropertyMetadata(0.0,
+                    FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
+                    (d, e) => { },
                     (d, baseValue) => CoerceHOffset(d, (double)baseValue)));
 
         public static double GetVOffset(DependencyObject obj) => (double)obj.GetValue(VOffsetProperty);
@@ -65,7 +67,9 @@ namespace Vogen.Client.Controls
         public static double CoerceVOffset(DependencyObject d, double _VOffset) => Math.Max(GetMinKey(d), Math.Min(GetMaxKey(d), _VOffset));
         public static DependencyProperty VOffsetProperty { get; } =
             DependencyProperty.RegisterAttached("VOffset", typeof(double), typeof(NoteChartEditor),
-                new FrameworkPropertyMetadata(DefaultVOffset, FrameworkPropertyMetadataOptions.AffectsMeasure, (d, e) => { },
+                new FrameworkPropertyMetadata(DefaultVOffset,
+                    FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
+                    (d, e) => { },
                     (d, baseValue) => CoerceVOffset(d, (double)baseValue)));
     }
 }

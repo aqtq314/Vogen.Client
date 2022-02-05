@@ -68,7 +68,7 @@ module WpfUtil =
         FormattedText(
             text,
             Globalization.CultureInfo.CurrentUICulture,
-            TextBlock.GetFlowDirection x,
+            FrameworkElement.GetFlowDirection x,
             typeface,
             TextBlock.GetFontSize x,
             TextBlock.GetForeground x,
@@ -223,9 +223,24 @@ type Converters =
 [<Extension>]
 type ExtensionMethods =
     [<Extension>]
-    static member Frozen (freezable : #Freezable) =
-        freezable.Freeze ()
-        freezable
+    static member Frozen freezable = freezable |>! freeze
 
+    [<Extension>]
+    static member MakeFormattedText x text = makeFormattedText text x
+
+    [<Extension>]
+    static member UsingClip (dc : DrawingContext) clipGeometry =
+        dc.PushClip clipGeometry
+        Disposable.create dc.Pop
+
+    [<Extension>]
+    static member UsingOpacity (dc : DrawingContext) opacity =
+        dc.PushOpacity opacity
+        Disposable.create dc.Pop
+
+    [<Extension>]
+    static member UsingTransform (dc : DrawingContext) transform =
+        dc.PushTransform transform
+        Disposable.create dc.Pop
 
 

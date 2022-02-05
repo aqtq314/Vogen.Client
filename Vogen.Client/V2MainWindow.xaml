@@ -47,6 +47,13 @@
         <ColumnDefinition/>
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
+      <c:TimeRuler x:Name="timeRuler" Grid.Row="0" Grid.Column="1" Height="24"
+                   c:NoteChartEditor.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+                   c:NoteChartEditor.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}"
+                   TimeSignature="{Binding ActiveChart.InitTimeSig}"/>
+      <c:SidePianoKeyboard x:Name="sidePianoKeyboard" Grid.Row="1" Grid.Column="0" Width="36" TextBlock.FontSize="9"
+                           c:NoteChartEditor.VOffset="{Binding ScrollValueAnimated, ElementName=vScrollZoom}"
+                           c:NoteChartEditor.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static v1c:ChartConverters.exp2Converter}}"/>
       <c:NoteChartEditor x:Name="chartEditor" Grid.Row="1" Grid.Column="1"
                          ItemsSource="{Binding SelectedItem.Notes, ElementName=trackList}"
                          c:NoteChartEditor.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
