@@ -6899,8 +6899,6 @@ ch,man,man-pop
 三人行,san ren xing,san ren xing
 三十六着,san shi liu zhao,san shi liu zhao
 三十六行,san shi liu hang,san shi liu hang
-三句不离本行,san ju bu li ben hang,san ju bu li ben hang
-三句不離本行,san ju bu li ben hang,san ju bu li ben hang
 三地,san di,san di
 三战三北,san zhan san bo,san zhan san bo
 三戰三北,san zhan san bo,san zhan san bo
@@ -7017,8 +7015,8 @@ ch,man,man-pop
 丑角,chou jue,chou jue
 丒,chou,chou
 专,zhuan,zhuan
-且,ju,ju
 且,qie,qie
+且,ju,ju
 且,qu,qu
 且行且談,qie xing qie tan,qie xing qie tan
 且行且谈,qie xing qie tan,qie xing qie tan
@@ -7154,7 +7152,6 @@ ch,man,man-pop
 乐,lao,lao
 乐亭大鼓,lao ting da gu,lao ting da gu
 乐人,yue ren,yue ren
-乐句,yue ju,yue ju
 乐史,yue shi,yue shi
 乐品,yue pin,yue pin
 乐器,yue qi,yue qi
@@ -7411,8 +7408,6 @@ ch,man,man-pop
 亏,yu,yu
 亐,yu,yu
 云,yun,yun
-云景,yun jing,yun jing
-云景,yun ying,yun ying
 云阶月地,yun jie yue di,yun jie yue di
 互,hu,hu
 亓,qi,qi
@@ -9859,12 +9854,11 @@ ch,man,man-pop
 古井重波,gu jing chong bo,gu jing chong bo
 古惑仔,gu huo zai,gu huo zai
 古樂,gu yue,gu yue
-句,gou,gou
 句,ju,ju
+句,gou,gou
 句卒,gou zu,gou zu
 句讀,ju dou,ju dou
 句读,ju dou,ju dou
-句重音,ju zhong yin,ju zhong yin
 另,ling,ling
 另辟蹊径,ling pi xi jing,ling pi xi jing
 叧,guo,guo
@@ -10202,9 +10196,9 @@ ch,man,man-pop
 咊,he,he
 咊,hu,hu
 咊,huo,huo
-咋,zha,zha
-咋,ze,ze
 咋,za,za
+咋,ze,ze
+咋,zha,zha
 咋呼,ze hu,ze hu
 咋舌,ze she,ze she
 和,he,he
@@ -10352,8 +10346,8 @@ ch,man,man-pop
 哏,hen,hen
 哏,gen,gen
 哐,kuang,kuang
-哑,e,e
 哑,ya,ya
+哑,e,e
 哑咤,ya zha,ya zha
 哑咽,ya ye,ya ye
 哒,da,da
@@ -10998,9 +10992,9 @@ ch,man,man-pop
 噟,ying,ying
 噠,da,da
 噡,zhan,zhan
-噢,yu,yu
 噢,o,o
 噢,ou,ou
+噢,yu,yu
 噢咻,yu xu,yu xu
 噣,zhou,zhou
 噣,zhuo,zhuo
@@ -11993,42 +11987,12 @@ ch,man,man-pop
 塛,li,li
 塜,peng,peng
 塝,bang,bang
-塞,se,se
 塞,sai,sai
+塞,se,se
 塞,sei,sei
-塞上曲,sai shang qu,sai shang qu
-塞下曲,sai xia qu,sai xia qu
-塞住,sai zhu,sai zhu
-塞內,sai nei,sai nei
 塞內加爾,se nei jia er,se nei jia er
-塞内,sai nei,sai nei
 塞内加尔,se nei jia er,se nei jia er
-塞凡提斯,sai fan ti si,sai fan ti si
-塞到,sai dao,sai dao
-塞北,sai bei,sai bei
-塞外,sai wai,sai wai
-塞子,sai zi,sai zi
-塞尔,sai er,sai er
 塞得港,sai de gang,sai de gang
-塞满,sai man,sai man
-塞滿,sai man,sai man
-塞爾,sai er,sai er
-塞牙,sai ya,sai ya
-塞狗洞,sai gou dong,sai gou dong
-塞班,sai ban,sai ban
-塞給,sai gei,sai gei
-塞維利亞,sai wei li ya,sai wei li ya
-塞给,sai gei,sai gei
-塞维利亚,sai wei li ya,sai wei li ya
-塞翁失馬,sai weng shi ma,sai weng shi ma
-塞翁失马,sai weng shi ma,sai weng shi ma
-塞話,sai hua,sai hua
-塞话,sai hua,sai hua
-塞車,sai che,sai che
-塞车,sai che,sai che
-塞进,sai jin,sai jin
-塞進,sai jin,sai jin
-塞黑,sai hei,sai hei
 塟,zang,zang
 塠,dui,dui
 塠,zui,zui
@@ -12385,8 +12349,6 @@ ch,man,man-pop
 天经地义,tian jing di yi,tian jing di yi
 天罗地网,tian luo di wang,tian luo di wang
 天羅地網,tian luo di wang,tian luo di wang
-天聋地哑,tian long di ya,tian long di ya
-天聾地啞,tian long di ya,tian long di ya
 天荆地棘,tian jing di ji,tian jing di ji
 天荊地棘,tian jing di ji,tian jing di ji
 天覆地載,tian fu di zai,tian fu di zai
@@ -12733,8 +12695,8 @@ ch,man,man-pop
 姣,jiao,jiao
 姤,gou,gou
 姤,hou,hou
-姥,mu,mu
 姥,lao,lao
+姥,mu,mu
 姦,jian,jian
 姧,jian,jian
 姨,yi,yi
@@ -13095,8 +13057,6 @@ ch,man,man-pop
 嫩,nen,nen
 嫩,nun,nun
 嫩江省,nen jiang sheng,nen jiang sheng
-嫩綠,nen lv,nen lv
-嫩绿,nen lv,nen lv
 嫪,lao,lao
 嫫,mo,mo
 嫬,shu,shu
@@ -14958,7 +14918,6 @@ ch,man,man-pop
 彩,cai,cai
 彪,biao,biao
 彫,diao,diao
-彫章鏤句,diao zhang lou ju,diao zhang lou ju
 彬,bin,bin
 彭,peng,peng
 彮,yong,yong
@@ -15846,7 +15805,6 @@ ch,man,man-pop
 憷,chu,chu
 憸,xian,xian
 憸,jian,jian
-憸邪,xian xie,xian xie
 憹,nao,nao
 憹,nong,nong
 憺,dan,dan
@@ -16199,7 +16157,6 @@ ch,man,man-pop
 扴,jie,jie
 扵,wu,wu
 扶,fu,fu
-扶正黜邪,fu zheng chu xie,fu zheng chu xie
 扷,ao,ao
 扸,zhe,zhe
 批,pi,pi
@@ -16291,7 +16248,6 @@ ch,man,man-pop
 披,pi,pi
 披,pei,pei
 披哆,pi che,pi che
-披拂,pi fu,pi fu
 披着羊皮的狼,pi zheh yang pi deh lang,pi zheh yang pi deh lang
 抬,tai,tai
 抭,yao,yao
@@ -16327,8 +16283,8 @@ ch,man,man-pop
 抿,min,min
 拀,zhu,zhu
 拁,jia,jia
-拂,bi,bi
 拂,fu,fu
+拂,bi,bi
 拃,zha,zha
 拃,zhan,zhan
 拄,zhu,zhu
@@ -16381,7 +16337,6 @@ ch,man,man-pop
 拗,niu,niu
 拗,yu,yu
 拗,yao,yao
-拗句,ao ju,ao ju
 拗強,ao jiang,ao jiang
 拗强,ao jiang,ao jiang
 拗怒,yu nu,yu nu
@@ -16965,7 +16920,6 @@ ch,man,man-pop
 搚,xie,xie
 搛,jian,jian
 搜,sou,sou
-搜章擿句,sou zhang ti ju,sou zhang ti ju
 搝,qiu,qiu
 搞,gao,gao
 搞什麼,gao shen me,gao shen me
@@ -16984,6 +16938,7 @@ ch,man,man-pop
 搨,ta,ta
 搩,zha,zha
 搪,tang,tang
+搪塞,tang se,tang se
 搫,pan,pan
 搬,ban,ban
 搬唇弄舌,ban chun long she,ban chun long she
@@ -17960,8 +17915,8 @@ ch,man,man-pop
 晭,zhou,zhou
 普,pu,pu
 普天率土,pu tian shuai tu,pu tian shuai tu
-景,ying,ying
 景,jing,jing
+景,ying,ying
 景宁畬乡,jing ning she xiang,jing ning she xiang
 景宁畬族自治县,jing ning she zu zi zhi xian,jing ning she zu zi zhi xian
 景寧畬族自治縣,jing ning she zu zi zhi xian,jing ning she zu zi zhi xian
@@ -19148,8 +19103,8 @@ ch,man,man-pop
 棶,lai,lai
 棷,zou,zou
 棸,zou,zou
-棹,zhao,zhao
 棹,zhuo,zhuo
+棹,zhao,zhao
 棺,guan,guan
 棺材出了討挽歌郎錢,guan cai chu liao tao wan ge lang qian,guan cai chu liao tao wan ge lang qian
 棺材出了讨挽歌郎钱,guan cai chu liao tao wan ge lang qian,guan cai chu liao tao wan ge lang qian
@@ -19506,7 +19461,6 @@ ch,man,man-pop
 樂,lao,lao
 樂亭大鼓,lao ting da gu,lao ting da gu
 樂人,yue ren,yue ren
-樂句,yue ju,yue ju
 樂史,yue shi,yue shi
 樂品,yue pin,yue pin
 樂器,yue qi,yue qi
@@ -20504,7 +20458,6 @@ ch,man,man-pop
 沈,shen,shen
 沈括,shen gua,shen gua
 沈括,shen kuo,shen kuo
-沈溺,chen ni,chen ni
 沈甸甸,chen dian dian,chen dian dian
 沈着,chen zhuo,chen zhuo
 沈降,chen jiang,chen jiang
@@ -20673,7 +20626,6 @@ ch,man,man-pop
 沭,shu,shu
 沮,ju,ju
 沮,zu,zu
-沮溺,ju ni,ju ni
 沯,bang,bang
 沯,beng,beng
 沰,tuo,tuo
@@ -20694,7 +20646,6 @@ ch,man,man-pop
 沸,fei,fei
 沸,fu,fu
 油,you,you
-油棹,you zhuo,you zhuo
 油气弹,you qi dan,you qi dan
 油氣彈,you qi dan,you qi dan
 油行,you hang,you hang
@@ -20837,11 +20788,10 @@ ch,man,man-pop
 洏,er,er
 洐,xing,xing
 洑,fu,fu
-洒,xian,xian
 洒,sa,sa
 洒,xi,xi
 洒,cui,cui
-洒家,sa jia,sa jia
+洒,xian,xian
 洒濯,xi zhuo,xi zhuo
 洓,qi,qi
 洔,zhi,zhi
@@ -21449,8 +21399,8 @@ ch,man,man-pop
 溷,hun,hun
 溸,su,su
 溹,su,su
-溺,niao,niao
 溺,ni,ni
+溺,niao,niao
 溻,ta,ta
 溼,shi,shi
 溼地,shi di,shi di
@@ -22914,7 +22864,6 @@ ch,man,man-pop
 狍,pao,pao
 狎,xia,xia
 狎,jia,jia
-狎邪,xia xie,xia xie
 狏,yi,yi
 狐,hu,hu
 狑,ling,ling
@@ -25940,8 +25889,6 @@ ch,man,man-pop
 穿着,chuan zheh,chuan zheh
 穿着,chuan zhuo,chuan zhuo
 穿着打扮,chuan zhuo da ban,chuan zhuo da ban
-穿紅着綠,chuan hong zhuo lv,chuan hong zhuo lv
-穿红着绿,chuan hong zhuo lv,chuan hong zhuo lv
 窀,zhun,zhun
 突,tu,tu
 突地,tu di,tu di
@@ -27005,10 +26952,8 @@ ch,man,man-pop
 綞,chui,chui
 綞,duo,duo
 綟,li,li
-綠,lu,lu
 綠,lv,lv
-綠地,lv di,lv di
-綠色行銷,lv se xing xiao,lv se xing xiao
+綠,lu,lu
 綡,liang,liang
 綢,chou,chou
 綢帷,zi wei,zi wei
@@ -27540,10 +27485,8 @@ ch,man,man-pop
 绽,ding,ding
 绾,wan,wan
 绾,guan,guan
-绿,lu,lu
 绿,lv,lv
-绿地,lv di,lv di
-绿色行销,lv se xing xiao,lv se xing xiao
+绿,lu,lu
 缀,zhui,zhui
 缀,chuo,chuo
 缀宅,zhui zhe,zhui zhe
@@ -28032,7 +27975,6 @@ ch,man,man-pop
 聉,zhuo,zhuo
 聊,liao,liao
 聋,long,long
-聋哑学校,long ya xue xiao,long ya xue xiao
 职,zhi,zhi
 聍,ning,ning
 聎,tiao,tiao
@@ -28101,7 +28043,6 @@ ch,man,man-pop
 聼,ting,ting
 聽,ting,ting
 聾,long,long
-聾啞學校,long ya xue xiao,long ya xue xiao
 聿,yu,yu
 肀,yu,yu
 肁,zhao,zhao
@@ -28223,8 +28164,6 @@ ch,man,man-pop
 胋,tian,tian
 背,bei,bei
 背地,bei di,bei di
-背景音乐,bei jing yin yue,bei jing yin yue
-背景音樂,bei jing yin yue,bei jing yin yue
 胍,gu,gu
 胍,gua,gua
 胍,hu,hu
@@ -28399,7 +28338,6 @@ ch,man,man-pop
 脷,li,li
 脸,lian,lian
 脸皮薄,lian pi bao,lian pi bao
-脸都绿了,lian dou lv leh,lian dou lv leh
 脹,zhang,zhang
 脺,cui,cui
 脻,jie,jie
@@ -28617,7 +28555,6 @@ ch,man,man-pop
 臈,la,la
 臉,lian,lian
 臉皮薄,lian pi bao,lian pi bao
-臉都綠了,lian dou lv leh,lian dou lv leh
 臊,sao,sao
 臋,tun,tun
 臌,gu,gu
@@ -29902,8 +29839,6 @@ ch,man,man-pop
 蔒,xun,xun
 蔓,man,man
 蔓,wan,wan
-蔓綠絨,man lv rong,man lv rong
-蔓绿绒,man lv rong,man lv rong
 蔔,bo,bo
 蔕,di,di
 蔖,cuo,cuo
@@ -34654,8 +34589,8 @@ ch,man,man-pop
 邧,yuan,yuan
 邨,cun,cun
 邩,huo,huo
-邪,ye,ye
 邪,xie,xie
+邪,ye,ye
 邪,xia,xia
 邪,xu,xu
 邪,yu,yu
@@ -36483,7 +36418,6 @@ ch,man,man-pop
 長出,zhang chu,zhang chu
 長到,zhang dao,zhang dao
 長勢,zhang shi,zhang shi
-長句,chang ju,chang ju
 長史,zhang shi,zhang shi
 長吏,zhang li,zhang li
 長君,zhang jun,zhang jun
@@ -36505,7 +36439,6 @@ ch,man,man-pop
 長相廝守,chang xiang si shou,chang xiang si shou
 長相思,chang xiang si,chang xiang si
 長着臉,chang zheh lian,chang zheh lian
-長短句,chang duan ju,chang duan ju
 長繩繫景,chang sheng xi jing,chang sheng xi jing
 長老,zhang lao,zhang lao
 長者,zhang zhe,zhang zhe
@@ -36541,7 +36474,6 @@ ch,man,man-pop
 长出,zhang chu,zhang chu
 长到,zhang dao,zhang dao
 长势,zhang shi,zhang shi
-长句,chang ju,chang ju
 长史,zhang shi,zhang shi
 长吏,zhang li,zhang li
 长君,zhang jun,zhang jun
@@ -36563,7 +36495,6 @@ ch,man,man-pop
 长相厮守,chang xiang si shou,chang xiang si shou
 长相思,chang xiang si,chang xiang si
 长着脸,chang zheh lian,chang zheh lian
-长短句,chang duan ju,chang duan ju
 长统袜,chang tong wa,chang tong wa
 长绳系景,chang sheng xi jing,chang sheng xi jing
 长老,zhang lao,zhang lao
@@ -37002,7 +36933,6 @@ ch,man,man-pop
 陶诞,yao dan,yao dan
 陷,xian,xian
 陷,xuan,xuan
-陷溺,xian ni,xian ni
 陸,lu,lu
 陸,liu,liu
 陸地,lu di,lu di
@@ -37162,8 +37092,6 @@ ch,man,man-pop
 雓,yu,yu
 雔,chou,chou
 雕,diao,diao
-雕章鏤句,diao zhang lou ju,diao zhang lou ju
-雕章镂句,diao zhang lou ju,diao zhang lou ju
 雖,sui,sui
 雗,gan,gan
 雗,han,han
@@ -37211,8 +37139,6 @@ ch,man,man-pop
 雰,fen,fen
 雱,pang,pang
 雲,yun,yun
-雲景,yun jing,yun jing
-雲景,yun ying,yun ying
 雲階月地,yun jie yue di,yun jie yue di
 雳,li,li
 雴,chi,chi
@@ -38627,6 +38553,8 @@ ch,man,man-pop
 髖,kuan,kuan
 髗,lu,lu
 高,gao,gao
+高句丽,gao gou li,gao gou li
+高句麗,gao gou li,gao gou li
 高丽参,gao li shen,gao li shen
 高冷地,gao leng di,gao leng di
 高凤流麦,gao feng liu mo,gao feng liu mo
