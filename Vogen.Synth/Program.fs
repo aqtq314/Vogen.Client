@@ -16,11 +16,20 @@ let main argv =
 
     //printfn "%A" (G2p.run "yue-wz" [| null; "woi"; "loi"; null; "soeng"; "zoek"; "seot"; null |])
 
-    let romScheme = "yue"
-    let tChars = Prosody.run romScheme 100 [|
-        { Ch = null; Rom = null; Notes = null; Ipa = null }
-        { Ch = "唱"; Rom = "coeng"; Notes = ImmutableList.CreateRange [| { Pitch = 69; On = 30; Off = 60 } |]; Ipa = null }
-        { Ch = null; Rom = null; Notes = null; Ipa = null }
+    let romScheme = "man"
+    let tChars = Prosody.run romScheme 288 [|
+        { Ch = null; Rom = null; Ipa = null; Notes = null }
+        { Ch = "梨"; Rom = "li"; Ipa = null; Notes = ImmutableList.CreateRange [|
+            { Pitch = 65; On = 50; Off = 97 }
+        |] }
+        { Ch = "花"; Rom = "huar"; Ipa = null; Notes = ImmutableList.CreateRange [|
+            { Pitch = 65; On = 97; Off = 120 }
+            { Pitch = 67; On = 120; Off = 144 }
+        |] }
+        { Ch = "香"; Rom = "xiang"; Ipa = null; Notes = ImmutableList.CreateRange [|
+            { Pitch = 65; On = 144; Off = 238 }
+        |] }
+        { Ch = null; Rom = null; Ipa = null; Notes = null }
     |]
 
     //printfn "%A" tChars

@@ -1,11 +1,7 @@
 ﻿module Vogen.Synth.DxVersion
 
-open Microsoft.ML.OnnxRuntime
-open Microsoft.ML.OnnxRuntime.Tensors
-open NAudio.Wave
 open System
 open System.Collections.Generic
-open System.Collections.Immutable
 open System.IO
 open System.Linq
 open System.Runtime.InteropServices
