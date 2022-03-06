@@ -6851,7 +6851,6 @@ ch,man,man-pop
 一暴十寒,yi pu shi han,yi pu shi han
 一朝,yi zhao,yi zhao
 一朝天子一朝臣,yi chao tian zi yi chao chen,yi chao tian zi yi chao chen
-一朝被蛇咬,yi zhao bei she yao,yi zhao bei she yao
 一树百获,yi shu bo huo,yi shu bo huo
 一樹百穫,yi shu bo huo,yi shu bo huo
 一死了之,yi si liao zhi,yi si liao zhi
@@ -7035,6 +7034,7 @@ ch,man,man-pop
 东家长西家短,dong jia chang xi jia duan,dong jia chang xi jia duan
 东躲西藏,dong duo xi cang,dong duo xi cang
 东量西折,dong liang xi she,dong liang xi she
+东莞,dong guan,dong guan
 丝,si,si
 丝瓜络,si gua lao,si gua lao
 丝竹乐,si zhu yue,si zhu yue
@@ -8487,8 +8487,6 @@ ch,man,man-pop
 僬僥,jiao yao,jiao yao
 僭,jian,jian
 僭,qian,qian
-僭称,jian cheng,jian cheng
-僭稱,jian cheng,jian cheng
 僮,tong,tong
 僮,zhuang,zhuang
 僮族,zhuang zu,zhuang zu
@@ -10591,7 +10589,6 @@ ch,man,man-pop
 啥,sha,sha
 啦,la,la
 啧,ze,ze
-啧啧称奇,ze ze cheng qi,ze ze cheng qi
 啨,qing,qing
 啨,ying,ying
 啩,gua,gua
@@ -10874,7 +10871,6 @@ ch,man,man-pop
 嘕,xian,xian
 嘕,yan,yan
 嘖,ze,ze
-嘖嘖稱奇,ze ze cheng qi,ze ze cheng qi
 嘗,chang,chang
 嘘,xu,xu
 嘙,po,po
@@ -13692,8 +13688,8 @@ ch,man,man-pop
 屜,ti,ti
 屜,xie,xie
 屝,fei,fei
-属,zhu,zhu
 属,shu,shu
+属,zhu,zhu
 属地,shu di,shu di
 屟,die,die
 屟,xie,xie
@@ -13719,8 +13715,8 @@ ch,man,man-pop
 屩,jue,jue
 屪,liao,liao
 屫,jue,jue
-屬,zhu,zhu
 屬,shu,shu
+屬,zhu,zhu
 屬地,shu di,shu di
 屭,xi,xi
 屮,che,che
@@ -16204,6 +16200,7 @@ ch,man,man-pop
 投弹,tou dan,tou dan
 投彈,tou dan,tou dan
 投行,tou hang,tou hang
+投降,tou xiang,tou xiang
 抖,dou,dou
 抗,kang,kang
 折,zhe,zhe
@@ -18508,6 +18505,7 @@ ch,man,man-pop
 東家長西家短,dong jia chang xi jia duan,dong jia chang xi jia duan
 東躲西藏,dong duo xi cang,dong duo xi cang
 東量西折,dong liang xi she,dong liang xi she
+東莞,dong guan,dong guan
 杲,gao,gao
 杲,guo,guo
 杳,yao,yao
@@ -19550,6 +19548,7 @@ ch,man,man-pop
 模式,mo shi,mo shi
 模数,mo shu,mo shu
 模數,mo shu,mo shu
+模糊,mo hu,mo hu
 樢,mu,mu
 樢,niao,niao
 樣,yang,yang
@@ -20463,6 +20462,8 @@ ch,man,man-pop
 沈降,chen jiang,chen jiang
 沉,chen,chen
 沉着,chen zhuo,chen zhuo
+沉没,chen mo,chen mo
+沉沒,chen mo,chen mo
 沊,dan,dan
 沋,you,you
 沌,dun,dun
@@ -20476,8 +20477,8 @@ ch,man,man-pop
 沐,mu,mu
 沑,niu,niu
 沑,nv,nv
-沒,mo,mo
 沒,mei,mei
+沒,mo,mo
 沒下,mei xia,mei xia
 沒下,mo xia,mo xia
 沒乾沒淨,mei gan mei jing,mei gan mei jing
@@ -20554,8 +20555,8 @@ ch,man,man-pop
 沞,za,za
 沟,gou,gou
 沠,liu,liu
-没,mo,mo
 没,mei,mei
+没,mo,mo
 没下,mei xia,mei xia
 没下,mo xia,mo xia
 没了,mei leh,mei leh
@@ -20758,8 +20759,6 @@ ch,man,man-pop
 泻,xie,xie
 泼,po,po
 泽,ze,ze
-泽被,ze bei,ze bei
-泽被,ze pi,ze pi
 泾,jing,jing
 泿,yin,yin
 洀,zhou,zhou
@@ -21718,8 +21717,6 @@ ch,man,man-pop
 澣,gan,gan
 澣,wan,wan
 澤,ze,ze
-澤被,ze bei,ze bei
-澤被,ze pi,ze pi
 澥,xie,xie
 澦,yu,yu
 澧,li,li
@@ -25693,10 +25690,8 @@ ch,man,man-pop
 积,ji,ji
 积,zhi,zhi
 积攒,ji zan,ji zan
-称,chen,chen
 称,cheng,cheng
-称谢,cheng xie,cheng xie
-称重,cheng zhong,cheng zhong
+称,chen,chen
 秱,tong,tong
 秲,zhi,zhi
 秳,hua,hua
@@ -25777,10 +25772,8 @@ ch,man,man-pop
 種地,zhong di,zhong di
 稯,zong,zong
 稰,xu,xu
-稱,chen,chen
 稱,cheng,cheng
-稱謝,cheng xie,cheng xie
-稱重,cheng zhong,cheng zhong
+稱,chen,chen
 稲,dao,dao
 稳,wen,wen
 稴,lian,lian
@@ -27867,7 +27860,6 @@ ch,man,man-pop
 老挝,lao zhua,lao zhua
 老撾,lao wo,lao wo
 老撾,lao zhua,lao zhua
-老虎生了翅膀一般,lao hu sheng leh chi bang yi ban,lao hu sheng leh chi bang yi ban
 老行尊,lao hang zun,lao hang zun
 老身長子,lao shen zhang zi,lao shen zhang zi
 老身长子,lao shen zhang zi,lao shen zhang zi
@@ -28718,9 +28710,9 @@ ch,man,man-pop
 航路标识,hang lu biao zhi,hang lu biao zhi
 航路標識,hang lu biao zhi,hang lu biao zhi
 舫,fang,fang
+般,ban,ban
 般,bo,bo
 般,pan,pan
-般,ban,ban
 般乐,pan le,pan le
 般地,ban deh,ban deh
 般桓,pan huan,pan huan
@@ -29268,10 +29260,8 @@ ch,man,man-pop
 莜,di,di
 莜,diao,diao
 莝,cuo,cuo
-莞,guan,guan
 莞,wan,wan
-莞尔,wan er,wan er
-莞爾,wan er,wan er
+莞,guan,guan
 莟,han,han
 莠,you,you
 莡,cuo,cuo
@@ -29570,8 +29560,6 @@ ch,man,man-pop
 著,zhe,zhe
 著,zhao,zhao
 著,zhuo,zhuo
-著称,zhu cheng,zhu cheng
-著稱,zhu cheng,zhu cheng
 葘,zi,zi
 葙,xiang,xiang
 葚,shen,shen
@@ -31195,15 +31183,8 @@ ch,man,man-pop
 袩,chan,chan
 袪,qu,qu
 袪,que,que
-被,pi,pi
 被,bei,bei
-被執行人,bei zhi xing ren,bei zhi xing ren
-被山带河,bei shan dai he,bei shan dai he
-被山带河,pi shan dai he,pi shan dai he
-被山帶河,bei shan dai he,bei shan dai he
-被山帶河,pi shan dai he,pi shan dai he
-被执行人,bei zhi xing ren,bei zhi xing ren
-被虐待狂,bei nve dai kuang,bei nve dai kuang
+被,pi,pi
 袬,gun,gun
 袬,yu,yu
 袭,xi,xi
@@ -32267,7 +32248,6 @@ ch,man,man-pop
 謓,chen,chen
 謔,xue,xue
 謔,nve,nve
-謔稱,xue cheng,xue cheng
 謕,si,si
 謕,ti,ti
 謖,su,su
@@ -32718,7 +32698,6 @@ ch,man,man-pop
 谐,xie,xie
 谑,xue,xue
 谑,nve,nve
-谑称,xue cheng,xue cheng
 谒,ye,ye
 谓,wei,wei
 谔,e,e
@@ -33733,8 +33712,6 @@ ch,man,man-pop
 躥,cuan,cuan
 躦,zuan,zuan
 躧,xi,xi
-躧匾称铊,xi bian cheng tuo,xi bian cheng tuo
-躧匾稱鉈,xi bian cheng tuo,xi bian cheng tuo
 躨,kui,kui
 躩,jue,jue
 躪,lin,lin
@@ -36849,18 +36826,13 @@ ch,man,man-pop
 陌,mo,mo
 陌,bai,bai
 陌地,mo di,mo di
-降,xiang,xiang
 降,jiang,jiang
-降升調,jiang sheng diao,jiang sheng diao
-降升调,jiang sheng diao,jiang sheng diao
+降,xiang,xiang
 降旗,jiang qi,jiang qi
 降旗,xiang qi,xiang qi
-降服,jiang fu,jiang fu
 降服,xiang fu,xiang fu
 降調,jiang diao,jiang diao
 降调,jiang diao,jiang diao
-降賜,jiang ci,jiang ci
-降赐,jiang ci,jiang ci
 陎,shu,shu
 陏,duo,duo
 陏,sui,sui
