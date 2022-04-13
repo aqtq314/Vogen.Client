@@ -97,6 +97,7 @@ type ProgramModel() as x =
         compFilePathOp |> Rp.set filePathOp
         compFileName |> Rp.set fileName
         compIsSaved |> Rp.set true
+        GC.Collect()
 
     member x.New() =
         x.OpenOrNew None
