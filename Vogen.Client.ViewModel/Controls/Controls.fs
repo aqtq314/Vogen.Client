@@ -296,7 +296,7 @@ type BgAudioDisplay() =
 
     static let fftSize = 512
 
-    let bgBrush = Brushes.Transparent
+    let bgBrush = Brushes.Black
     let waveBrush = SolidColorBrush(aRgb 0x60 -1) |>! freeze
     let mutable spImage : WriteableBitmap = null
 
@@ -335,15 +335,16 @@ type BgAudioDisplay() =
             let fftSampleIndices = [|
                 for x in 0.0 .. floor actualWidth - 1.0 ->
                     (x |> pixelToPulse quarterWidth hOffset |> Audio.pulseToSample bpm0) - sampleOffset |]
-            try let cis = Rfft.run fftSize samples fftSampleIndices
-                if spImage = null || spImage.PixelHeight <> cis.GetLength 0 || spImage.PixelWidth <> cis.GetLength 1 then
+            let outFreqs = Array.init(int actualHeight)(fun i -> float32 i / 2f / float32(floor actualHeight))
+            try let colorIndices = Rfft.run fftSize samples fftSampleIndices outFreqs
+                if spImage = null || spImage.PixelHeight <> colorIndices.GetLength 0 || spImage.PixelWidth <> colorIndices.GetLength 1 then
                     let dpi = VisualTreeHelper.GetDpi x
                     spImage <- WriteableBitmap(
-                        cis.GetLength 1, cis.GetLength 0, dpi.PixelsPerInchX, 96.0, PixelFormats.Indexed8, BitmapPalettes.afmhot)
+                        colorIndices.GetLength 1, colorIndices.GetLength 0, dpi.PixelsPerInchX, 96.0, PixelFormats.Indexed8, BitmapPalettes.afmhot)
                 spImage.WritePixels(
                     Int32Rect(0, 0, spImage.PixelWidth, spImage.PixelHeight),
-                    cis, cis.GetLength 1, 0)
-                dc.DrawImage(spImage, Rect(Size(floor actualWidth, actualHeight)))
+                    colorIndices, colorIndices.GetLength 1, 0)
+                dc.DrawImage(spImage, Rect(Size(floor actualWidth, floor actualHeight)))
             with ex -> ()
 
         let minWaveformSamplesPerFrame = 100

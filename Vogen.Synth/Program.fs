@@ -47,9 +47,6 @@ let main argv =
     do  use waveWriter = new WaveFileWriter(Environment.ExpandEnvironmentVariables @"%USERPROFILE%\Desktop\test.wav", WaveFormat(44100, 1))
         waveWriter.WriteSamples(y, 0, y.Length)
 
-    //let cis = Rfft.run 1024 y [| 14336 .. 512 .. 16384 |]
-    //printfn "%A" cis
-
     printfn "Done"
     let _ = Console.ReadKey true
     0
