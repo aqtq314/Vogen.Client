@@ -7783,7 +7783,6 @@ ch,man,man-pop
 伯,ba,ba
 伯,bai,bai
 伯业,ba ye,ba ye
-伯余,bo yu,bo yu
 伯吉阿斯法,bo ji a si fa,bo ji a si fa
 伯图,ba tu,ba tu
 伯圖,ba tu,ba tu
@@ -7865,13 +7864,9 @@ ch,man,man-pop
 佗,ta,ta
 佘,she,she
 佘,yu,yu
-余,xu,xu
 余,yu,yu
 余,tu,tu
-余車,yu che,yu che
-余車,yu ju,yu ju
-余车,yu che,yu che
-余车,yu ju,yu ju
+余,xu,xu
 佚,yi,yi
 佛,fo,fo
 佛,fu,fu
@@ -9399,6 +9394,7 @@ ch,man,man-pop
 勽,bao,bao
 勽,wen,wen
 勾,gou,gou
+勾勒,gou le,gou le
 勿,wu,wu
 匀,yun,yun
 匂,bi,bi
@@ -10011,8 +10007,8 @@ ch,man,man-pop
 吣,qin,qin
 吤,jie,jie
 吥,pou,pou
-否,pi,pi
 否,fou,fou
+否,pi,pi
 吧,ba,ba
 吨,dun,dun
 吨,tun,tun
@@ -13764,8 +13760,8 @@ ch,man,man-pop
 岁,sui,sui
 岁会,sui kuai,sui kuai
 岁朝,sui zhao,sui zhao
-岂,kai,kai
 岂,qi,qi
+岂,kai,kai
 岂弟,kai ti,kai ti
 岃,ren,ren
 岄,yue,yue
@@ -14023,9 +14019,8 @@ ch,man,man-pop
 嵉,ting,ting
 嵊,sheng,sheng
 嵋,mei,mei
-嵌,kan,kan
 嵌,qian,qian
-嵌窞,qian dan,qian dan
+嵌,kan,kan
 嵍,mao,mao
 嵍,wu,wu
 嵎,yu,yu
@@ -18755,6 +18750,7 @@ ch,man,man-pop
 栕,zhen,zhen
 栖,qi,qi
 栖,xi,xi
+栖息,qi xi,qi xi
 栖息地,qi xi di,qi xi di
 栗,li,li
 栘,chi,chi
@@ -20770,8 +20766,8 @@ ch,man,man-pop
 洄,hui,hui
 洅,zai,zai
 洆,cheng,cheng
-洇,yan,yan
 洇,yin,yin
+洇,yan,yan
 洈,wei,wei
 洉,hou,hou
 洊,cun,cun
@@ -24263,38 +24259,8 @@ ch,man,man-pop
 的,di,di
 的一确二,di yi que ar,di yi que ar
 的一確二,di yi que ar,di yi que ar
-的些,di xie,di xie
-的信,di xin,di xin
-的决,di jue,di jue
-的卢,di lu,di lu
-的历,di li,di li
-的士,di shi,di shi
-的实,di shi,di shi
-的實,di shi,di shi
-的当,di dang,di dang
-的是,di shi,di shi
-的歷,di li,di li
-的決,di jue,di jue
-的溜扑碌,di liu pu lu,di liu pu lu
-的溜撲碌,di liu pu lu,di liu pu lu
-的溜溜,di liu liu,di liu liu
-的溜骨碌,di liu gu lu,di liu gu lu
-的然,di ran,di ran
-的留的立,di liu di li,di liu di li
-的當,di dang,di dang
-的的,di di,di di
-的的喀喀湖,di di ka ka hu,di di ka ka hu
-的皪,di li,di li
-的盧,di lu,di lu
-的知,di zhi,di zhi
 的确,di que,di que
 的確,di que,di que
-的笃戏,di du xi,di du xi
-的篤戲,di du xi,di du xi
-的耗,di hao,di hao
-的見,di jian,di jian
-的见,di jian,di jian
-的黎波里,di li bo li,di li bo li
 皅,ba,ba
 皅,pa,pa
 皆,jie,jie
@@ -24621,12 +24587,8 @@ ch,man,man-pop
 着想,zhuo xiang,zhuo xiang
 着意,zhuo yi,zhuo yi
 着慌,zhao huang,zhao huang
-着手,zhao shou,zhao shou
 着手,zhuo shou,zhuo shou
-着手于,zhuo shou yu,zhuo shou yu
-着手回春,zhuo shou hui chun,zhuo shou hui chun
-着手成春,zhuo shou cheng chun,zhuo shou cheng chun
-着手於,zhuo shou yu,zhuo shou yu
+着手,zhao shou,zhao shou
 着摸,zhuo mo,zhuo mo
 着数,zhao shu,zhao shu
 着数,zhuo shu,zhuo shu
@@ -25528,8 +25490,8 @@ ch,man,man-pop
 禂,dao,dao
 禃,zhi,zhi
 禄,lu,lu
-禅,shan,shan
 禅,chan,chan
+禅,shan,shan
 禆,bei,bei
 禇,chu,chu
 禈,hui,hui
@@ -25578,8 +25540,8 @@ ch,man,man-pop
 禧,xi,xi
 禨,ji,ji
 禩,si,si
-禪,shan,shan
 禪,chan,chan
+禪,shan,shan
 禫,tan,tan
 禬,gui,gui
 禬,hui,hui
@@ -32789,8 +32751,8 @@ ch,man,man-pop
 豆重榆瞑,dou zhong yu mian,dou zhong yu mian
 豇,jiang,jiang
 豇,gang,gang
-豈,kai,kai
 豈,qi,qi
+豈,kai,kai
 豈弟,kai ti,kai ti
 豉,chi,chi
 豉,shi,shi
@@ -34679,17 +34641,10 @@ ch,man,man-pop
 郻,qiao,qiao
 郼,wei,wei
 郼,yi,yi
-都,du,du
 都,dou,dou
-都付笑談中,dou fu xiao tan zhong,dou fu xiao tan zhong
-都付笑谈中,dou fu xiao tan zhong,dou fu xiao tan zhong
+都,du,du
+都市,du shi,du shi
 都市之肺,du shi zhi fei,du shi zhi fei
-都是,dou shi,dou shi
-都有,dou you,dou you
-都行,dou xing,dou xing
-都要,dou yao,dou yao
-都齊,dou qi,dou qi
-都齐,dou qi,dou qi
 郾,yan,yan
 郿,mei,mei
 鄀,ruo,ruo
@@ -36509,8 +36464,8 @@ ch,man,man-pop
 閏,run,run
 閐,san,san
 閑,xian,xian
-閒,jian,jian
 閒,xian,xian
+閒,jian,jian
 閒地,xian di,xian di
 閒聒七,xian gua qi,xian gua qi
 閒言長語,xian yan chang yu,xian yan chang yu
@@ -36644,8 +36599,8 @@ ch,man,man-pop
 闯,chen,chen
 闰,run,run
 闱,wei,wei
-闲,jian,jian
 闲,xian,xian
+闲,jian,jian
 闲地,xian di,xian di
 闲聒七,xian gua qi,xian gua qi
 闲言长语,xian yan chang yu,xian yan chang yu
