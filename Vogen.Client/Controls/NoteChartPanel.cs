@@ -20,7 +20,7 @@ namespace Vogen.Client.Controls
         protected override Size MeasureOverride(Size availableSize)
         {
             if (double.IsInfinity(availableSize.Width) || double.IsInfinity(availableSize.Height))
-                throw new ArgumentException($"{nameof(NoteChartPanel)} measure availableSize ({availableSize}) cannot contain infinity");
+                throw new ArgumentException($"Unable to handle measure availableSize: {availableSize}");
 
             var actualWidth = ActualWidth;
             var actualHeight = ActualHeight;
@@ -40,27 +40,27 @@ namespace Vogen.Client.Controls
 
             for (int i = 0; i < InternalChildren.Count; i++)
             {
-                var note = (NoteItem)InternalChildren[i];
-                var noteOff = i + 1 < InternalChildren.Count ? ((NoteItem)InternalChildren[i + 1]).Onset : note.Onset;
-                if (noteOff < minPulse) continue;
-                if (note.Onset > maxPulse) continue;
+                var child = (NoteItem)InternalChildren[i];
+                var childOff = i + 1 < InternalChildren.Count ? ((NoteItem)InternalChildren[i + 1]).Onset : child.Onset;
+                if (childOff < minPulse) continue;
+                if (child.Onset > maxPulse) continue;
 
                 var prevPitch = i == 0 ? Note.RestPitch : ((NoteItem)InternalChildren[i - 1]).Pitch;
-                var arrangePrevPitch = prevPitch != Note.RestPitch ? prevPitch : note.Pitch;
-                var arrangeCurrPitch = note.Pitch != Note.RestPitch ? note.Pitch : prevPitch;
+                var arrangePrevPitch = prevPitch != Note.RestPitch ? prevPitch : child.Pitch;
+                var arrangeCurrPitch = child.Pitch != Note.RestPitch ? child.Pitch : prevPitch;
                 if (arrangeCurrPitch == Note.RestPitch) continue;
                 if (Math.Max(arrangePrevPitch, arrangeCurrPitch) < botPitch) continue;
                 if (Math.Min(arrangePrevPitch, arrangeCurrPitch) > topPitch) continue;
 
-                note.InternalDeltaPitch = arrangeCurrPitch - arrangePrevPitch;
+                child.InternalDeltaPitch = arrangeCurrPitch - arrangePrevPitch;
 
-                var x0 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, note.Onset);
-                var x1 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, noteOff);
-                var yMid = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, note.Pitch);
+                var x0 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, child.Onset);
+                var x1 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, childOff);
+                var yMid = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, child.Pitch);
 
-                var noteRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
-                note.Measure(noteRect.Size);
-                measuredChildren.Add(note, noteRect);
+                var childRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
+                child.Measure(childRect.Size);
+                measuredChildren.Add(child, childRect);
             }
 
             foreach (NoteItem note in InternalChildren)
@@ -71,9 +71,10 @@ namespace Vogen.Client.Controls
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            foreach (NoteItem note in InternalChildren)
-                if (measuredChildren.TryGetValue(note, out var noteRect))
-                    note.Arrange(noteRect);
+            // Might cause child visibility issues if finalSize != availableSize
+            foreach (NoteItem child in InternalChildren)
+                if (measuredChildren.TryGetValue(child, out var childRect))
+                    child.Arrange(childRect);
 
             return finalSize;
         }
