@@ -85,7 +85,7 @@ let pulseToStringFormatter =
         | [| timeSig; pulses |] ->
             let timeSig = timeSig |> unbox
             let pulses = Convert.ToInt64 pulses
-            MidiClock.FormatFull timeSig (MidiClock pulses)
+            TimeSignature.FormatFull(MidiClock pulses) timeSig
         | _ ->
             raise(ArgumentException()))
 

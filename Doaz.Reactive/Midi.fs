@@ -50,21 +50,15 @@ type MidiClock(tick : int64) =
     static member (%)(p : MidiClock, k) = MidiClock(p.Tick % k)
     static member (%)(p : MidiClock, k) = MidiClock(p.Tick % int64(k : int))
 
+    static member op_Equality(p : MidiClock, q : MidiClock) = p.Tick = q.Tick
+    static member op_LessThan(p : MidiClock, q : MidiClock) = p.Tick < q.Tick
+    static member op_GreaterThan(p : MidiClock, q : MidiClock) = p.Tick > q.Tick
+    static member op_LessThanOrEqual(p : MidiClock, q : MidiClock) = p.Tick <= q.Tick
+    static member op_GreaterThanOrEqual(p : MidiClock, q : MidiClock) = p.Tick >= q.Tick
+
+    static member Zero = MidiClock()
+
     static member inline tickOf(p : MidiClock) = p.Tick
-
-    static member FormatMeasures(timeSig : TimeSignature)(p : MidiClock) =
-        let measure = p.Tick / timeSig.PulsesPerMeasure
-        sprintf "%d" (measure + 1L)
-
-    static member FormatMeasureBeats(timeSig : TimeSignature)(p : MidiClock) =
-        let measure, pulsesInMeasure = p.Tick /% timeSig.PulsesPerMeasure
-        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
-        sprintf "%d:%d" (measure + 1L) (beats + 1L)
-
-    static member FormatFull(timeSig : TimeSignature)(p : MidiClock) =
-        let measure, pulsesInMeasure = p.Tick /% timeSig.PulsesPerMeasure
-        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
-        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
 
     static member ToTimeSpan bpm (p : MidiClock) =
         float p.Tick / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
@@ -112,6 +106,14 @@ type MidiClockF(tick : float) =
     static member (%)(p : MidiClockF, k) = MidiClockF(p.Tick % k)
     static member (%)(p : MidiClockF, k) = MidiClockF(p.Tick % float(k : float32))
 
+    static member op_Equality(p : MidiClockF, q : MidiClockF) = p.Tick = q.Tick
+    static member op_LessThan(p : MidiClockF, q : MidiClockF) = p.Tick < q.Tick
+    static member op_GreaterThan(p : MidiClockF, q : MidiClockF) = p.Tick > q.Tick
+    static member op_LessThanOrEqual(p : MidiClockF, q : MidiClockF) = p.Tick <= q.Tick
+    static member op_GreaterThanOrEqual(p : MidiClockF, q : MidiClockF) = p.Tick >= q.Tick
+
+    static member Zero = MidiClockF()
+
     static member Round(p : MidiClockF) = MidiClockF(round p.Tick)
     static member Floor(p : MidiClockF) = MidiClockF(floor p.Tick)
     static member Ceil(p : MidiClockF) = MidiClockF(ceil p.Tick)
@@ -158,8 +160,8 @@ type TimeSignature(numerator, denominator) =
 
     member x.AsFloat = float numerator / float(1 <<< denominatorExp)
 
-    member x.PulsesPerBeat = Midi.ppqn <<< 2 >>> denominatorExp
-    member x.PulsesPerMeasure = int64 numerator * x.PulsesPerBeat
+    member x.TicksPerBeat = Midi.ppqn <<< 2 >>> denominatorExp
+    member x.TicksPerMeasure = int64 numerator * x.TicksPerBeat
 
     override x.Equals y =
         match y with
@@ -189,6 +191,20 @@ type TimeSignature(numerator, denominator) =
         match TimeSignature.TryParse timeSigStr with
         | Some timeSig -> timeSig
         | None -> raise(FormatException($"Cannot parse time signature \"{timeSigStr}\"."))
+
+    static member FormatMeasures(p : MidiClock)(timeSig : TimeSignature) =
+        let measure = p.Tick / timeSig.TicksPerMeasure
+        sprintf "%d" (measure + 1L)
+
+    static member FormatMeasureBeats(p : MidiClock)(timeSig : TimeSignature) =
+        let measure, ticksInMeasure = p.Tick /% timeSig.TicksPerMeasure
+        let beats = ticksInMeasure / timeSig.TicksPerBeat
+        sprintf "%d:%d" (measure + 1L) (beats + 1L)
+
+    static member FormatFull(p : MidiClock)(timeSig : TimeSignature) =
+        let measure, ticksInMeasure = p.Tick /% timeSig.TicksPerMeasure
+        let beats, ticksInBeat = ticksInMeasure /% timeSig.TicksPerBeat
+        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) ticksInBeat
 
 [<AutoOpen>]
 module TimeSignatureUtils =

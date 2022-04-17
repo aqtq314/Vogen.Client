@@ -223,12 +223,12 @@ type RulerGrid() =
             yield 1L
             yield 5L
             yield! Seq.initInfinite(fun i -> 15L <<< i)
-                |> Seq.takeWhile(fun length -> length < timeSig.PulsesPerBeat)
-            yield timeSig.PulsesPerBeat
-            yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure >>> (i + 1))
-                |> Seq.takeWhile(fun length -> length > timeSig.PulsesPerBeat && length % timeSig.PulsesPerBeat = 0L)
+                |> Seq.takeWhile(fun length -> length < timeSig.TicksPerBeat)
+            yield timeSig.TicksPerBeat
+            yield! Seq.initInfinite(fun i -> timeSig.TicksPerMeasure >>> (i + 1))
+                |> Seq.takeWhile(fun length -> length > timeSig.TicksPerBeat && length % timeSig.TicksPerBeat = 0L)
                 |> Seq.rev
-            yield! Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i) }
+            yield! Seq.initInfinite(fun i -> timeSig.TicksPerMeasure <<< i) }
         |> Seq.find(fun hop ->
             pulseToPixel quarterWidth 0.0 (float hop) >= minTickHop)
     
@@ -271,9 +271,9 @@ type RulerGrid() =
 
             if isMajor then
                 let textStr =
-                    if majorHop % timeSig.PulsesPerMeasure = 0L then MidiClock.FormatMeasures timeSig (MidiClock currPulse)
-                    elif majorHop % timeSig.PulsesPerBeat = 0L then MidiClock.FormatMeasureBeats timeSig (MidiClock currPulse)
-                    else MidiClock.FormatFull timeSig (MidiClock currPulse)
+                    if majorHop % timeSig.TicksPerMeasure = 0L then TimeSignature.FormatMeasures(MidiClock currPulse) timeSig
+                    elif majorHop % timeSig.TicksPerBeat = 0L then TimeSignature.FormatMeasureBeats(MidiClock currPulse) timeSig
+                    else TimeSignature.FormatFull(MidiClock currPulse) timeSig
                 let ft = x |> makeFormattedText textStr
                 let halfTextWidth = half ft.Width
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
@@ -561,18 +561,18 @@ type ChartEditor() =
         // time grids
         let timeSig = comp.TimeSig0
         let measureHop =
-            Seq.initInfinite(fun i -> timeSig.PulsesPerMeasure <<< i)
+            Seq.initInfinite(fun i -> timeSig.TicksPerMeasure <<< i)
             |> Seq.find(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
         let beatHop =
-            Seq.initInfinite(fun i -> timeSig.PulsesPerBeat <<< i)
+            Seq.initInfinite(fun i -> timeSig.TicksPerBeat <<< i)
             |> Seq.skipWhile(fun pulses -> pulses < quantization)
-            |> Seq.takeWhile(fun pulses -> pulses < timeSig.PulsesPerMeasure)
+            |> Seq.takeWhile(fun pulses -> pulses < timeSig.TicksPerMeasure)
             |> Seq.tryFind(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
             |> Option.defaultValue measureHop
         let gridHop =
             if quantization = 1L then beatHop else
             Seq.initInfinite(fun i -> quantization <<< i)
-            |> Seq.takeWhile(fun pulses -> pulses < timeSig.PulsesPerBeat)
+            |> Seq.takeWhile(fun pulses -> pulses < timeSig.TicksPerBeat)
             |> Seq.tryFind(fun pulses -> pulseToPixel quarterWidth 0.0 (float pulses) >= minGridScreenHop)
             |> Option.defaultValue beatHop
 
@@ -581,7 +581,7 @@ type ChartEditor() =
                 let x0 = pulseToPixel quarterWidth hOffset (float measurePulse)
                 dc.DrawLine(majorGridPen, Point(x0, 0.0), Point(x0, actualHeight))
 
-            for beatPulse in measurePulse .. beatHop .. min maxPulse (measurePulse + timeSig.PulsesPerMeasure - 1L) do
+            for beatPulse in measurePulse .. beatHop .. min maxPulse (measurePulse + timeSig.TicksPerMeasure - 1L) do
                 if beatPulse > max minPulse measurePulse then
                     let x0 = pulseToPixel quarterWidth hOffset (float beatPulse)
                     for pitch in botPitch .. topPitch do
@@ -589,7 +589,7 @@ type ChartEditor() =
                         if pitch |> Midi.isBlackKey then
                             dc.DrawLine(majorGridPen, Point(x0, y - (half keyHeight + 1.0)), Point(x0, y + (half keyHeight + 1.0)))
 
-                for gridPulse in beatPulse + gridHop .. gridHop .. min maxPulse (beatPulse + timeSig.PulsesPerBeat - 1L) do
+                for gridPulse in beatPulse + gridHop .. gridHop .. min maxPulse (beatPulse + timeSig.TicksPerBeat - 1L) do
                     if gridPulse > max minPulse beatPulse then
                         let x0 = pulseToPixel quarterWidth hOffset (float gridPulse)
                         for pitch in botPitch .. topPitch do

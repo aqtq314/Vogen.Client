@@ -26,13 +26,13 @@ module ChartUnitConversionModule =
 
     let quantize snap quantization (timeSig : TimeSignature) pulses =
         if not snap then pulses else
-            let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
+            let pulsesMeasureQuantized = pulses / timeSig.TicksPerMeasure * timeSig.TicksPerMeasure
             pulsesMeasureQuantized + (pulses - pulsesMeasureQuantized) / quantization * quantization
 
     let quantizeCeil snap quantization (timeSig : TimeSignature) pulses =
         if not snap then pulses else
-            let pulsesMeasureQuantized = pulses / timeSig.PulsesPerMeasure * timeSig.PulsesPerMeasure
-            pulsesMeasureQuantized + ((pulses - pulsesMeasureQuantized) /^ quantization * quantization |> min timeSig.PulsesPerMeasure)
+            let pulsesMeasureQuantized = pulses / timeSig.TicksPerMeasure * timeSig.TicksPerMeasure
+            pulsesMeasureQuantized + ((pulses - pulsesMeasureQuantized) /^ quantization * quantization |> min timeSig.TicksPerMeasure)
 
 module ChartConverters =
     let hScrollMaxConverter = ValueConverter.Create(fun comp trailingSil ->
