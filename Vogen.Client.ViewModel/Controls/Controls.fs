@@ -271,9 +271,9 @@ type RulerGrid() =
 
             if isMajor then
                 let textStr =
-                    if majorHop % timeSig.PulsesPerMeasure = 0L then Midi.formatMeasures timeSig currPulse
-                    elif majorHop % timeSig.PulsesPerBeat = 0L then Midi.formatMeasureBeats timeSig currPulse
-                    else Midi.formatFull timeSig currPulse
+                    if majorHop % timeSig.PulsesPerMeasure = 0L then MidiClock.FormatMeasures timeSig (MidiClock currPulse)
+                    elif majorHop % timeSig.PulsesPerBeat = 0L then MidiClock.FormatMeasureBeats timeSig (MidiClock currPulse)
+                    else MidiClock.FormatFull timeSig (MidiClock currPulse)
                 let ft = x |> makeFormattedText textStr
                 let halfTextWidth = half ft.Width
                 if xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth then
@@ -822,16 +822,16 @@ type ChartEditor() =
                 let f0Samples = uttSynthResult.F0Samples
                 let uttTimeOffset = uttSynthResult.SampleOffset |> Audio.sampleToTime
                 let startSampleIndex =
-                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset 0.0) - uttTimeOffset) - 1.0
+                    TimeTable.timeToFrame(MidiClockF.ToTimeSpan bpm0 (MidiClockF(pixelToPulse quarterWidth hOffset 0.0)) - uttTimeOffset) - 1.0
                     |> int |> max 0
                 let endSampleIndex =
-                    TimeTable.timeToFrame(Midi.toTimeSpan bpm0 (pixelToPulse quarterWidth hOffset actualWidth) - uttTimeOffset) + 1.0
+                    TimeTable.timeToFrame(MidiClockF.ToTimeSpan bpm0 (MidiClockF(pixelToPulse quarterWidth hOffset actualWidth)) - uttTimeOffset) + 1.0
                     |> ceil |> int |> min f0Samples.Length
                 let mutable prevVuv = false
                 for sampleIndex in startSampleIndex .. endSampleIndex - 1 do
                     let freq = f0Samples.[sampleIndex]
                     if freq > 0f then
-                        let x = pulseToPixel quarterWidth hOffset (Midi.ofTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float sampleIndex)))
+                        let x = pulseToPixel quarterWidth hOffset (MidiClockF.OfTimeSpan bpm0 (uttTimeOffset + TimeTable.frameToTime(float sampleIndex)) |> MidiClockF.tickOf)
                         let y = pitchToPixel keyHeight actualHeight vOffset (Midi.ofFreq(float freq))
                         if not prevVuv then
                             sgc.BeginFigure(Point(x, y), false, false)

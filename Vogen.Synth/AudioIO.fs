@@ -33,10 +33,10 @@ module Audio =
         int(time.TotalSeconds * float fs)
 
     let inline pulseToSample bpm0 pulses =
-        pulses |> Midi.toTimeSpan bpm0 |> timeToSample
+        MidiClockF(pulses) |> MidiClockF.ToTimeSpan bpm0 |> timeToSample
 
     let inline sampleToPulse bpm0 sampleTime =
-        sampleTime |> sampleToTime |> Midi.ofTimeSpan bpm0
+        sampleTime |> sampleToTime |> MidiClockF.OfTimeSpan bpm0 |> MidiClockF.tickOf
 
 type AudioSamplesLazy = {
     FileBytes : byte []

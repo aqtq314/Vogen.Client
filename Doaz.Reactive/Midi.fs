@@ -7,6 +7,123 @@ open System.Text
 open System.Text.RegularExpressions
 
 
+[<Struct>]
+[<StructuralEquality>]
+[<StructuralComparison>]
+type MidiClock(tick : int64) =
+    member x.Tick = tick
+
+    override x.ToString() = $"{nameof MidiClock}({tick})"
+
+    static member TryParse inStr =
+        if isNotNull inStr then
+            let m = Regex.Match(inStr, $@"^\s*{nameof MidiClock}\((?<num>.*)\)\s*$")
+            if m.Success then
+                let success, num = Int64.TryParse m.Groups.["num"].Value
+                if success then
+                    Some(MidiClock(num))
+                else None
+            else None
+        else None
+
+    static member Parse inStr =
+        match MidiClock.TryParse inStr with
+        | Some p -> p
+        | None -> raise(FormatException($"Cannot parse {nameof MidiClock} \"{inStr}\"."))
+
+    static member op_Explicit(p : MidiClock) : int64 = p.Tick
+    static member op_Explicit(p : MidiClock) : int = int p.Tick
+    static member op_Explicit(midiTicks : int64) : MidiClock = MidiClock(midiTicks)
+    static member op_Explicit(midiTicks : int) : MidiClock = MidiClock(int64 midiTicks)
+    static member op_Explicit(q : MidiClockF) : MidiClock = MidiClock(int64 q.Tick)
+
+    static member (+)(p : MidiClock, q : MidiClock) = MidiClock(p.Tick + q.Tick)
+    static member (-)(p : MidiClock, q : MidiClock) = MidiClock(p.Tick - q.Tick)
+    static member (~-)(p : MidiClock) = MidiClock(-p.Tick)
+
+    static member (*)(p : MidiClock, k) = MidiClock(p.Tick * k)
+    static member (*)(p : MidiClock, k) = MidiClock(p.Tick * int64(k : int))
+    static member (*)(k, p : MidiClock) = MidiClock(p.Tick * k)
+    static member (*)(k, p : MidiClock) = MidiClock(p.Tick * int64(k : int))
+    static member (/)(p : MidiClock, k) = MidiClock(p.Tick / k)
+    static member (/)(p : MidiClock, k) = MidiClock(p.Tick / int64(k : int))
+    static member (%)(p : MidiClock, k) = MidiClock(p.Tick % k)
+    static member (%)(p : MidiClock, k) = MidiClock(p.Tick % int64(k : int))
+
+    static member inline tickOf(p : MidiClock) = p.Tick
+
+    static member FormatMeasures(timeSig : TimeSignature)(p : MidiClock) =
+        let measure = p.Tick / timeSig.PulsesPerMeasure
+        sprintf "%d" (measure + 1L)
+
+    static member FormatMeasureBeats(timeSig : TimeSignature)(p : MidiClock) =
+        let measure, pulsesInMeasure = p.Tick /% timeSig.PulsesPerMeasure
+        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
+        sprintf "%d:%d" (measure + 1L) (beats + 1L)
+
+    static member FormatFull(timeSig : TimeSignature)(p : MidiClock) =
+        let measure, pulsesInMeasure = p.Tick /% timeSig.PulsesPerMeasure
+        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
+        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
+
+    static member ToTimeSpan bpm (p : MidiClock) =
+        float p.Tick / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
+
+[<Struct>]
+[<StructuralEquality>]
+[<StructuralComparison>]
+type MidiClockF(tick : float) =
+    member x.Tick = tick
+
+    override x.ToString() = $"{nameof MidiClockF}({tick})"
+
+    static member TryParse inStr =
+        if isNotNull inStr then
+            let m = Regex.Match(inStr, $@"^\s*{nameof MidiClockF}\((?<num>.*)\)\s*$")
+            if m.Success then
+                let success, num = Double.TryParse m.Groups.["num"].Value
+                if success then
+                    Some(MidiClockF(num))
+                else None
+            else None
+        else None
+
+    static member Parse inStr =
+        match MidiClockF.TryParse inStr with
+        | Some p -> p
+        | None -> raise(FormatException($"Cannot parse {nameof MidiClockF} \"{inStr}\"."))
+
+    static member op_Explicit(p : MidiClockF) : float = p.Tick
+    static member op_Explicit(p : MidiClockF) : float32 = float32 p.Tick
+    static member op_Explicit(midiTicks : float) : MidiClockF = MidiClockF(midiTicks)
+    static member op_Explicit(midiTicks : float32) : MidiClockF = MidiClockF(float midiTicks)
+    static member op_Explicit(q : MidiClock) : MidiClockF = MidiClockF(float q.Tick)
+
+    static member (+)(p : MidiClockF, q : MidiClockF) = MidiClockF(p.Tick + q.Tick)
+    static member (-)(p : MidiClockF, q : MidiClockF) = MidiClockF(p.Tick - q.Tick)
+    static member (~-)(p : MidiClockF) = MidiClockF(-p.Tick)
+
+    static member (*)(p : MidiClockF, k) = MidiClockF(p.Tick * k)
+    static member (*)(p : MidiClockF, k) = MidiClockF(p.Tick * float(k : float32))
+    static member (*)(k, p : MidiClockF) = MidiClockF(p.Tick * k)
+    static member (*)(k, p : MidiClockF) = MidiClockF(p.Tick * float(k : float32))
+    static member (/)(p : MidiClockF, k) = MidiClockF(p.Tick / k)
+    static member (/)(p : MidiClockF, k) = MidiClockF(p.Tick / float(k : float32))
+    static member (%)(p : MidiClockF, k) = MidiClockF(p.Tick % k)
+    static member (%)(p : MidiClockF, k) = MidiClockF(p.Tick % float(k : float32))
+
+    static member Round(p : MidiClockF) = MidiClockF(round p.Tick)
+    static member Floor(p : MidiClockF) = MidiClockF(floor p.Tick)
+    static member Ceil(p : MidiClockF) = MidiClockF(ceil p.Tick)
+
+    static member inline tickOf(p : MidiClockF) = p.Tick
+
+    static member ToTimeSpan bpm (p : MidiClockF) =
+        p.Tick / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
+
+    static member OfTimeSpan bpm (timeSpan : TimeSpan) =
+        MidiClockF(timeSpan.TotalMinutes * bpm * float Midi.ppqn)
+
 module Midi =
     let [<Literal>] ppqn = 480L
     let [<Literal>] middleC = 60
@@ -18,26 +135,6 @@ module Midi =
 
     let toFreq pitch = Math.Pow(2.0, (pitch - 69.0) / 12.0) * 440.0
     let ofFreq f0 = 12.0 * log(f0 / 440.0) / log 2.0 + 69.0
-
-    let formatMeasures(timeSig : TimeSignature)(pulses : int64) =
-        let measure = pulses / timeSig.PulsesPerMeasure
-        sprintf "%d" (measure + 1L)
-
-    let formatMeasureBeats(timeSig : TimeSignature)(pulses : int64) =
-        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
-        let beats = pulsesInMeasure / timeSig.PulsesPerBeat
-        sprintf "%d:%d" (measure + 1L) (beats + 1L)
-
-    let formatFull(timeSig : TimeSignature)(pulses : int64) =
-        let measure, pulsesInMeasure = pulses /% timeSig.PulsesPerMeasure
-        let beats, pulsesInBeat = pulsesInMeasure /% timeSig.PulsesPerBeat
-        sprintf "%d:%d.%d" (measure + 1L) (beats + 1L) pulsesInBeat
-
-    let toTimeSpan bpm pulses =
-        pulses / float Midi.ppqn / bpm |> TimeSpan.FromMinutes
-
-    let ofTimeSpan bpm (timeSpan : TimeSpan) =
-        timeSpan.TotalMinutes * bpm * float Midi.ppqn
 
 
 type TimeSignature(numerator, denominator) =

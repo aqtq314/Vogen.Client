@@ -51,8 +51,8 @@ module TimeTable =
 
     let ofUtt bpm0 (utt : FUtt) =
         let allNotes = utt.Notes.ToList()
-        let uttStart = (float allNotes.[0].On |> Midi.toTimeSpan bpm0) - headSil
-        let uttEnd = (float allNotes.[^0].Off |> Midi.toTimeSpan bpm0) + tailSil
+        let uttStart = (MidiClock(allNotes.[0].On) |> MidiClock.ToTimeSpan bpm0) - headSil
+        let uttEnd = (MidiClock(allNotes.[^0].Off) |> MidiClock.ToTimeSpan bpm0) + tailSil
         let uttDur = uttEnd - uttStart
 
         // check leading hyphen note
@@ -84,8 +84,8 @@ module TimeTable =
             charNotes
             |> Array.map(fun notes ->
                 let outNotes = ImmutableList.CreateRange(notes |> Seq.map(fun note ->
-                    let on  = (float note.On  |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> round |> int
-                    let off = (float note.Off |> Midi.toTimeSpan bpm0) - uttStart |> timeToFrame |> round |> int
+                    let on  = (MidiClock(note.On)  |> MidiClock.ToTimeSpan bpm0) - uttStart |> timeToFrame |> round |> int
+                    let off = (MidiClock(note.Off) |> MidiClock.ToTimeSpan bpm0) - uttStart |> timeToFrame |> round |> int
                     { Pitch = note.Pitch; On = on; Off = off }))
                 let ch = notes.[0].Lyric
                 let rom = notes.[0].Rom

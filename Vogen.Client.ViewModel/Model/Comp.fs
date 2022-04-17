@@ -104,8 +104,8 @@ type UttSynthResult(sampleOffset, isSynthing, charGrids, f0Samples, audio) =
     member x.AudioOrDefault = x.Audio |> Option.defaultValue AudioSamples.empty
 
     static member GetSampleOffset(utt : Utterance) =
-        float utt.On
-        |> Midi.toTimeSpan utt.Bpm0
+        MidiClockF(float utt.On)
+        |> MidiClockF.ToTimeSpan utt.Bpm0
         |> (+) -headSil
         |> Audio.timeToSample
 

@@ -168,8 +168,8 @@ type ProgramModel() as x =
 
     member x.ManualSetCursorPos newCursorPos =
         audioEngine.ManualSetPlaybackSamplePosition(
-            float newCursorPos
-            |> Midi.toTimeSpan (!!activeChart).Comp.Bpm0
+            MidiClockF(float newCursorPos)
+            |> MidiClockF.ToTimeSpan (!!activeChart).Comp.Bpm0
             |> Audio.timeToSample)
         cursorPos |> Rp.set newCursorPos
 
@@ -179,7 +179,7 @@ type ProgramModel() as x =
             |> Audio.sampleToTime
             |> (+)(TimeSpan.FromTicks(Stopwatch.GetTimestamp() - audioEngine.PlaybackPositionRefTicks))
             |> (+)(if isPlaying.Value then -latencyTimeSpan else TimeSpan.Zero)
-            |> Midi.ofTimeSpan((!!activeChart).Comp.Bpm0) |> round |> int64
+            |> MidiClockF.OfTimeSpan((!!activeChart).Comp.Bpm0) |> MidiClockF.tickOf |> round |> int64
         cursorPos |> Rp.set newCursorPos
 
     member x.LoadAccom audioFile =
