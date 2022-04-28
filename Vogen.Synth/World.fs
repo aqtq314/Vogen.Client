@@ -120,15 +120,22 @@ module private WorldNativeInterop =
 
 open WorldNativeInterop
 type World =
-    static member Dio(x, fs, ?f0Floor, ?f0Ceil, ?channelsInOctave, ?framePeriod, ?speed, ?allowedRange) =
+    static member Dio(
+        x, fs,
+        [<Optional; DefaultParameterValue(DefaultF0Floor)>]     f0Floor,
+        [<Optional; DefaultParameterValue(DefaultF0Ceil)>]      f0Ceil,
+        [<Optional; DefaultParameterValue(2.0)>]                channelsInOctave,
+        [<Optional; DefaultParameterValue(DefaultFramePeriod)>] framePeriod,
+        [<Optional; DefaultParameterValue(1)>]                  speed,
+        [<Optional; DefaultParameterValue(0.1)>]                allowedRange) =
         let mutable option = DioOption()
         InitializeDioOption &option
-        option.F0Floor          <- f0Floor          |> Option.defaultValue DefaultF0Floor
-        option.F0Ceil           <- f0Ceil           |> Option.defaultValue DefaultF0Ceil
-        option.ChannelsInOctave <- channelsInOctave |> Option.defaultValue 2.0
-        option.FramePeriod      <- framePeriod      |> Option.defaultValue DefaultFramePeriod
-        option.Speed            <- speed            |> Option.defaultValue 1
-        option.AllowedRange     <- allowedRange     |> Option.defaultValue 0.1
+        option.F0Floor          <- f0Floor
+        option.F0Ceil           <- f0Ceil
+        option.ChannelsInOctave <- channelsInOctave
+        option.FramePeriod      <- framePeriod
+        option.Speed            <- speed
+        option.AllowedRange     <- allowedRange
 
         let f0Length = GetSamplesForDIO(fs, (x : _ []).Length, option.FramePeriod)
         let f0 = Array.zeroCreate f0Length
@@ -136,8 +143,9 @@ type World =
         Dio(x, x.Length, fs, &option, tpos, f0)
         f0, tpos
 
-    static member GetSamplesForDIO(fs, xLength, ?framePeriod) =
-        let framePeriod = framePeriod |> Option.defaultValue DefaultFramePeriod
+    static member GetSamplesForDIO(fs, xLength,
+        [<Optional; DefaultParameterValue(DefaultFramePeriod)>] framePeriod) =
+        let framePeriod = framePeriod
         GetSamplesForDIO(fs, xLength, framePeriod)
 
     static member Stonemask(x, fs, tpos, f0) =
@@ -145,12 +153,15 @@ type World =
         StoneMask(x, x.Length, fs, tpos, f0, f0.Length, outF0)
         outF0
 
-    static member Harvest(x, fs, ?f0Floor, ?f0Ceil, ?framePeriod) =
+    static member Harvest(x, fs,
+        [<Optional; DefaultParameterValue(DefaultF0Floor)>]     f0Floor,
+        [<Optional; DefaultParameterValue(DefaultF0Ceil)>]      f0Ceil,
+        [<Optional; DefaultParameterValue(DefaultFramePeriod)>] framePeriod) =
         let mutable option = HarvestOption()
         InitializeHarvestOption &option
-        option.F0Floor     <- f0Floor     |> Option.defaultValue DefaultF0Floor
-        option.F0Ceil      <- f0Ceil      |> Option.defaultValue DefaultF0Ceil
-        option.FramePeriod <- framePeriod |> Option.defaultValue DefaultFramePeriod
+        option.F0Floor     <- f0Floor
+        option.F0Ceil      <- f0Ceil
+        option.FramePeriod <- framePeriod
 
         let f0Length = GetSamplesForHarvest(fs, (x : _ []).Length, option.FramePeriod)
         let f0 = Array.zeroCreate f0Length
@@ -158,36 +169,43 @@ type World =
         Harvest(x, x.Length, fs, &option, tpos, f0)
         f0, tpos
 
-    static member GetSamplesForHarvest(fs, xLength, ?framePeriod) =
-        let framePeriod = framePeriod |> Option.defaultValue DefaultFramePeriod
+    static member GetSamplesForHarvest(fs, xLength,
+        [<Optional; DefaultParameterValue(DefaultFramePeriod)>] framePeriod) =
+        let framePeriod = framePeriod
         GetSamplesForHarvest(fs, xLength, framePeriod)
 
-    static member CheapTrick(x, fs, tpos, f0, ?q1, ?f0Floor, ?fftSize) = array2dIntptrConv {
+    static member CheapTrick(x, fs, tpos, f0,
+        [<Optional; DefaultParameterValue(-0.15)>]          q1,
+        [<Optional; DefaultParameterValue(DefaultF0Floor)>] f0Floor,
+        [<Optional; DefaultParameterValue(0)>]              fftSize) = array2dIntptrConv {
         let mutable option = CheapTrickOption()
         InitializeCheapTrickOption(fs, &option)
-        option.Q1      <- q1      |> Option.defaultValue -0.15
-        option.F0Floor <- f0Floor |> Option.defaultValue DefaultF0Floor
-        option.FftSize <- fftSize |> Option.defaultWith(fun () -> GetFFTSizeForCheapTrick(fs, &option))
+        option.Q1      <- q1
+        option.F0Floor <- f0Floor
+        option.FftSize <- if fftSize > 0 then fftSize else GetFFTSizeForCheapTrick(fs, &option)
 
         let sp = Array2D.zeroCreate((f0 : _ []).Length)(option.FftSize / 2 + 1)
         let! spFramePtrs = sp
         CheapTrick(x, x.Length, fs, tpos, f0, f0.Length, &option, spFramePtrs)
         return sp }
 
-    static member GetFftSize(fs, ?f0Floor) =
+    static member GetFftSize(fs,
+        [<Optional; DefaultParameterValue(DefaultF0Floor)>] f0Floor) =
         let mutable option = CheapTrickOption()
         InitializeCheapTrickOption(fs, &option)
-        option.F0Floor <- f0Floor |> Option.defaultValue DefaultF0Floor
+        option.F0Floor <- f0Floor
         GetFFTSizeForCheapTrick(fs, &option)
 
     static member GetF0FloorForCheapTrick(fs, fftSize) =
         GetF0FloorForCheapTrick(fs, fftSize)
 
-    static member D4C(x, fs, tpos, f0, ?threshold, ?fftSize) = array2dIntptrConv {
-        let fftSize = fftSize |> Option.defaultWith(fun () -> World.GetFftSize fs)
+    static member D4C(x, fs, tpos, f0,
+        [<Optional; DefaultParameterValue(0.85)>] threshold,
+        [<Optional; DefaultParameterValue(0)>]    fftSize) = array2dIntptrConv {
         let mutable option = D4COption()
         InitializeD4COption &option
-        option.Threshold <- threshold |> Option.defaultValue 0.85
+        option.Threshold <- threshold
+        let fftSize = if fftSize > 0 then fftSize else World.GetFftSize fs
 
         let ap = Array2D.zeroCreate((f0 : _ []).Length)(fftSize / 2 + 1)
         let! apFramePtrs = ap
@@ -230,9 +248,10 @@ type World =
         DecodeSpectralEnvelope(mgcFramePtrs, mgc.GetLength 0, fs, fftSize, mgc.GetLength 1, spFramePtrs)
         return sp }
 
-    static member Synthesis(f0, sp, ap, fs, ?framePeriod) = array2dIntptrConv {
+    static member Synthesis(f0, sp, ap, fs,
+        [<Optional; DefaultParameterValue(DefaultFramePeriod)>] framePeriod) = array2dIntptrConv {
         let fftSize = ((sp : _ [,]).GetLength 1 - 1) * 2
-        let framePeriod = framePeriod |> Option.defaultValue DefaultFramePeriod
+        let framePeriod = framePeriod
 
         let yLength = int(float (f0 : _ []).LongLength * framePeriod * float fs / 1000.0)
         let y = Array.zeroCreate(yLength)

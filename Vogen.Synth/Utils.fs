@@ -26,6 +26,11 @@ module Params =
     let headSil = TimeSpan.FromSeconds 0.5
     let tailSil = TimeSpan.FromSeconds 0.5
 
+    let hopSamplesF = float fs * hopSize.TotalSeconds
+    let hopSamples = int hopSamplesF
+    do  if float hopSamples <> hopSamplesF then
+            raise(ArithmeticException($"Audio samples per frame ({hopSamplesF}) is not an integer"))
+
 [<AutoOpen>]
 module Utils =
     let appDir =
@@ -65,12 +70,14 @@ module InferenceSession =
         use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream uri
         ofStream stream
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     let ofDenseTensor(tensor : DenseTensor<_>) =
         let outArr = Array.zeroCreate(int tensor.Length)
         tensor.Buffer.Span.CopyTo(outArr.AsSpan())
         outArr
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array2D =
     let ofDenseTensor(tensor : DenseTensor<'a>) =
         let width = tensor.Dimensions.[tensor.Dimensions.Length - 1]

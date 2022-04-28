@@ -49,6 +49,7 @@ type AudioSamples = {
     member x.AsLazy =
         { FileBytes = x.FileBytes; GetSamples = fun () -> x.Samples }
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AudioSamples =
     let inline create fileBytes samples = { FileBytes = fileBytes; Samples = samples }
 
