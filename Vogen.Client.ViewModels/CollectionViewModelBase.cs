@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,12 +10,10 @@ using System.Threading.Tasks;
 
 namespace Vogen.Client.ViewModels
 {
-    public class ViewModelBase : INotifyPropertyChanged
+    public class CollectionViewModelBase<TItem> : ObservableCollection<TItem>
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 
         protected bool SetAndNotify<T>(ref T field, T newValue, [CallerMemberName] string? propertyName = null)
         {
@@ -23,6 +23,10 @@ namespace Vogen.Client.ViewModels
             field = newValue;
             OnPropertyChanged(propertyName);
             return true;
+        }
+
+        public CollectionViewModelBase(IEnumerable<TItem>? items = null) : base(items ?? Enumerable.Empty<TItem>())
+        {
         }
     }
 }
