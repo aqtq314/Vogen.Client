@@ -7,11 +7,18 @@ using System.Threading.Tasks;
 
 namespace Vogen.Client.ViewModels.Charting
 {
-    public class Track : CollectionViewModelBase<PartBase>
+    public class Track : ViewModelBase
     {
+        int _Index;
         string _Name;
         float _Volume;
         bool _IsMuted;
+
+        public int Index
+        {
+            get => _Index;
+            internal set => SetAndNotify(ref _Index, value);
+        }
 
         public string Name
         {
@@ -31,11 +38,10 @@ namespace Vogen.Client.ViewModels.Charting
             set => SetAndNotify(ref _IsMuted, value);
         }
 
-        public Track(string? name = null, float volume = 1, bool isMuted = false,
-            IEnumerable<PartBase>? parts = null)
-            : base(parts)
+        public Track(string name = "", float volume = 1, bool isMuted = false)
         {
-            _Name = name ?? "";
+            _Index = -1;
+            _Name = name;
             _Volume = volume;
             _IsMuted = isMuted;
         }

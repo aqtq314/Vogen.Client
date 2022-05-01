@@ -40,11 +40,11 @@ namespace Vogen.Client.ViewModels.Charting
         public AudioGraphemeChart GraphemeChart { get; init; }
         public AudioPhonemeChart PhonemeChart { get; init; }
 
-        public DryVocalPart(MidiClock offset, float[] inAudio, float[]? outAudio = null,
+        public DryVocalPart(MidiClock offset, Track track, float[] inAudio, float[]? outAudio = null,
             float[]? f0 = null,
             IEnumerable<AudioGraphemeItem>? graphemes = null,
             IEnumerable<TimedValueItem<TimeSpan, string>>? phonemes = null)
-            : base(offset, outAudio)
+            : base(offset, track, outAudio)
         {
             _InAudio = inAudio;
             _F0 = f0 ?? Array.Empty<float>();

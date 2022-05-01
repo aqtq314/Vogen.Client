@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace Vogen.Client.ViewModels.Charting
 {
-    public abstract class PartBase : ViewModelBase
+    public abstract class PartBase : TimedEventItem<MidiClock>
     {
-        MidiClock _Offset;
+        Track _Track;
         float[] _OutAudio;
 
-        public MidiClock Offset
+        public Track Track
         {
-            get => _Offset;
-            set => SetAndNotify(ref _Offset, value);
+            get => _Track;
+            set => SetAndNotify(ref _Track, value);
         }
 
         public float[] OutAudio
@@ -24,9 +24,10 @@ namespace Vogen.Client.ViewModels.Charting
             set => SetAndNotify(ref _OutAudio, value);
         }
 
-        protected PartBase(MidiClock offset, float[]? outAudio = null)
+        protected PartBase(MidiClock time, Track track, float[]? outAudio = null)
+            : base(time)
         {
-            _Offset = offset;
+            _Track = track;
             _OutAudio = outAudio ?? Array.Empty<float>();
         }
     }

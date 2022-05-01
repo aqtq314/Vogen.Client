@@ -37,7 +37,7 @@ namespace Vogen.Client.ViewModels.Charting
             foreach (var item in this)
                 OnItemAdded(item);
 
-            OnItemsChanged();
+            using var _ = ItemsChangingNotifier();  // manually trigger OnItemsChanged()
         }
 
         protected virtual void OnItemRemoving(TItem item)

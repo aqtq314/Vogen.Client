@@ -10,26 +10,28 @@ namespace Vogen.Client.ViewModels.Charting
 {
     public class Composition : ViewModelBase
     {
-        public TimeSignatureChart TimeSig { get; init; }
-        public TempoChart Tempo { get; init; }
-
-        public ObservableCollection<Track> Tracks { get; init; }
+        public TimeSignatureChart TimeSigs { get; init; }
+        public TempoChart Tempos { get; init; }
+        public TrackList Tracks { get; init; }
+        public PartChart Parts { get; init; }
 
         public Composition(
             TimeSignature? initTimeSig = null,
             double initTempo = 120,
             IEnumerable<TimedValueItem<int, TimeSignature>>? timeSigs = null,
             IEnumerable<TimedValueItem<MidiClock, double>>? tempos = null,
-            IEnumerable<Track>? tracks = null)
+            IEnumerable<Track>? tracks = null,
+            IEnumerable<PartBase>? parts = null)
         {
-            TimeSig = new TimeSignatureChart(
+            TimeSigs = new TimeSignatureChart(
                 initTimeSig ?? new TimeSignature(4, 4),
                 timeSigs ?? Enumerable.Empty<TimedValueItem<int, TimeSignature>>());
-            Tempo = new TempoChart(
+            Tempos = new TempoChart(
                 initTempo,
                 tempos ?? Enumerable.Empty<TimedValueItem<MidiClock, double>>());
 
-            Tracks = new ObservableCollection<Track>(tracks ?? Enumerable.Empty<Track>());
+            Tracks = new TrackList(tracks ?? Enumerable.Empty<Track>());
+            Parts = new PartChart(parts ?? Enumerable.Empty<PartBase>());
         }
     }
 }

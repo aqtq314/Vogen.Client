@@ -17,8 +17,8 @@ namespace Vogen.Client.ViewModels.Charting
             set => SetAndNotify(ref _Name, value);
         }
 
-        public WavePart(MidiClock offset, string name, float[]? outAudio = null)
-            : base(offset, outAudio)
+        public WavePart(MidiClock offset, Track track, string name, float[]? outAudio = null)
+            : base(offset, track, outAudio)
         {
             _Name = name;
         }

@@ -12,27 +12,27 @@ namespace Vogen.Client.ViewModels
 {
     public class ProgramViewModel : ViewModelBase
     {
-        Composition _ActiveChart;
+        Composition _ActiveComp;
 
-        public Composition ActiveChart
+        public Composition ActiveComp
         {
-            get => _ActiveChart;
-            set => SetAndNotify(ref _ActiveChart, value);
+            get => _ActiveComp;
+            set => SetAndNotify(ref _ActiveComp, value);
         }
 
         public ProgramViewModel()
         {
-            _ActiveChart = new Composition();
+            _ActiveComp = new Composition();
         }
 
         public void New()
         {
-            ActiveChart = new Composition();
+            ActiveComp = new Composition();
         }
 
         public void LoadComp(Composition comp)
         {
-            ActiveChart = comp;
+            ActiveComp = comp;
         }
 
         //public void ImportFromVog(VogPackage.VogPackage vog)

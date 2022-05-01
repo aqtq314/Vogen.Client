@@ -39,12 +39,12 @@ namespace Vogen.Client.ViewModels.Charting
         public PhonemeChart PhonemeChart { get; init; }
         public F0AnchorChart F0AnchorChart { get; init; }
 
-        public NotePart(MidiClock offset, string name, string romScheme,
+        public NotePart(MidiClock offset, Track track, string name, string romScheme,
             IEnumerable<NoteItem>? notes = null,
             IEnumerable<TimedValueItem<TimeSpan, string?>>? phonemes = null,
             IEnumerable<F0AnchorItem>? f0Anchors = null,
             float[]? outAudio = null)
-            : base(offset, outAudio)
+            : base(offset, track, outAudio)
         {
             _Name = name;
             _RomScheme = romScheme;
