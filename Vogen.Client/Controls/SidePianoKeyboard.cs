@@ -35,10 +35,10 @@ namespace Vogen.Client.Controls
         {
             var actualWidth = ActualWidth;
             var actualHeight = ActualHeight;
-            var keyHeight = NoteChartEditor.GetKeyHeight(this);
-            var minKey = NoteChartEditor.GetMinKey(this);
-            var maxKey = NoteChartEditor.GetMaxKey(this);
-            var vOffset = NoteChartEditor.GetVOffset(this);
+            var keyHeight = MidiCharting.GetKeyHeight(this);
+            var minKey = MidiCharting.GetMinKey(this);
+            var maxKey = MidiCharting.GetMaxKey(this);
+            var vOffset = MidiCharting.GetVOffset(this);
 
             var whiteKeyWidth = actualWidth;
             var blackKeyWidth = (whiteKeyWidth * BlackKeyLengthRatio).Clamp(0.0, whiteKeyWidth);

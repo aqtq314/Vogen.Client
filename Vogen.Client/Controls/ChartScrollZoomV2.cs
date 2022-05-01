@@ -7,14 +7,6 @@ using System.Windows;
 
 namespace Vogen.Client.Controls
 {
-    public class ChartScrollZoomH2 : ChartScrollZoomBase
-    {
-        static ChartScrollZoomH2()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(ChartScrollZoomH2), new FrameworkPropertyMetadata(typeof(ChartScrollZoomH2)));
-        }
-    }
-
     public class ChartScrollZoomV2 : ChartScrollZoomBase
     {
         static ChartScrollZoomV2()

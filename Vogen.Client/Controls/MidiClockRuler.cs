@@ -9,10 +9,11 @@ using System.Windows;
 using System.Windows.Media;
 using Vogen.Client.Converters;
 using Vogen.Client.Utils;
+using Vogen.Client.ViewModels.Charting;
 
 namespace Vogen.Client.Controls
 {
-    public class TimeRuler : FrameworkElement
+    public class MidiClockRuler : FrameworkElement
     {
         static readonly double majorTickHeight = 6;
         static readonly double minorTickHeight = 4;
@@ -32,40 +33,42 @@ namespace Vogen.Client.Controls
             yield return 1;
             yield return 5;
 
-            for (long length = 15; length < timeSig.PulsesPerBeat; length <<= 1)
+            for (long length = 15; length < timeSig.TicksPerBeat; length <<= 1)
                 yield return length;
 
-            yield return timeSig.PulsesPerBeat;
+            yield return timeSig.TicksPerBeat;
 
-            long minMultiBeatHop = timeSig.PulsesPerMeasure;
-            for (long length = minMultiBeatHop >> 1; length > timeSig.PulsesPerBeat && length % timeSig.PulsesPerBeat == 0; length >>= 1)
+            long minMultiBeatHop = timeSig.TicksPerMeasure;
+            for (long length = minMultiBeatHop >> 1; length > timeSig.TicksPerBeat && length % timeSig.TicksPerBeat == 0; length >>= 1)
                 minMultiBeatHop = length;
-            for (long length = minMultiBeatHop; length < timeSig.PulsesPerMeasure; length <<= 1)
+            for (long length = minMultiBeatHop; length < timeSig.TicksPerMeasure; length <<= 1)
                 yield return length;
 
-            for (long length = timeSig.PulsesPerMeasure; ; length <<= 1)
+            for (long length = timeSig.TicksPerMeasure; ; length <<= 1)
                 yield return length;
         }
 
         public static long FindTickHop(TimeSignature timeSig, double quarterWidth, double minTickHop) =>
             ListTickHops(timeSig).First(hop => ChartUnitConversion.PulseToPixel(quarterWidth, 0, hop) >= minTickHop);
 
-        public TimeSignature TimeSignature
+        public TimeSignatureChart TimeSignatureChart
         {
-            get => (TimeSignature)GetValue(TimeSignatureProperty);
-            set => SetValue(TimeSignatureProperty, value);
+            get => (TimeSignatureChart)GetValue(TimeSignatureChartProperty);
+            set => SetValue(TimeSignatureChartProperty, value);
         }
-        public static DependencyProperty TimeSignatureProperty { get; } =
-            DependencyProperty.Register(nameof(TimeSignature), typeof(TimeSignature), typeof(TimeRuler),
-                new FrameworkPropertyMetadata(new TimeSignature(4, 4), FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public static DependencyProperty TimeSignatureChartProperty { get; } =
+            DependencyProperty.Register(nameof(TimeSignatureChart), typeof(TimeSignatureChart), typeof(MidiClockRuler),
+                new FrameworkPropertyMetadata(new TimeSignatureChart(new TimeSignature(4, 4)),
+                    FrameworkPropertyMetadataOptions.AffectsRender));
 
         protected override void OnRender(DrawingContext dc)
         {
             var actualWidth = ActualWidth;
             var actualHeight = ActualHeight;
-            var timeSig = TimeSignature;
-            var quarterWidth = NoteChartEditor.GetQuarterWidth(this);
-            var hOffset = NoteChartEditor.GetHOffset(this);
+            var timeSig = TimeSignatureChart.InitialValue;
+            var quarterWidth = MidiCharting.GetQuarterWidth(this);
+            var hOffset = MidiCharting.GetHOffset(this);
 
             var minPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, 0);
             var maxPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, actualWidth);
@@ -92,9 +95,9 @@ namespace Vogen.Client.Controls
                 if (isMajor)
                 {
                     var textStr =
-                        majorHop % timeSig.PulsesPerMeasure == 0 ? Midi.formatMeasures(timeSig, currPulse) :
-                        majorHop % timeSig.PulsesPerBeat == 0 ? Midi.formatMeasureBeats(timeSig, currPulse) :
-                        Midi.formatFull(timeSig, currPulse);
+                        majorHop % timeSig.TicksPerMeasure == 0 ? TimeSignature.FormatMeasures(new MidiClock(currPulse), timeSig) :
+                        majorHop % timeSig.TicksPerBeat == 0 ? TimeSignature.FormatMeasureBeats(new MidiClock(currPulse), timeSig) :
+                        TimeSignature.FormatFull(new MidiClock(currPulse), timeSig);
                     var ft = this.MakeFormattedText(textStr);
                     var halfTextWidth = ft.Width / 2;
                     if (xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth)

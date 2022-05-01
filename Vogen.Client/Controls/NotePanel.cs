@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Doaz.Reactive;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,9 +14,9 @@ using Vogen.Client.ViewModels;
 
 namespace Vogen.Client.Controls
 {
-    public class NoteChartPanel : Panel
+    public class NotePanel : Panel
     {
-        Dictionary<NoteItem, Rect> measuredChildren = new Dictionary<NoteItem, Rect>();
+        Dictionary<NoteItem, Rect> measuredChildren = new();
 
         protected override Size MeasureOverride(Size availableSize)
         {
@@ -24,15 +25,15 @@ namespace Vogen.Client.Controls
 
             var actualWidth = ActualWidth;
             var actualHeight = ActualHeight;
-            var quarterWidth = NoteChartEditor.GetQuarterWidth(this);
-            var keyHeight = NoteChartEditor.GetKeyHeight(this);
-            var minKey = NoteChartEditor.GetMinKey(this);
-            var maxKey = NoteChartEditor.GetMaxKey(this);
-            var hOffset = NoteChartEditor.GetHOffset(this);
-            var vOffset = NoteChartEditor.GetVOffset(this);
+            var quarterWidth = MidiCharting.GetQuarterWidth(this);
+            var keyHeight = MidiCharting.GetKeyHeight(this);
+            var minKey = MidiCharting.GetMinKey(this);
+            var maxKey = MidiCharting.GetMaxKey(this);
+            var hOffset = MidiCharting.GetHOffset(this);
+            var vOffset = MidiCharting.GetVOffset(this);
 
-            var minPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, 0);
-            var maxPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, actualWidth).Ceil();
+            var minPulse = MidiClock.FloorFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, 0));
+            var maxPulse = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, actualWidth));
             var botPitch = Math.Max(minKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
             var topPitch = Math.Min(maxKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, 0).Ceil());
 
@@ -45,17 +46,17 @@ namespace Vogen.Client.Controls
                 if (childOff < minPulse) continue;
                 if (child.Onset > maxPulse) continue;
 
-                var prevPitch = i == 0 ? Note.RestPitch : ((NoteItem)InternalChildren[i - 1]).Pitch;
-                var arrangePrevPitch = prevPitch != Note.RestPitch ? prevPitch : child.Pitch;
-                var arrangeCurrPitch = child.Pitch != Note.RestPitch ? child.Pitch : prevPitch;
-                if (arrangeCurrPitch == Note.RestPitch) continue;
+                var prevPitch = i == 0 ? 0 : ((NoteItem)InternalChildren[i - 1]).Pitch;
+                var arrangePrevPitch = prevPitch != 0 ? prevPitch : child.Pitch;
+                var arrangeCurrPitch = child.Pitch != 0 ? child.Pitch : prevPitch;
+                if (arrangeCurrPitch == 0) continue;
                 if (Math.Max(arrangePrevPitch, arrangeCurrPitch) < botPitch) continue;
                 if (Math.Min(arrangePrevPitch, arrangeCurrPitch) > topPitch) continue;
 
                 child.InternalDeltaPitch = arrangeCurrPitch - arrangePrevPitch;
 
-                var x0 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, child.Onset);
-                var x1 = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, childOff);
+                var x0 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, child.Onset);
+                var x1 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, childOff);
                 var yMid = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, child.Pitch);
 
                 var childRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
@@ -73,13 +74,22 @@ namespace Vogen.Client.Controls
         {
             // Might cause child visibility issues if finalSize != availableSize
             foreach (NoteItem child in InternalChildren)
+            {
                 if (measuredChildren.TryGetValue(child, out var childRect))
-                    child.Arrange(childRect);
+                {
+                    child.HasLeftOverflow = childRect.Left < 0;
+                    child.HasRightOverflow = childRect.Right >= finalSize.Width;
+
+                    var x0 = Math.Max(childRect.Left, 0);
+                    var x1 = Math.Max(Math.Min(childRect.Right, finalSize.Width), x0);
+                    child.Arrange(new Rect(x0, childRect.Y, x1 - x0, childRect.Height));
+                }
+            }
 
             return finalSize;
         }
 
-        public NoteChartPanel()
+        public NotePanel()
         {
         }
     }

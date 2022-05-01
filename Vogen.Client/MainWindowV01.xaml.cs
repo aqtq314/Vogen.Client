@@ -20,9 +20,9 @@ using Vogen.Client.Views;
 
 namespace Vogen.Client
 {
-    public partial class MainWindow : MainWindowBase
+    public partial class MainWindowV01 : MainWindowBase
     {
-        public MainWindow()
+        public MainWindowV01()
         {
             InitializeComponent();
             noteChartEditPanel.Focus();

@@ -15,6 +15,8 @@ namespace Vogen.Client.ViewModels
     {
         public static ProgramViewModel Program { get; private set; }
         public static Composition ActiveComp { get; private set; }
+        public static DryVocalPart ActiveVocalPart { get; private set; }
+        public static NotePart ActiveNotePart { get; private set; }
 
         static float[] GetSampleDryVocal()
         {
@@ -102,6 +104,9 @@ namespace Vogen.Client.ViewModels
                             new NoteItem(new MidiClock(960), "du", "du", 50),
                             NoteItem.CreateRest(new MidiClock(1920)),
                             NoteItem.CreateRest(new MidiClock(2880))))));
+
+            ActiveVocalPart = ActiveComp.Parts.OfType<DryVocalPart>().First();
+            ActiveNotePart = ActiveComp.Parts.OfType<NotePart>().First(part => part.Track.Index == 1);
 
             Program.LoadComp(ActiveComp);
         }

@@ -1,4 +1,4 @@
-﻿<vv:MainWindowBase x:Class="Vogen.Client.MainWindow"
+﻿<vv:MainWindowBase x:Class="Vogen.Client.MainWindowV01"
                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -225,6 +225,6 @@
     </ToolBar>
     <!--<ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding ActiveChart.Value.Comp.Utts}">
     </ItemsControl>-->
-    <v:NoteChartEditPanel x:Name="noteChartEditPanel" Quantization="240" Snap="True"/>
+    <v:NoteChartEditPanelV01 x:Name="noteChartEditPanel" Quantization="240" Snap="True"/>
   </DockPanel>
 </vv:MainWindowBase>

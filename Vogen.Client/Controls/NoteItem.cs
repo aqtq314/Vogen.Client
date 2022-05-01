@@ -19,17 +19,16 @@ namespace Vogen.Client.Controls
         ZeroDuration,
     }
 
-    public class NoteItem : ContentControl
+    public class NoteItem : MidiEventItem
     {
-        public long Onset
+        public bool IsRest
         {
-            get => (long)GetValue(OnsetProperty);
-            set => SetValue(OnsetProperty, value);
+            get => (bool)GetValue(IsRestProperty);
+            set => SetValue(IsRestProperty, value);
         }
-        public static DependencyProperty OnsetProperty { get; } =
-            DependencyProperty.Register(nameof(Onset), typeof(long), typeof(NoteItem),
-                new FrameworkPropertyMetadata(0L,
-                    FrameworkPropertyMetadataOptions.AffectsParentMeasure | FrameworkPropertyMetadataOptions.AffectsParentArrange));
+        public static DependencyProperty IsRestProperty { get; } =
+            DependencyProperty.Register(nameof(IsRest), typeof(bool), typeof(NoteItem),
+                new FrameworkPropertyMetadata(false));
 
         public double Pitch
         {
@@ -38,7 +37,7 @@ namespace Vogen.Client.Controls
         }
         public static DependencyProperty PitchProperty { get; } =
             DependencyProperty.Register(nameof(Pitch), typeof(double), typeof(NoteItem),
-                new FrameworkPropertyMetadata(Note.RestPitch,
+                new FrameworkPropertyMetadata(0.0,
                     FrameworkPropertyMetadataOptions.AffectsParentMeasure | FrameworkPropertyMetadataOptions.AffectsParentArrange));
 
         public double InternalDeltaPitch
@@ -50,14 +49,14 @@ namespace Vogen.Client.Controls
             DependencyProperty.Register(nameof(InternalDeltaPitch), typeof(double), typeof(NoteItem),
                 new FrameworkPropertyMetadata(0.0));
 
-        public NoteItemErrorType ErrorType
-        {
-            get => (NoteItemErrorType)GetValue(ErrorTypeProperty);
-            set => SetValue(ErrorTypeProperty, value);
-        }
-        public static DependencyProperty ErrorTypeProperty { get; } =
-            DependencyProperty.Register(nameof(ErrorType), typeof(NoteItemErrorType), typeof(NoteItem),
-                new FrameworkPropertyMetadata(NoteItemErrorType.None));
+        //public NoteItemErrorType ErrorType
+        //{
+        //    get => (NoteItemErrorType)GetValue(ErrorTypeProperty);
+        //    set => SetValue(ErrorTypeProperty, value);
+        //}
+        //public static DependencyProperty ErrorTypeProperty { get; } =
+        //    DependencyProperty.Register(nameof(ErrorType), typeof(NoteItemErrorType), typeof(NoteItem),
+        //        new FrameworkPropertyMetadata(NoteItemErrorType.None));
 
         public NoteItem()
         {

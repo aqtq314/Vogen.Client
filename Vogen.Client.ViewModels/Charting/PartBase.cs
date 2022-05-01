@@ -24,6 +24,8 @@ namespace Vogen.Client.ViewModels.Charting
             set => SetAndNotify(ref _OutAudio, value);
         }
 
+        public Type PartType => GetType();
+
         protected PartBase(MidiClock time, Track track, float[]? outAudio = null)
             : base(time)
         {

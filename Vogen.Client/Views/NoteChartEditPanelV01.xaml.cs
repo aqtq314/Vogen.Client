@@ -19,7 +19,7 @@ using Vogen.Client.ViewModel;
 
 namespace Vogen.Client.Views
 {
-    public partial class NoteChartEditPanel : NoteChartEditPanelBase
+    public partial class NoteChartEditPanelV01 : NoteChartEditPanelBase
     {
         public override ChartEditor ChartEditor => chartEditor;
         public override ChartEditorAdornerLayer ChartEditorAdornerLayer => chartEditorAdornerLayer;
@@ -31,7 +31,7 @@ namespace Vogen.Client.Views
         public override TextBoxPopupBase LyricPopup => lyricPopup;
         public override ContextMenu ChartEditorContextMenu => chartEditorContextMenu;
 
-        public NoteChartEditPanel()
+        public NoteChartEditPanelV01()
         {
             InitializeComponent();
             BindBehaviors();

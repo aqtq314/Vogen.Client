@@ -13,13 +13,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Vogen.Client.Controls
+namespace Vogen.Client.Views
 {
-    public class ChartScrollZoomV : ChartScrollZoomKitBase
+    public partial class PartEditPanel : UserControl
     {
-        static ChartScrollZoomV()
+        public PartEditPanel()
         {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(ChartScrollZoomV), new FrameworkPropertyMetadata(typeof(ChartScrollZoomV)));
+            InitializeComponent();
         }
     }
 }

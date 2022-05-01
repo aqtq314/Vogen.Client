@@ -1,0 +1,122 @@
+﻿<UserControl x:Name="root" x:Class="Vogen.Client.Views.NoteEditPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:c="clr-namespace:Vogen.Client.Controls"
+             xmlns:k="clr-namespace:Vogen.Client.Converters"
+             xmlns:vm="clr-namespace:Vogen.Client.ViewModels;assembly=Vogen.Client.ViewModels"
+             mc:Ignorable="d" 
+             Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}"
+             d:Background="White"
+             d:DesignWidth="800" d:DesignHeight="400" d:FontFamily="Segoe UI, Microsoft Yahei UI"
+             d:DataContext="{x:Static vm:DesignerModel.ActiveComp}">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="24"/>
+      <RowDefinition/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="36"/>
+      <ColumnDefinition/>
+      <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
+    <c:MidiClockRuler Grid.Row="0" Grid.Column="1" TimeSignatureChart="{Binding TimeSigs}"
+      c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+      c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+    <c:SidePianoKeyboard Grid.Row="1" Grid.Column="0" TextBlock.FontSize="9"
+      c:MidiCharting.VOffset="{Binding ScrollValueAnimated, ElementName=vScrollZoom}"
+      c:MidiCharting.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+    <c:NoteItemsControl x:Name="noteItemsControl" Grid.Row="1" Grid.Column="1" DataContext="{Binding ActiveNotePart, ElementName=root}"
+      ItemsSource="{Binding NoteChart}"
+      c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+      c:MidiCharting.VOffset="{Binding ScrollValueAnimated, ElementName=vScrollZoom}"
+      c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"
+      c:MidiCharting.KeyHeight="{Binding Log2ZoomValueAnimated, ElementName=vScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}">
+      <Control.Template>
+        <ControlTemplate TargetType="{x:Type c:NoteItemsControl}">
+          <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+        </ControlTemplate>
+      </Control.Template>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:NotePanel ClipToBounds="True"
+            c:MidiCharting.HOffset="{Binding (c:MidiCharting.HOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
+            c:MidiCharting.VOffset="{Binding (c:MidiCharting.VOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
+            c:MidiCharting.QuarterWidth="{Binding (c:MidiCharting.QuarterWidth), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
+            c:MidiCharting.KeyHeight="{Binding (c:MidiCharting.KeyHeight), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle>
+        <Style TargetType="{x:Type c:NoteItem}">
+          <Setter Property="Onset" Value="{Binding Time}"/>
+          <Setter Property="Pitch" Value="{Binding Pitch}"/>
+          <Setter Property="Template">
+            <Setter.Value>
+              <ControlTemplate TargetType="{x:Type c:NoteItem}">
+                <ContentPresenter/>
+              </ControlTemplate>
+            </Setter.Value>
+          </Setter>
+        </Style>
+      </ItemsControl.ItemContainerStyle>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="Black" BorderThickness="0.5">
+            <c:ZeroSizeAnchorPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Lyric}"/>
+                <TextBlock Text="{Binding Rom}"/>
+                <!--<TextBlock Text="{Binding Onset, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItem}}}"/>-->
+              </StackPanel>
+            </c:ZeroSizeAnchorPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </c:NoteItemsControl>
+    <c:MidiEventItemsControl Grid.Row="2" Grid.Column="1" Height="20" DataContext="{Binding ActiveNotePart, ElementName=root}"
+      ItemsSource="{Binding NoteChart}"
+      c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+      c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:MidiEventPanel
+            c:MidiCharting.HOffset="{Binding (c:MidiCharting.HOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:MidiEventItemsControl}}}"
+            c:MidiCharting.QuarterWidth="{Binding (c:MidiCharting.QuarterWidth), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:MidiEventItemsControl}}}"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle>
+        <Style TargetType="{x:Type c:MidiEventItem}">
+          <Setter Property="Onset" Value="{Binding Time}"/>
+        </Style>
+      </ItemsControl.ItemContainerStyle>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="Black" BorderThickness="0.5">
+            <c:ZeroSizeAnchorPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Lyric}"/>
+              </StackPanel>
+            </c:ZeroSizeAnchorPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </c:MidiEventItemsControl>
+    <c:ChartScrollZoomH2 x:Name="hScrollZoom" Grid.Row="3" Grid.Column="1"
+      ScrollMaximum="30720"
+      ScrollViewport="{Binding ActualWidth, ElementName=noteItemsControl}"
+      Log2ZoomMinimum="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=-5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomMaximum="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomValue="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static k:ChartXamlConverters.Log2}}"/>
+    <c:ChartScrollZoomV2 x:Name="vScrollZoom" Grid.Row="1" Grid.Column="2"
+      ScrollMinimum="{x:Static c:MidiCharting.DefaultMinKey}"
+      ScrollMaximum="{x:Static c:MidiCharting.DefaultMaxKey}"
+      ScrollValue="{x:Static c:MidiCharting.DefaultVOffset}"
+      ScrollViewport="{Binding ActualHeight, ElementName=noteItemsControl}"
+      Log2ZoomMinimum="{Binding Source={x:Static c:MidiCharting.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=-2, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomMaximum="{Binding Source={x:Static c:MidiCharting.DefaultKeyHeight}, Mode=OneTime, ConverterParameter=2, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomValue="{Binding Source={x:Static c:MidiCharting.DefaultKeyHeight}, Mode=OneTime, Converter={x:Static k:ChartXamlConverters.Log2}}"/>
+  </Grid>
+</UserControl>

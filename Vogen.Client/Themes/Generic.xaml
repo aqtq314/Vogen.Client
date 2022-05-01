@@ -6,12 +6,12 @@
   xmlns:cc="clr-namespace:Doaz.Reactive.Controls;assembly=Doaz.Reactive.Wpf"
   xmlns:vc="clr-namespace:Vogen.Client.Controls;assembly=Vogen.Client.ViewModel">
 
-  <Style TargetType="{x:Type c:ChartScrollZoomH}">
+  <Style TargetType="{x:Type c:ChartScrollZoomHV01}">
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="IsTabStop" Value="False"/>
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="{x:Type c:ChartScrollZoomH}">
+        <ControlTemplate TargetType="{x:Type c:ChartScrollZoomHV01}">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition/>
@@ -50,12 +50,12 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <Style TargetType="{x:Type c:ChartScrollZoomV}">
+  <Style TargetType="{x:Type c:ChartScrollZoomVV01}">
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="IsTabStop" Value="False"/>
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="{x:Type c:ChartScrollZoomV}">
+        <ControlTemplate TargetType="{x:Type c:ChartScrollZoomVV01}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition/>

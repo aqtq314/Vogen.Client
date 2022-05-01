@@ -1,0 +1,135 @@
+﻿<UserControl x:Class="Vogen.Client.Views.PartEditPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:c="clr-namespace:Vogen.Client.Controls"
+             xmlns:k="clr-namespace:Vogen.Client.Converters"
+             xmlns:vm="clr-namespace:Vogen.Client.ViewModels;assembly=Vogen.Client.ViewModels"
+             mc:Ignorable="d" 
+             Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}"
+             d:Background="White"
+             d:DesignWidth="800" d:DesignHeight="160" d:FontFamily="Segoe UI, Microsoft Yahei UI"
+             d:DataContext="{x:Static vm:DesignerModel.ActiveComp}">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="24"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="160"/>
+      <ColumnDefinition/>
+      <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
+    <!-- Top controls -->
+    <DockPanel>
+      <TextBlock Text="1:0.000" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+    </DockPanel>
+    <c:MidiClockRuler Grid.Column="1" TimeSignatureChart="{Binding TimeSigs}"
+      c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+      c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+    <!-- Time Signature -->
+    <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.5" VerticalAlignment="Center" HorizontalAlignment="Right">
+      <TextBlock Text="{Binding TimeSigs.InitialValue}"/>
+    </Border>
+    <c:MeasureEventItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TimeSigs}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:TimeSigEventPanel TimeSignatureChart="{Binding TimeSigs}"
+            c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+            c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle>
+        <Style TargetType="{x:Type c:MeasureEventItem}">
+          <Setter Property="MeasureIndex" Value="{Binding Time}"/>
+        </Style>
+      </ItemsControl.ItemContainerStyle>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="Black" BorderThickness="0.5">
+            <TextBlock Text="{Binding Value}"/>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </c:MeasureEventItemsControl>
+    <!-- Tempo -->
+    <Border Grid.Row="2" BorderBrush="Black" BorderThickness="0.5" VerticalAlignment="Center" HorizontalAlignment="Right">
+      <TextBlock Text="{Binding Tempos.InitialValue}"/>
+    </Border>
+    <c:MidiEventItemsControl Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Tempos}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:TempoEventPanel
+            c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+            c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle>
+        <Style TargetType="{x:Type c:MidiEventItem}">
+          <Setter Property="Onset" Value="{Binding Time}"/>
+        </Style>
+      </ItemsControl.ItemContainerStyle>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="Black" BorderThickness="0.5">
+            <TextBlock Text="{Binding Value}"/>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </c:MidiEventItemsControl>
+    <!-- Tracks -->
+    <Grid Grid.Row="3">
+      <Border BorderBrush="Black" BorderThickness="0.5"/>
+      <ItemsControl x:Name="trackHeaderList" ItemsSource="{Binding Tracks}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <DockPanel Height="20">
+              <Thumb DockPanel.Dock="Left" Width="6">
+                <Control.Template>
+                  <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border Background="Gray"></Border>
+                  </ControlTemplate>
+                </Control.Template>
+              </Thumb>
+              <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+            </DockPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Grid>
+    <!-- Parts -->
+    <c:PartItemsControl x:Name="partItemsControl" Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Parts}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:PartPanel TrackHeight="20"
+            c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
+            c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemContainerStyle>
+        <Style TargetType="{x:Type c:PartItem}">
+          <Setter Property="Onset" Value="{Binding Time}"/>
+          <Setter Property="TrackIndex" Value="{Binding Track.Index}"/>
+        </Style>
+      </ItemsControl.ItemContainerStyle>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="Black" BorderThickness="0.5">
+            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </c:PartItemsControl>
+    <!-- Scroll & Zoom -->
+    <c:ChartScrollZoomH2 x:Name="hScrollZoom" Grid.Row="4" Grid.Column="1"
+      ScrollMaximum="30720"
+      ScrollViewport="{Binding ActualWidth, ElementName=partItemsControl}"
+      Log2ZoomMinimum="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=-5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomMaximum="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, ConverterParameter=5, Converter={x:Static k:ChartXamlConverters.Log2}}"
+      Log2ZoomValue="{Binding Source={x:Static c:MidiCharting.DefaultQuarterWidth}, Mode=OneTime, Converter={x:Static k:ChartXamlConverters.Log2}}"/>
+  </Grid>
+</UserControl>

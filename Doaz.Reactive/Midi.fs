@@ -58,6 +58,10 @@ type MidiClock(tick : int64) =
 
     static member Zero = MidiClock()
 
+    static member RoundFrom(p : MidiClockF) = MidiClock(int64(round p.Tick))
+    static member FloorFrom(p : MidiClockF) = MidiClock(int64(floor p.Tick))
+    static member CeilFrom(p : MidiClockF) = MidiClock(int64(ceil p.Tick))
+
     static member inline tickOf(p : MidiClock) = p.Tick
 
     static member ToTimeSpan bpm (p : MidiClock) =

@@ -32,7 +32,7 @@ namespace Vogen.Client
 
             if (msgboxResult == MessageBoxResult.OK)
             {
-                var mainWindow = MainWindow as MainWindow;
+                var mainWindow = MainWindow as MainWindowV01;
                 mainWindow?.SaveACopy();
             }
         }
