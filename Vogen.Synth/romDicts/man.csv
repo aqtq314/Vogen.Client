@@ -9455,12 +9455,12 @@ ch,man,man-pop
 匫,wu,wu
 匬,yu,yu
 匭,gui,gui
-匮,gui,gui
 匮,kui,kui
+匮,gui,gui
 匯,hui,hui
 匰,dan,dan
-匱,gui,gui
 匱,kui,kui
+匱,gui,gui
 匲,lian,lian
 匳,lian,lian
 匴,suan,suan
@@ -16336,8 +16336,8 @@ ch,man,man-pop
 拗相公,niu xiang gong,niu xiang gong
 拘,ju,ju
 拙,zhuo,zhuo
-拚,pan,pan
 拚,pin,pin
+拚,pan,pan
 拚,fen,fen
 招,zhao,zhao
 招,shao,shao
@@ -16389,8 +16389,8 @@ ch,man,man-pop
 拹,xie,xie
 拺,ce,ce
 拻,hui,hui
-拼,pan,pan
 拼,pin,pin
+拼,pan,pan
 拼,fen,fen
 拼扒,pin pa,pin pa
 拼花地板,pin hua di ban,pin hua di ban
@@ -26824,14 +26824,8 @@ ch,man,man-pop
 絣扒,beng ba,beng ba
 絤,xian,xian
 絥,fu,fu
-給,ji,ji
 給,gei,gei
-給予,gei yu,gei yu
-給予,ji yu,ji yu
-給付,gei fu,gei fu
-給付,ji fu,ji fu
-給與,gei yu,gei yu
-給與,ji yu,ji yu
+給,ji,ji
 絧,tong,tong
 絨,rong,rong
 絩,tiao,tiao
@@ -27375,14 +27369,8 @@ ch,man,man-pop
 绗,heng,heng
 绗,xing,xing
 绘,hui,hui
-给,ji,ji
 给,gei,gei
-给与,gei yu,gei yu
-给与,ji yu,ji yu
-给予,gei yu,gei yu
-给予,ji yu,ji yu
-给付,gei fu,gei fu
-给付,ji fu,ji fu
+给,ji,ji
 绚,xuan,xuan
 绛,jiang,jiang
 络,luo,luo
@@ -34127,23 +34115,13 @@ ch,man,man-pop
 迖,ta,ta
 迖,ti,ti
 迗,e,e
-还,huan,huan
 还,hai,hai
+还,huan,huan
 还,xuan,xuan
-还了得,hai liao de,hai liao de
 还得,hai dei,hai dei
 还得快,huan de kuai,huan de kuai
 还得起,huan de qi,huan de qi
-还有,hai you,hai you
-还有,huan you,huan you
-还来,hai lai,hai lai
-还来,huan lai,huan lai
-还着,hai zhao,hai zhao
-还着,hai zhuo,hai zhuo
-还着,huan zheh,huan zheh
-还给,hai gei,hai gei
 还给,huan gei,huan gei
-还行,hai xing,hai xing
 这,zhe,zhe
 这,zhei,zhei
 这么着,zhe meh zhao,zhe meh zhao
