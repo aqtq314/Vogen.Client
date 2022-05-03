@@ -15,6 +15,16 @@ namespace Vogen.Client.Controls
     {
         Dictionary<MidiEventItem, XRange> measuredChildren = new();
 
+        public MidiClock PartOnset
+        {
+            get => (MidiClock)GetValue(PartOnsetProperty);
+            set => SetValue(PartOnsetProperty, value);
+        }
+
+        public static DependencyProperty PartOnsetProperty { get; } =
+            DependencyProperty.Register(nameof(PartOnset), typeof(MidiClock), typeof(MidiEventPanel),
+                new FrameworkPropertyMetadata(MidiClock.Zero));
+
         protected override Size MeasureOverride(Size availableSize)
         {
             if (double.IsInfinity(availableSize.Width))
@@ -22,6 +32,7 @@ namespace Vogen.Client.Controls
 
             var quarterWidth = MidiCharting.GetQuarterWidth(this);
             var hOffset = MidiCharting.GetHOffset(this);
+            var partOnset = PartOnset;
 
             var minPulse = MidiClock.FloorFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, 0));
             var maxPulse = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, availableSize.Width));
@@ -32,11 +43,12 @@ namespace Vogen.Client.Controls
             for (int i = 0; i < InternalChildren.Count; i++)
             {
                 var child = (MidiEventItem)InternalChildren[i];
-                var childOff = i + 1 < InternalChildren.Count ? ((MidiEventItem)InternalChildren[i + 1]).Onset : child.Onset;
+                var childOn = child.Onset + partOnset;
+                var childOff = i + 1 < InternalChildren.Count ? ((MidiEventItem)InternalChildren[i + 1]).Onset + partOnset : childOn;
                 if (childOff < minPulse) continue;
-                if (child.Onset > maxPulse) continue;
+                if (childOn > maxPulse) continue;
 
-                var x0 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, child.Onset);
+                var x0 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, childOn);
                 var x1 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, childOff);
 
                 var childMeasureSize = new Size(x1 - x0, availableSize.Height);

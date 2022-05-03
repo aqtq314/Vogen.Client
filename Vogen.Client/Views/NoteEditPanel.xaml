@@ -43,6 +43,7 @@
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
           <c:NotePanel ClipToBounds="True"
+            PartOnset="{Binding Time}"
             c:MidiCharting.HOffset="{Binding (c:MidiCharting.HOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
             c:MidiCharting.VOffset="{Binding (c:MidiCharting.VOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
             c:MidiCharting.QuarterWidth="{Binding (c:MidiCharting.QuarterWidth), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:NoteItemsControl}}}"
@@ -83,6 +84,7 @@
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
           <c:MidiEventPanel
+            PartOnset="{Binding Time}"
             c:MidiCharting.HOffset="{Binding (c:MidiCharting.HOffset), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:MidiEventItemsControl}}}"
             c:MidiCharting.QuarterWidth="{Binding (c:MidiCharting.QuarterWidth), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type c:MidiEventItemsControl}}}"/>
         </ItemsPanelTemplate>
