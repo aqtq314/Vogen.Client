@@ -30,14 +30,12 @@ namespace Vogen.Client.Controls
             if (double.IsInfinity(availableSize.Width))
                 availableSize.Width = 0;
 
-            var actualWidth = ActualWidth;
-            var actualHeight = ActualHeight;
             var quarterWidth = MidiCharting.GetQuarterWidth(this);
             var hOffset = MidiCharting.GetHOffset(this);
             var timeSignatureChart = TimeSignatureChart;
 
             var minTime = MidiClock.FloorFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, 0));
-            var maxTime = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, actualWidth));
+            var maxTime = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, availableSize.Width));
 
             double maxDesiredHeight = 0;
             measuredChildren.Clear();

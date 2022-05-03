@@ -23,8 +23,6 @@ namespace Vogen.Client.Controls
             if (double.IsInfinity(availableSize.Width) || double.IsInfinity(availableSize.Height))
                 throw new ArgumentException($"Unable to handle measure availableSize: {availableSize}");
 
-            var actualWidth = ActualWidth;
-            var actualHeight = ActualHeight;
             var quarterWidth = MidiCharting.GetQuarterWidth(this);
             var keyHeight = MidiCharting.GetKeyHeight(this);
             var minKey = MidiCharting.GetMinKey(this);
@@ -33,9 +31,9 @@ namespace Vogen.Client.Controls
             var vOffset = MidiCharting.GetVOffset(this);
 
             var minPulse = MidiClock.FloorFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, 0));
-            var maxPulse = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, actualWidth));
-            var botPitch = Math.Max(minKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, actualHeight));
-            var topPitch = Math.Min(maxKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, actualHeight, vOffset, 0).Ceil());
+            var maxPulse = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, availableSize.Width));
+            var botPitch = Math.Max(minKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, availableSize.Height, vOffset, availableSize.Height));
+            var topPitch = Math.Min(maxKey, (int)ChartUnitConversion.PixelToPitch(keyHeight, availableSize.Height, vOffset, 0).Ceil());
 
             measuredChildren.Clear();
 
@@ -57,7 +55,7 @@ namespace Vogen.Client.Controls
 
                 var x0 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, child.Onset);
                 var x1 = ChartUnitConversion.MidiClockToPixel(quarterWidth, hOffset, childOff);
-                var yMid = ChartUnitConversion.PitchToPixel(keyHeight, actualHeight, vOffset, child.Pitch);
+                var yMid = ChartUnitConversion.PitchToPixel(keyHeight, availableSize.Height, vOffset, child.Pitch);
 
                 var childRect = new Rect(x0, yMid - keyHeight / 2, x1 - x0, keyHeight);
                 child.Measure(childRect.Size);
