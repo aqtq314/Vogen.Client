@@ -7749,15 +7749,8 @@ ch,man,man-pop
 伝,yun,yun
 伞,san,san
 伟,wei,wei
-传,zhuan,zhuan
 传,chuan,chuan
-传乘,zhuan cheng,zhuan cheng
-传乘,zhuan sheng,zhuan sheng
-传柑,chuan gan,chuan gan
-传檄,chuan xi,chuan xi
-传著,chuan zhu,chuan zhu
-传输速率,chuan shu su lv,chuan shu su lv
-传重,chuan zhong,chuan zhong
+传,zhuan,zhuan
 伡,che,che
 伡,ju,ju
 伢,ya,ya
@@ -7988,8 +7981,8 @@ ch,man,man-pop
 依,yi,yi
 侞,ru,ru
 侟,jian,jian
-侠,jia,jia
 侠,xia,xia
+侠,jia,jia
 価,ga,ga
 価,jia,jia
 侢,dai,dai
@@ -8085,8 +8078,8 @@ ch,man,man-pop
 俞兒,shu er,shu er
 俟,si,si
 俟,qi,qi
-俠,jia,jia
 俠,xia,xia
+俠,jia,jia
 信,xin,xin
 信,shen,shen
 信人調,xin ren tiao,xin ren tiao
@@ -8390,15 +8383,8 @@ ch,man,man-pop
 傰,peng,peng
 傱,song,song
 傲,ao,ao
-傳,zhuan,zhuan
 傳,chuan,chuan
-傳乘,zhuan cheng,zhuan cheng
-傳乘,zhuan sheng,zhuan sheng
-傳柑,chuan gan,chuan gan
-傳檄,chuan xi,chuan xi
-傳著,chuan zhu,chuan zhu
-傳輸速率,chuan shu su lv,chuan shu su lv
-傳重,chuan zhong,chuan zhong
+傳,zhuan,zhuan
 傴,yu,yu
 傴,kou,kou
 債,zhai,zhai
@@ -11685,8 +11671,8 @@ ch,man,man-pop
 垏,lu,lu
 垐,ji,ji
 垑,chi,chi
-垒,lv,lv
 垒,lei,lei
+垒,lv,lv
 垓,gai,gai
 垓,hai,hai
 垔,yan,yan
@@ -12148,8 +12134,8 @@ ch,man,man-pop
 壖,ru,ru
 壖,ruan,ruan
 壗,jin,jin
-壘,lv,lv
 壘,lei,lei
+壘,lv,lv
 壙,kuang,kuang
 壚,lu,lu
 壛,yan,yan
@@ -16028,10 +16014,9 @@ ch,man,man-pop
 所,suo,suo
 所在地,suo zai di,suo zai di
 所着,suo zhuo,suo zhuo
-扁,pian,pian
 扁,bian,bian
+扁,pian,pian
 扁柏,bian bo,bian bo
-扁毛畜生,bian mao chu sheng,bian mao chu sheng
 扂,dian,dian
 扃,jiong,jiong
 扃,ju,ju
@@ -16097,8 +16082,8 @@ ch,man,man-pop
 托管地,tuo guan di,tuo guan di
 扙,zhang,zhang
 扚,diao,diao
-扛,gang,gang
 扛,kang,kang
+扛,gang,gang
 扛,gong,gong
 扛長活,kang chang huo,kang chang huo
 扛长活,kang chang huo,kang chang huo
@@ -27569,8 +27554,8 @@ ch,man,man-pop
 罠,min,min
 罡,gang,gang
 罡,zheng,zheng
-罢,pi,pi
 罢,ba,ba
+罢,pi,pi
 罢了,ba leh,ba leh
 罢了,ba liao,ba liao
 罢黜,ba chu,ba chu
@@ -27602,8 +27587,8 @@ ch,man,man-pop
 罴,pi,pi
 罵,ma,ma
 罶,liu,liu
-罷,pi,pi
 罷,ba,ba
+罷,pi,pi
 罷了,ba leh,ba leh
 罷了,ba liao,ba liao
 罷黜,ba chu,ba chu
@@ -29285,8 +29270,8 @@ ch,man,man-pop
 菍,ren,ren
 菎,bi,bi
 菎,kun,kun
-菏,ge,ge
 菏,he,he
+菏,ge,ge
 菐,pu,pu
 菑,zi,zi
 菑,zai,zai
@@ -33896,8 +33881,8 @@ ch,man,man-pop
 轋,hun,hun
 轋,lian,lian
 轌,xue,xue
-轍,che,che
 轍,zhe,zhe
+轍,che,che
 轎,jiao,jiao
 轏,chan,chan
 轏,zhan,zhan
@@ -34012,8 +33997,8 @@ ch,man,man-pop
 辗,nian,nian
 辗转相传,zhan zhuan xiang chuan,zhan zhuan xiang chuan
 辘,lu,lu
-辙,che,che
 辙,zhe,zhe
+辙,che,che
 辚,lin,lin
 辛,xin,xin
 辜,gu,gu
@@ -38171,9 +38156,8 @@ ch,man,man-pop
 騋,lai,lai
 騌,zong,zong
 騍,ke,ke
-騎,ji,ji
 騎,qi,qi
-騎自行車,qi zi xing che,qi zi xing che
+騎,ji,ji
 騎行,qi xing,qi xing
 騏,qi,qi
 騐,yan,yan
@@ -38356,9 +38340,8 @@ ch,man,man-pop
 骎,qin,qin
 骏,jun,jun
 骐,qi,qi
-骑,ji,ji
 骑,qi,qi
-骑自行车,qi zi xing che,qi zi xing che
+骑,ji,ji
 骑行,qi xing,qi xing
 骒,ke,ke
 骓,zhui,zhui
