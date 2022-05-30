@@ -28,28 +28,28 @@ namespace Vogen.Client.Controls
         public static double MinMajorTickHop { get; } = 70;    // in screen pixels
         public static double MinMinorTickHop { get; } = 25;
 
-        public static IEnumerable<long> ListTickHops(TimeSignature timeSig)
+        public static IEnumerable<MidiClock> ListTickHops(TimeSignature timeSig)
         {
-            yield return 1;
-            yield return 5;
+            yield return new MidiClock(1);
+            yield return new MidiClock(5);
 
             for (long length = 15; length < timeSig.TicksPerBeat; length <<= 1)
-                yield return length;
+                yield return new MidiClock(length);
 
-            yield return timeSig.TicksPerBeat;
+            yield return new MidiClock(timeSig.TicksPerBeat);
 
             long minMultiBeatHop = timeSig.TicksPerMeasure;
             for (long length = minMultiBeatHop >> 1; length > timeSig.TicksPerBeat && length % timeSig.TicksPerBeat == 0; length >>= 1)
                 minMultiBeatHop = length;
             for (long length = minMultiBeatHop; length < timeSig.TicksPerMeasure; length <<= 1)
-                yield return length;
+                yield return new MidiClock(length);
 
             for (long length = timeSig.TicksPerMeasure; ; length <<= 1)
-                yield return length;
+                yield return new MidiClock(length);
         }
 
-        public static long FindTickHop(TimeSignature timeSig, double quarterWidth, double minTickHop) =>
-            ListTickHops(timeSig).First(hop => ChartUnitConversion.PulseToPixel(quarterWidth, 0, hop) >= minTickHop);
+        public static MidiClock FindTickHop(TimeSignature timeSig, double quarterWidth, double minTickHop) =>
+            ListTickHops(timeSig).First(hop => ChartUnitConversion.MidiClockToPixel(quarterWidth, 0, hop) >= minTickHop);
 
         public TimeSignatureChart TimeSignatureChart
         {
@@ -66,15 +66,11 @@ namespace Vogen.Client.Controls
         {
             var actualWidth = ActualWidth;
             var actualHeight = ActualHeight;
-            var timeSig = TimeSignatureChart.InitialValue;
             var quarterWidth = MidiCharting.GetQuarterWidth(this);
             var hOffset = MidiCharting.GetHOffset(this);
 
-            var minPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, 0);
-            var maxPulse = (long)ChartUnitConversion.PixelToPulse(quarterWidth, hOffset, actualWidth);
-
-            var majorHop = FindTickHop(timeSig, quarterWidth, MinMajorTickHop);
-            var minorHop = FindTickHop(timeSig, quarterWidth, MinMinorTickHop);
+            var minPulse = MidiClock.FloorFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, 0));
+            var maxPulse = MidiClock.CeilFrom(ChartUnitConversion.PixelToMidiClock(quarterWidth, hOffset, actualWidth));
 
             using var _ = dc.UsingClip(new RectangleGeometry(new Rect(new Size(actualWidth, actualHeight))));
 
@@ -85,24 +81,47 @@ namespace Vogen.Client.Controls
             dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, actualHeight - 0.5, actualWidth, 0.5));
 
             // tickmarks
-            for (var currPulse = minPulse / minorHop * minorHop; currPulse <= maxPulse; currPulse += minorHop)
+            for (int i = 0; i <= TimeSignatureChart.Count; i++)
             {
-                var isMajor = currPulse % majorHop == 0;
-                var xPos = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, currPulse);
-                var height = isMajor ? majorTickHeight : minorTickHeight;
-                dc.DrawLine(tickPen, new Point(xPos, actualHeight - height), new Point(xPos, actualHeight));
+                var maxPulseInTimeSig =
+                        i < TimeSignatureChart.Count ?
+                        TimeSignatureChart.TimeCodeToMidiTime(TimeSignatureChart[i].Time, 0, 0) :
+                        maxPulse;
+                maxPulseInTimeSig = maxPulse < maxPulseInTimeSig ? maxPulse : maxPulseInTimeSig;
+                if (maxPulseInTimeSig < minPulse)
+                    continue;
 
-                if (isMajor)
+                var timeSig = i > 0 ? TimeSignatureChart[i - 1].Value : TimeSignatureChart.InitialValue;
+                var minorHop = FindTickHop(timeSig, quarterWidth, MinMinorTickHop);
+                var majorHop = FindTickHop(timeSig, quarterWidth, MinMajorTickHop);
+                var currPulse = TimeSignatureChart.TimeCodeToMidiTime(
+                        i == 0 ? 0 : TimeSignatureChart[i - 1].Time, 0, 0);
+                if (minPulse > currPulse) 
+                    currPulse = (minPulse - currPulse).Tick / minorHop.Tick * minorHop + currPulse;
+
+                for (; currPulse < maxPulseInTimeSig; currPulse += minorHop)
                 {
-                    var textStr =
-                        majorHop % timeSig.TicksPerMeasure == 0 ? TimeSignature.FormatMeasures(new MidiClock(currPulse), timeSig) :
-                        majorHop % timeSig.TicksPerBeat == 0 ? TimeSignature.FormatMeasureBeats(new MidiClock(currPulse), timeSig) :
-                        TimeSignature.FormatFull(new MidiClock(currPulse), timeSig);
-                    var ft = this.MakeFormattedText(textStr);
-                    var halfTextWidth = ft.Width / 2;
-                    if (xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth)
-                        dc.DrawText(ft, new Point(xPos - halfTextWidth, actualHeight - ft.Height - majorTickHeight));
+                    var (measure, beat, ticksInBeat) = TimeSignatureChart.MidiTimeToTimeCode(currPulse);
+                    var isMajor = (currPulse - TimeSignatureChart.TimeCodeToMidiTime(
+                        i == 0 ? 0 : TimeSignatureChart[i - 1].Time, 0, 0)).Tick % majorHop.Tick == 0;
+                    var xPos = ChartUnitConversion.PulseToPixel(quarterWidth, hOffset, currPulse.Tick);
+                    var height = isMajor ? majorTickHeight : minorTickHeight;
+                    dc.DrawLine(tickPen, new Point(xPos, actualHeight - height), new Point(xPos, actualHeight));
+
+                    if (isMajor)
+                    {
+                        var textStr =
+                            majorHop.Tick % timeSig.TicksPerMeasure == 0 ? $"{measure + 1}" :
+                            majorHop.Tick % timeSig.TicksPerBeat == 0 ? $"{measure + 1}:{beat + 1}" :
+                            $"{measure + 1}:{beat + 1}.{ticksInBeat}";
+                        var ft = this.MakeFormattedText(textStr);
+                        var halfTextWidth = ft.Width / 2;
+                        if (xPos - halfTextWidth >= 0.0 && xPos + halfTextWidth <= actualWidth)
+                            dc.DrawText(ft, new Point(xPos - halfTextWidth, actualHeight - ft.Height - majorTickHeight));
+                    }
                 }
+                if (maxPulseInTimeSig >= maxPulse)
+                    break;
             }
         }
     }
