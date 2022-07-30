@@ -28,13 +28,15 @@
     <DockPanel>
       <TextBlock Text="1:0.000" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
     </DockPanel>
-    <c:MidiClockRuler Grid.Column="1" TimeSignatureChart="{Binding TimeSigs}"
+    <c:MidiClockRuler x:Name="MidiClockRulerPart" Grid.Column="1" TimeSignatureChart="{Binding TimeSigs}"
       c:MidiCharting.HOffset="{Binding ScrollValueAnimated, ElementName=hScrollZoom}"
       c:MidiCharting.QuarterWidth="{Binding Log2ZoomValueAnimated, ElementName=hScrollZoom, Converter={x:Static k:ChartXamlConverters.Exp2}}"/>
     <!-- Time Signature -->
-    <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.5" VerticalAlignment="Center" HorizontalAlignment="Right">
+    <!--<Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.5" VerticalAlignment="Center" HorizontalAlignment="Right">
       <TextBlock Text="{Binding TimeSigs.InitialValue}"/>
-    </Border>
+    </Border>-->
+    <c:ValueBox Grid.Row="1" Value="{Binding TimeSigs.InitialValue, Mode=TwoWay, NotifyOnSourceUpdated=True}"
+                SourceUpdated="ValueBox_SourceUpdated" HorizontalAlignment="Right"/>
     <c:MeasureEventItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TimeSigs}">
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
@@ -60,6 +62,7 @@
     <Border Grid.Row="2" BorderBrush="Black" BorderThickness="0.5" VerticalAlignment="Center" HorizontalAlignment="Right">
       <TextBlock Text="{Binding Tempos.InitialValue}"/>
     </Border>
+    <!--<c:ValueBox Grid.Row="2" Value="{Binding Tempos.InitialValue}" HorizontalAlignment="Right"/>-->
     <c:MidiEventItemsControl Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Tempos}">
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
