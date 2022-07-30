@@ -21,5 +21,10 @@ namespace Vogen.Client.Views
         {
             InitializeComponent();
         }
+
+        private void ValueBox_SourceUpdated(object sender, DataTransferEventArgs e)
+        {
+            MidiClockRulerPart.InvalidateVisual();
+        }
     }
 }

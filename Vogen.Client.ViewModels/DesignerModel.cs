@@ -45,7 +45,7 @@ namespace Vogen.Client.ViewModels
             ActiveComp = new Composition(
                 new TimeSignature(3, 4), 120,
                 Util.Array.ofParams(
-                    TimedValueItem.Create(0, new TimeSignature(6, 8)),
+                    TimedValueItem.Create(1, new TimeSignature(6, 8)),
                     TimedValueItem.Create(2, new TimeSignature(2, 4)),
                     TimedValueItem.Create(6, new TimeSignature(12, 16)),
                     TimedValueItem.Create(8, new TimeSignature(1, 4))),
